@@ -1,0 +1,62 @@
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-black px-6 py-10 text-white">
+      <section className="mx-auto flex max-w-4xl flex-col items-center text-center">
+        <div className="mb-6 text-6xl">✝️❤️🙏</div>
+
+        <h1 className="text-5xl font-bold tracking-tight">
+          CrossHeartPray
+        </h1>
+
+        <p className="mt-6 max-w-2xl text-xl text-zinc-300">
+          Bring your burden to Christ. Reflect with Scripture. Pray. Take the
+          next faithful step.
+        </p>
+
+        <div className="mt-12 w-full rounded-3xl border border-zinc-800 bg-zinc-950 p-6 text-left shadow-2xl">
+          <label className="text-sm font-semibold text-zinc-300">
+            What is weighing on your heart today?
+          </label>
+
+          <textarea
+            className="mt-4 min-h-36 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none"
+            placeholder="Example: My daughter won't talk to me..."
+          />
+Example: I don't feel enough, I'm afraid, I'm angry, I can't forgive...
+          <button className="mt-5 rounded-full bg-white px-8 py-3 font-semibold text-black">
+            Reflect
+          </button>
+        </div>
+
+        <div className="mt-12 grid w-full gap-6 md:grid-cols-3">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+            <div className="text-3xl">✝️</div>
+            <h2 className="mt-4 text-xl font-bold">Cross</h2>
+            <p className="mt-3 text-zinc-400">
+              Remember what Christ has already done for you before trying to fix
+              the problem yourself.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+            <div className="text-3xl">❤️</div>
+            <h2 className="mt-4 text-xl font-bold">Heart</h2>
+            <p className="mt-3 text-zinc-400">
+              Honestly name fear, anger, grief, pride, shame, or control — and
+              receive God's love.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+            <div className="text-3xl">🙏</div>
+            <h2 className="mt-4 text-xl font-bold">Pray</h2>
+            <p className="mt-3 text-zinc-400">
+              Pray with Scripture, humility, confession, thanksgiving, and trust
+              in God's will.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
