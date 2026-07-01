@@ -215,6 +215,9 @@ export default function BibleBingoVerseCard({
             showOpenOption={false}
           />
         </div>
+        <p className="mt-3 text-center text-xs text-white/40">
+          Bible.com may follow your Bible App or device theme settings.
+        </p>
       </article>
     </>
   );
