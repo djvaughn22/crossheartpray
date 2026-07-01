@@ -368,7 +368,7 @@ export default function CrossHeartPrayReflectPage() {
     setVerseExplanationLoading(true);
 
     try {
-      const response = await fetch("/api/verse-explanation", {
+      const response = await fetch("https://openmirrorllc.com/api/verse-explanation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -413,7 +413,7 @@ export default function CrossHeartPrayReflectPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/reflect", {
+      const response = await fetch("https://openmirrorllc.com/api/reflect", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
