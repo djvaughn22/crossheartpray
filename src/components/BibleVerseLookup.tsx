@@ -131,7 +131,7 @@ export default function BibleVerseLookup({
   const loadPassageByReference = useCallback(
     async (reference: string, textOverride?: string) => {
       const response = await fetch(
-        `/api/local-verse-lookup?q=${encodeURIComponent(reference)}`,
+        `https://openmirrorllc.com/api/local-verse-lookup?q=${encodeURIComponent(reference)}`,
       );
 
       const data = await response.json();
@@ -158,7 +158,7 @@ export default function BibleVerseLookup({
 
       try {
         const response = await fetch(
-          `/api/local-verse-lookup?q=${encodeURIComponent(initialReference)}`,
+          `https://openmirrorllc.com/api/local-verse-lookup?q=${encodeURIComponent(initialReference)}`,
         );
 
         const data = await response.json();
@@ -273,7 +273,7 @@ export default function BibleVerseLookup({
     setNote("");
 
     try {
-      const response = await fetch(`/api/local-verse-lookup?random=${spinMode}`, {
+      const response = await fetch(`https://openmirrorllc.com/api/local-verse-lookup?random=${spinMode}`, {
         cache: "no-store",
       });
 

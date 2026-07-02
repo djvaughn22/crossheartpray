@@ -51,7 +51,7 @@ export function buildDeepDiveWordStudiesUrl(passage: WordStudyPassage) {
     verse: String(Number(passage.verse)),
   });
 
-  return `/api/deep-dive-word-studies?${params.toString()}`;
+  return `https://openmirrorllc.com/api/deep-dive-word-studies?${params.toString()}`;
 }
 
 const lowValueEnglishWords = new Set([
