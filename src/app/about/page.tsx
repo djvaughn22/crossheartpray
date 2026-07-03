@@ -182,6 +182,38 @@ export default function AboutPage() {
               </li>
             </ul>
           </section>
+
+          <section className="border-t border-white/10 pt-8">
+            <h2 className="text-2xl font-black text-white">Dr. Gene Getz &amp; Life Essentials</h2>
+
+            <div className="mt-5 space-y-4 text-base leading-8 text-slate-300">
+              <p>
+                Dr. Gene Getz&apos;s <span className="font-semibold text-white">Life Essentials</span> has
+                been a big part of this whole project. It is his life work — more than{" "}
+                <span className="font-semibold text-white">1,500 Bible principles</span> drawn straight
+                from Scripture, with hundreds of hours of video teaching to go with them.
+              </p>
+              <p>
+                I got to meet Dr. Getz in person and read his own{" "}
+                <span className="font-semibold text-white">personally signed Life Essentials Study Bible</span>,
+                sitting with his men&apos;s ski group — which included Apollo 16 moonwalker{" "}
+                <span className="font-semibold text-white">astronaut Charlie Duke</span>. It was one of
+                those moments you don&apos;t forget, and a big reason Life Essentials is woven through
+                CrossHeartPray. It&apos;s amazing work.
+              </p>
+              <p className="font-semibold text-emerald-100">
+                Open the Bible first. When a verse connects to a Life Essentials principle, continue
+                with Dr. Gene Getz.
+              </p>
+            </div>
+
+            <Link
+              href="/gene-getz"
+              className="mt-6 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              Explore the Bible with Dr. Gene Getz →
+            </Link>
+          </section>
         </section>
 
         <section className="mt-12 rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-6 text-center">

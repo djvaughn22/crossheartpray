@@ -678,6 +678,7 @@ export default function BibleExplorerPage() {
   const focusedCardRef = useRef<HTMLElement | null>(null);
   const hasFocusedCardMountedRef = useRef(false);
   const [activeWordStudy, setActiveWordStudy] = useState<ActiveWordStudy | null>(null);
+  const [loadingStudyKey, setLoadingStudyKey] = useState<string | null>(null);
   const [wordStudiesByPassage, setWordStudiesByPassage] = useState<
     Record<string, VerifiedWordStudy[]>
   >({});
@@ -878,22 +879,42 @@ export default function BibleExplorerPage() {
     setFocusedCardIndex(index);
   }
 
-  function openWordStudy(
+  async function openWordStudy(
     _section: Section,
     passage: Passage,
     selectedWordStudy?: VerifiedWordStudy,
   ) {
-    const wordStudy =
-      selectedWordStudy ?? getDefaultWordStudy(wordStudiesForPassage(passage));
+    // A specific word was clicked — data is already loaded.
+    if (selectedWordStudy) {
+      setActiveWordStudy({ passage, wordStudy: selectedWordStudy });
+      return;
+    }
 
+    const key = wordStudyLookupKey(passage);
+    let studies: VerifiedWordStudy[] | undefined = wordStudiesByPassage[key];
+
+    // Deep Dive tapped before the background load resolved — fetch on demand so
+    // the button always responds instead of silently doing nothing.
+    if (studies === undefined) {
+      setLoadingStudyKey(key);
+      try {
+        const response = await fetch(buildDeepDiveWordStudiesUrl(passage));
+        const data = response.ok ? await response.json() : null;
+        studies = Array.isArray(data?.wordStudies) ? data.wordStudies : [];
+      } catch {
+        studies = [];
+      }
+      const loaded = studies ?? [];
+      setWordStudiesByPassage((current) => ({ ...current, [key]: loaded }));
+      setLoadingStudyKey((prev) => (prev === key ? null : prev));
+    }
+
+    const wordStudy = getDefaultWordStudy(studies ?? []);
     if (!wordStudy) {
       return;
     }
 
-    setActiveWordStudy({
-      passage,
-      wordStudy,
-    });
+    setActiveWordStudy({ passage, wordStudy });
   }
 
   useEffect(() => {
@@ -1054,12 +1075,12 @@ export default function BibleExplorerPage() {
                       {readInPlan || hasLifeEssentials ? (
                         <div className="mt-1.5 flex flex-wrap items-center gap-1">
                           {readInPlan ? (
-                            <span className="inline-flex max-w-full items-center rounded-full border border-emerald-200/25 bg-emerald-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.1em] text-emerald-50">
+                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-emerald-50">
                               Read
                             </span>
                           ) : null}
                           {hasLifeEssentials ? (
-                            <span className="inline-flex max-w-full items-center truncate rounded-full border border-amber-200/25 bg-amber-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.1em] text-amber-50">
+                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-amber-200/25 bg-amber-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-amber-50">
                               Life Essentials
                             </span>
                           ) : null}
@@ -1214,7 +1235,9 @@ export default function BibleExplorerPage() {
                   }
                   className="text-center justify-center items-center inline-flex rounded-full border border-emerald-200/20 bg-emerald-300/10 px-5 py-2 text-sm font-semibold text-emerald-100 shadow-sm transition hover:bg-emerald-300/15 disabled:cursor-not-allowed disabled:border-zinc-700/70 disabled:bg-zinc-800/70 disabled:text-zinc-500 disabled:shadow-none disabled:hover:bg-zinc-800/70"
                 >
-                  Deep Dive
+                  {loadingStudyKey === wordStudyLookupKey(focusedCard.passage)
+                    ? "Deep Dive…"
+                    : "Deep Dive"}
                 </button>
 
                 <button

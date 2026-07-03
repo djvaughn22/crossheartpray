@@ -9,13 +9,13 @@ type SiteHeaderProps = {
 };
 
 const menuLinks = [
-  { href: "/crossheartpray", label: "Home" },
+  { href: "/", label: "Home" },
   { href: "/bible-reading-plan", label: "Bible Reading" },
   { href: "/daily-hope", label: "Daily Hope" },
   { href: "/explorebible", label: "Bible Bingo 7" },
   { href: "/gene-getz", label: "Gene Getz" },
   { href: "/about", label: "About" },
-  { href: "/", label: "← Open Mirror LLC" },
+  { href: "https://openmirrorllc.com", label: "← Open Mirror LLC" },
 ];
 
 export default function SiteHeader({ className = "mb-16" }: SiteHeaderProps) {
