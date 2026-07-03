@@ -992,7 +992,7 @@ async function shareOriginalReadingPlanPdf() {
                             href={href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block min-w-[8.5rem] whitespace-nowrap text-left text-[0.86rem] font-black leading-snug text-emerald-50 underline decoration-emerald-300/45 decoration-2 underline-offset-3 transition hover:text-white hover:decoration-emerald-100"
+                            className="block min-w-0 flex-1 whitespace-nowrap text-left text-[0.72rem] font-black leading-snug text-emerald-50 underline decoration-emerald-300/45 decoration-2 underline-offset-3 transition hover:text-white hover:decoration-emerald-100"
                             title={label}
                           >
                             {label}
