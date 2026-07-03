@@ -11,6 +11,8 @@ import CentralTimeBadge from "./CentralTimeBadge";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
 import PageNucleusHero from "./PageNucleusHero";
+import GeneGetzResourceCard from "./GeneGetzResourceCard";
+import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
 import {
   buildDeepDiveWordStudiesUrl,
   getDefaultWordStudy,
@@ -911,6 +913,16 @@ export default function DailyHopeRoutine({
                             Deep Dive
                           </button>
                         </div>
+
+                        {firstPassage ? (
+                          <GeneGetzResourceCard
+                            principles={getGeneGetzPrinciplesForVerse(
+                              firstPassage.code,
+                              firstPassage.chapter,
+                              firstPassage.verse,
+                            )}
+                          />
+                        ) : null}
                       </article>
                     );
                   })}

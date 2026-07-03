@@ -5,6 +5,8 @@ import SiteFooter from "../../components/SiteFooter";
 
 import SiteHeader from "../../components/SiteHeader";
 import BibleBingoKingCard from "../../components/BibleBingoKingCard";
+import GeneGetzResourceCard from "../../components/GeneGetzResourceCard";
+import { getGeneGetzPrinciplesForVerse } from "../../lib/geneGetzLifeEssentials";
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import {
@@ -1006,6 +1008,8 @@ export default function BibleExplorerPage() {
                 const cardTitle = splitBibleBingoSectionTitle(section.title);
                 const cardSummary = shortBibleBingoSectionLine(section.title);
                 const readInPlan = isBingoReadingPlanDone(bingoReadingPlanDone, passage.code, passage.chapter);
+                const hasLifeEssentials =
+                  getGeneGetzPrinciplesForVerse(passage.code, passage.chapter, passage.verse).length > 0;
 
                 return (
                   <button
@@ -1048,11 +1052,18 @@ export default function BibleExplorerPage() {
                         <p className="text-xs font-black leading-5 text-white">
                           {chpBingoVerseOnlyLabel(passage.label)}
                         </p>
-                        {readInPlan ? (
-                          <span className="shrink-0 rounded-full border border-emerald-200/25 bg-emerald-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.12em] text-emerald-50">
-                            Read
-                          </span>
-                        ) : null}
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          {readInPlan ? (
+                            <span className="rounded-full border border-emerald-200/25 bg-emerald-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.12em] text-emerald-50">
+                              Read
+                            </span>
+                          ) : null}
+                          {hasLifeEssentials ? (
+                            <span className="rounded-full border border-amber-200/25 bg-amber-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.12em] text-amber-50">
+                              Life Essentials
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <p className="hidden sm:block bible-card-verse-preview mt-2 text-[0.72rem] font-semibold leading-5 text-slate-100/90">
                         {passage.text}
@@ -1221,6 +1232,14 @@ export default function BibleExplorerPage() {
               <p className="bible-bingo-focused-lane-position-footnote mt-3 text-xs font-semibold leading-5 text-slate-400">
                 {bibleBingoLaneVerseLabel(focusedCard)}
               </p>
+
+              <GeneGetzResourceCard
+                principles={getGeneGetzPrinciplesForVerse(
+                  focusedCard.passage.code,
+                  focusedCard.passage.chapter,
+                  focusedCard.passage.verse,
+                )}
+              />
 
               {focusedBookLinks.length ? (
                 <div className="bible-bingo-focused-lane-books mt-6 rounded-[1.35rem] border border-white/10 bg-black/15 px-4 py-4 text-center sm:mt-7 sm:rounded-[2rem] sm:px-5 sm:py-5">

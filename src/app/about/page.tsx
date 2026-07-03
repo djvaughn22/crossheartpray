@@ -207,6 +207,30 @@ export default function AboutPage() {
             <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-white/60">Other Sources</h3>
             <p className="mt-3 text-sm leading-6 text-white/75">52 Week Bible Reading Plan — ©Copyright 1995-2009 Michael Coley — Used With Permission — http://www.Bible-Reading.com</p>
           </div>
+
+          <div className="mt-4 rounded-2xl border border-amber-200/20 bg-amber-300/[0.05] p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-100/80">Gene Getz · Life Essentials</h3>
+            <p className="mt-3 text-sm leading-6 text-white/75">
+              Gene Getz / Bible Principles resources are linked as external study helps. CrossHeartPray opens Scripture first and points to official resources when available.
+            </p>
+            <ul className="mt-3 space-y-1 text-sm leading-6">
+              <li>
+                <a href="https://bibleprinciples.org" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-100 underline decoration-white/20 underline-offset-4 hover:text-amber-50">Bible Principles</a>
+              </li>
+              <li>
+                <a href="https://bibleprinciples.org/pf-search-book/" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-100 underline decoration-white/20 underline-offset-4 hover:text-amber-50">Principle Finder</a>
+              </li>
+              <li>
+                <a href="https://bibleprinciples.org/life-essentials-app/" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-100 underline decoration-white/20 underline-offset-4 hover:text-amber-50">Life Essentials App</a>
+              </li>
+              <li>
+                <a href="https://bibleprinciples.org/the-life-essentials-study-bible/" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-100 underline decoration-white/20 underline-offset-4 hover:text-amber-50">Life Essentials Study Bible</a>
+              </li>
+              <li>
+                <a href="https://www.youtube.com/user/LifeEssentialsVideos" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-100 underline decoration-white/20 underline-offset-4 hover:text-amber-50">Official YouTube Channel</a>
+              </li>
+            </ul>
+          </div>
         </section>
 
 </main>
