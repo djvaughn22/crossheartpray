@@ -30,15 +30,6 @@ const dailyWays = [
     cta: "Open Daily Hope",
   },
   {
-    href: "/explorebible?passage=Matthew%205",
-    icon: "king-of-hearts",
-    eyebrow: "7-card deck",
-    title: "Bible Bingo 7",
-    body:
-      "Deal seven Bible cards, open the verse or chapter, and connect the card to the reading plan.",
-    cta: "Deal 7 Cards",
-  },
-  {
     href: "/gene-getz",
     icon: "🎬",
     eyebrow: "Deeper study",
@@ -46,6 +37,15 @@ const dailyWays = [
     body:
       "Open the Bible first, then continue with Dr. Gene Getz — 1,500 Life Essentials principles with official video teaching, matched to the verse.",
     cta: "Explore Gene Getz",
+  },
+  {
+    href: "/explorebible?passage=Matthew%205",
+    icon: "king-of-hearts",
+    eyebrow: "7-card deck",
+    title: "Bible Bingo 7",
+    body:
+      "Deal seven Bible cards, open the verse or chapter, and connect the card to the reading plan.",
+    cta: "Deal 7 Cards",
   },
 ];
 
