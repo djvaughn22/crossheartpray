@@ -1,5 +1,6 @@
 import {
   formatPrincipleRange,
+  GENE_GETZ_SOURCE_LABEL,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
 
@@ -24,7 +25,7 @@ export default function GeneGetzResourceCard({
       </p>
 
       {principles.map((principle) => {
-        const href = principle.officialVideoUrl ?? principle.officialSourceUrl;
+        const href = principle.officialVideoUrl;
         const isVideo = principle.verified && Boolean(principle.officialVideoUrl);
         return (
           <div
@@ -52,7 +53,7 @@ export default function GeneGetzResourceCard({
                 : "Open official Principle Finder"}
             </a>
             <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-              {principle.sourceLabel}
+              {principle.sourceLabel ?? GENE_GETZ_SOURCE_LABEL}
             </p>
           </div>
         );
