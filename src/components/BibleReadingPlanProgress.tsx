@@ -978,13 +978,15 @@ async function shareOriginalReadingPlanPdf() {
                         }`}
                       >
                         <div className="flex min-h-[1.85rem] items-center justify-start gap-1.5">
-                          <input
-                            type="checkbox"
-                            checked={isRead}
-                            onChange={() => toggleReading(id)}
+                          <button
+                            type="button"
+                            onClick={() => toggleReading(id)}
                             aria-label={`${isRead ? "Mark unread" : "Mark read"} ${label}`}
-                            className="h-3.5 w-3.5 shrink-0 accent-emerald-300"
-                          />
+                            aria-pressed={isRead}
+                            className="chp-read-check"
+                          >
+                            ✓
+                          </button>
 
                           <a
                             href={href}
@@ -997,15 +999,22 @@ async function shareOriginalReadingPlanPdf() {
                           </a>
 
                           {getz ? (
-                            <button
-                              type="button"
+                            <span
+                              role="button"
+                              tabIndex={0}
                               onClick={() => setActiveVideo(getz)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setActiveVideo(getz);
+                                }
+                              }}
                               title={`Watch Dr. Gene Getz — ${getz.principleTitle}`}
                               aria-label={`Watch Gene Getz Life Essentials video for ${label}`}
-                              className="shrink-0 text-sm leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
+                              className="chp-getz-icon ml-auto shrink-0 cursor-pointer text-base leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
                             >
                               🎬
-                            </button>
+                            </span>
                           ) : null}
                         </div>
                       </td>

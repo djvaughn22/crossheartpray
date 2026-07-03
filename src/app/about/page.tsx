@@ -188,18 +188,33 @@ export default function AboutPage() {
 
             <div className="mt-5 space-y-4 text-base leading-8 text-slate-300">
               <p>
-                Dr. Gene Getz&apos;s <span className="font-semibold text-white">Life Essentials</span> has
-                been a big part of this whole project. It is his life work — more than{" "}
+                <a
+                  href="https://en.wikipedia.org/wiki/Gene_Getz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
+                >
+                  Dr. Gene Getz
+                </a>
+                &apos;s <span className="font-semibold text-white">Life Essentials</span> has shaped a
+                big part of this project. It is his life&apos;s work — more than{" "}
                 <span className="font-semibold text-white">1,500 Bible principles</span> drawn straight
-                from Scripture, with hundreds of hours of video teaching to go with them.
+                from Scripture, paired with hundreds of hours of video teaching.
               </p>
               <p>
-                I got to meet Dr. Getz in person and read his own{" "}
-                <span className="font-semibold text-white">personally signed Life Essentials Study Bible</span>,
-                sitting with his men&apos;s ski group — which included Apollo 16 moonwalker{" "}
-                <span className="font-semibold text-white">astronaut Charlie Duke</span>. It was one of
-                those moments you don&apos;t forget, and a big reason Life Essentials is woven through
-                CrossHeartPray. It&apos;s amazing work.
+                I was blessed to meet Dr. Getz in person and to hold his own{" "}
+                <span className="font-semibold text-white">personally signed Life Essentials Study Bible</span>.
+                We sat together with his men&apos;s ski group — which included Apollo 16 moonwalker{" "}
+                <a
+                  href="https://en.wikipedia.org/wiki/Charlie_Duke"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
+                >
+                  astronaut Charlie Duke
+                </a>
+                . It is a moment I will never forget, and a big reason Life Essentials runs all
+                through CrossHeartPray.
               </p>
               <p className="font-semibold text-emerald-100">
                 Open the Bible first. When a verse connects to a Life Essentials principle, continue

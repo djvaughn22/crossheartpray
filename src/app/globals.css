@@ -1906,3 +1906,44 @@ a[href]:hover {
   color: var(--om-ink);
 }
 /* OPEN MIRROR FAMILY STYLE OVERRIDE END */
+
+/* Reading-plan "read" checkbox — a real square check, not a pill. Wins over the
+   generic .chp-reading-progress-shell button !important rules via specificity. */
+.chp-reading-progress-shell button.chp-read-check {
+  display: grid !important;
+  place-items: center !important;
+  height: 1.3rem !important;
+  width: 1.3rem !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+  border-radius: 0.4rem !important;
+  font-size: 0.85rem !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+.chp-reading-progress-shell button.chp-read-check[aria-pressed="true"] {
+  background-color: #34d399 !important;
+  border-color: #34d399 !important;
+  color: #04120b !important;
+}
+.chp-reading-progress-shell button.chp-read-check[aria-pressed="false"] {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: #3a4a6a !important;
+  color: transparent !important;
+}
+.chp-reading-progress-shell button.chp-read-check:hover {
+  filter: brightness(1.12) !important;
+}
+
+/* Reading-plan Gene Getz video icon — a bare 🎬 pinned to the right of the cell
+   (rendered as a <span role="button"> so the pill button styling never applies). */
+.chp-reading-progress-shell .chp-getz-icon {
+  margin-left: auto;
+  padding-left: 0.35rem;
+  font-size: 0.95rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
