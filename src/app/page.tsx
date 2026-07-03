@@ -12,15 +12,6 @@ export const metadata = {
 
 const dailyWays = [
   {
-    href: "/bible-reading-plan",
-    icon: "📖",
-    eyebrow: "Structured",
-    title: "52-week Bible Reading Plan",
-    body:
-      "A 52-week Bible table with seven lanes across each week, chapter links, checkboxes, and simple progress.",
-    cta: "Open Bible Reading",
-  },
-  {
     href: "/daily-hope",
     icon: "🌅",
     eyebrow: "Daily",
@@ -28,6 +19,15 @@ const dailyWays = [
     body:
       "A fixed daily prayer and Scripture routine with the same hope verses organized by day of the week.",
     cta: "Open Daily Hope",
+  },
+  {
+    href: "/bible-reading-plan",
+    icon: "📖",
+    eyebrow: "Structured",
+    title: "52-week Bible Reading Plan",
+    body:
+      "A 52-week Bible table with seven lanes across each week, chapter links, checkboxes, and simple progress.",
+    cta: "Open Bible Reading",
   },
   {
     href: "/gene-getz",
