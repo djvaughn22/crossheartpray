@@ -38,6 +38,15 @@ const dailyWays = [
       "Deal seven Bible cards, open the verse or chapter, and connect the card to the reading plan.",
     cta: "Deal 7 Cards",
   },
+  {
+    href: "/gene-getz",
+    icon: "🎬",
+    eyebrow: "Deeper study",
+    title: "Life Essentials",
+    body:
+      "Open the Bible first, then continue with Dr. Gene Getz — 1,500 Life Essentials principles with official video teaching, matched to the verse.",
+    cta: "Explore Gene Getz",
+  },
 ];
 
 const deepDiveLinks = [
@@ -71,12 +80,12 @@ export default function WelcomePage() {
         <CrossHeartPrayHero>
 </CrossHeartPrayHero>
 
-        <section className="mt-10 grid gap-6 lg:grid-cols-3">
+        <section className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {dailyWays.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group flex h-full min-h-[22rem] flex-col rounded-[2rem] border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-7 text-left shadow-2xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-emerald-200/40 hover:bg-slate-900"
+              className="group flex h-full min-h-[20rem] flex-col rounded-[2rem] border border-white/10 bg-[#141d2e] p-7 text-left shadow-2xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-emerald-200/40 hover:bg-[#1a2742]"
             >
               <div className="flex items-center justify-between gap-4">
                 {item.icon === "king-of-hearts" ? (

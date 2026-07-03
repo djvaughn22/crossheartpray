@@ -15,6 +15,11 @@ const BIBLE_READING_PLAN_EXPORT_ASSET = CHP_OFFICIAL_BIBLE_READING_PLAN_PDF;
 
 import { useEffect, useMemo, useState } from "react";
 import type { BibleReadingPlanWeek } from "../lib/bibleReadingPlan";
+import {
+  getGeneGetzPrinciplesForChapter,
+  type LifeEssentialsPrinciple,
+} from "../lib/geneGetzLifeEssentials";
+import YouTubeModal from "./YouTubeModal";
 
 type BibleReadingPlanProgressProps = {
   weeks: BibleReadingPlanWeek[];
@@ -398,6 +403,16 @@ function bibleUrl(reading: unknown): string {
   return "https://www.bible.com/search/bible?q=" + encodeURIComponent(label || "Bible reading plan");
 }
 
+// Recover {code, chapter} from the parsed bible.com URL (zero-risk reuse of
+// bibleUrl's book/chapter parsing), then return the Life Essentials principles
+// that overlap that chapter — powers the 1-click Gene Getz video icon per cell.
+function geneGetzForReading(reading: unknown): LifeEssentialsPrinciple[] {
+  const url = bibleUrl(reading);
+  const m = url.match(/\/bible\/206\/([A-Z0-9]+)\.(\d+)\.WEBUS/);
+  if (!m) return [];
+  return getGeneGetzPrinciplesForChapter(m[1], m[2]);
+}
+
 function flattenPlan(weeks: BibleReadingPlanWeek[]) {
   return weeks.flatMap((week, weekIndex) => {
     const weekNo = weekNumber(week, weekIndex + 1);
@@ -467,6 +482,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
   const [highlightedReadingId, setHighlightedReadingId] = useState("");
+  const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
 
   useEffect(() => {
     setProgress(loadProgress());
@@ -947,6 +963,7 @@ async function shareOriginalReadingPlanPdf() {
                     const id = idForReading(reading, weekNo, laneIndex);
                     const href = bibleUrl(reading);
                     const isRead = Boolean(progress[id]);
+                    const getz = geneGetzForReading(reading).find((p) => p.youtubeId);
 
                     return (
                       <td
@@ -978,6 +995,18 @@ async function shareOriginalReadingPlanPdf() {
                           >
                             {label}
                           </a>
+
+                          {getz ? (
+                            <button
+                              type="button"
+                              onClick={() => setActiveVideo(getz)}
+                              title={`Watch Dr. Gene Getz — ${getz.principleTitle}`}
+                              aria-label={`Watch Gene Getz Life Essentials video for ${label}`}
+                              className="shrink-0 text-sm leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
+                            >
+                              🎬
+                            </button>
+                          ) : null}
                         </div>
                       </td>
                     );
@@ -988,6 +1017,14 @@ async function shareOriginalReadingPlanPdf() {
           </tbody>
         </table>
       </div>
+
+      {activeVideo?.youtubeId ? (
+        <YouTubeModal
+          videoId={activeVideo.youtubeId}
+          title={`Principle ${activeVideo.principleNumber} · ${activeVideo.principleTitle}`}
+          onClose={() => setActiveVideo(null)}
+        />
+      ) : null}
     </section>
   );
 }

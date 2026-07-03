@@ -1685,6 +1685,21 @@ export function getGeneGetzPrinciplesForVerse(
   return (BY_CODE[code] ?? []).filter((p) => rangeContains(p, c, v));
 }
 
+// Every principle that overlaps a given chapter (for whole-chapter readings like
+// the Bible Reading Plan). `book` may be a full name, abbreviation, or USFM code.
+export function getGeneGetzPrinciplesForChapter(
+  book: string,
+  chapter: string | number,
+): LifeEssentialsPrinciple[] {
+  const code = normalizeBookToCode(book);
+  if (!code) return [];
+  const c = toInt(chapter);
+  if (Number.isNaN(c)) return [];
+  return (BY_CODE[code] ?? []).filter(
+    (p) => c >= p.startChapter && c <= p.endChapter,
+  );
+}
+
 export function formatPrincipleRange(p: LifeEssentialsPrinciple): string {
   if (p.startChapter === p.endChapter) {
     return p.startVerse === p.endVerse
