@@ -1048,6 +1048,16 @@ export default function BibleExplorerPage() {
                       animationDelay: spinningCards[index] ? `${spinDelays[index]}ms` : "0ms",
                     }}
                   >
+                    {hasLifeEssentials ? (
+                      <span
+                        aria-hidden
+                        title="Has a Dr. Gene Getz Life Essentials video"
+                        className="pointer-events-none absolute right-1.5 top-1.5 text-sm leading-none opacity-90 drop-shadow"
+                      >
+                        🎬
+                      </span>
+                    ) : null}
+
                     <div className="flex justify-center gap-2 text-lg" aria-hidden="true">
                       <span>✝️</span>
                       <span>❤️</span>
@@ -1072,18 +1082,11 @@ export default function BibleExplorerPage() {
                       <p className="text-xs font-black leading-5 text-white">
                         {chpBingoVerseOnlyLabel(passage.label)}
                       </p>
-                      {readInPlan || hasLifeEssentials ? (
+                      {readInPlan ? (
                         <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                          {readInPlan ? (
-                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-emerald-50">
-                              Read
-                            </span>
-                          ) : null}
-                          {hasLifeEssentials ? (
-                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-amber-200/25 bg-amber-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-amber-50">
-                              Life Essentials
-                            </span>
-                          ) : null}
+                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-emerald-50">
+                            Read
+                          </span>
                         </div>
                       ) : null}
                       <p className="hidden sm:block bible-card-verse-preview mt-2 text-[0.72rem] font-semibold leading-5 text-slate-100/90">
