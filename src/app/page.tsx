@@ -81,19 +81,31 @@ export default function WelcomePage() {
 </CrossHeartPrayHero>
 
         <section className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {dailyWays.map((item) => (
+          {dailyWays.map((item, i) => {
+            // Cool, distinct accent per card — Open Mirror card style, no warm colors.
+            const accent = ["#38BDF8", "#4ADE80", "#A78BFA", "#22D3EE"][i % 4];
+            return (
             <Link
               key={item.href}
               href={item.href}
-              className="group flex h-full min-h-[20rem] flex-col rounded-[2rem] border border-white/10 bg-[#141d2e] p-7 text-left shadow-2xl shadow-slate-950/30 transition hover:-translate-y-1 hover:border-emerald-200/40 hover:bg-[#1a2742]"
+              style={{ borderColor: `${accent}33` }}
+              className="group relative flex h-full min-h-[20rem] flex-col overflow-hidden rounded-[2rem] border bg-[#141d2e] p-7 text-left shadow-2xl shadow-slate-950/30 transition hover:-translate-y-1 hover:bg-[#1a2742]"
             >
+              <span
+                aria-hidden
+                style={{ background: accent }}
+                className="absolute inset-x-0 top-0 h-1"
+              />
               <div className="flex items-center justify-between gap-4">
                 {item.icon === "king-of-hearts" ? (
                   <BibleBingoKingCard className="h-16 w-12" />
                 ) : (
                   <p className="text-5xl">{item.icon}</p>
                 )}
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.2em] text-emerald-100">
+                <span
+                  style={{ color: accent, borderColor: `${accent}55`, background: `${accent}1a` }}
+                  className="rounded-full border px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.2em]"
+                >
                   {item.eyebrow}
                 </span>
               </div>
@@ -107,12 +119,16 @@ export default function WelcomePage() {
               </p>
 
               <div className="mt-auto pt-7">
-                <span className="inline-flex min-w-[11.5rem] justify-center rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-xs font-black text-slate-100 transition hover:bg-white/[0.10] group-hover:border-emerald-200/30 group-hover:bg-emerald-300/10 group-hover:text-emerald-50">
+                <span
+                  style={{ color: accent, borderColor: `${accent}44` }}
+                  className="inline-flex min-w-[11.5rem] justify-center rounded-full border bg-white/[0.04] px-4 py-2 text-xs font-black transition group-hover:bg-white/[0.08]"
+                >
                   {item.cta} →
                 </span>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </section>
 
         <section className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-[2rem] border border-emerald-200/15 bg-slate-950/35 shadow-2xl shadow-emerald-950/15 sm:mt-14">
