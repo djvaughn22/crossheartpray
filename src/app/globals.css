@@ -554,6 +554,51 @@ html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-
   border-color: #26324c !important;
 }
 
+/* No warm accents, no transparent layers. Flatten every colored/translucent tint
+   panel to a solid cool surface, and recolor warm (yellow/amber/orange/red/rose/
+   lime/pink) text + borders to cool. Cool, flat, inviting — no yellow or red.
+   Dark mode only. */
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-emerald-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-green-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-teal-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-cyan-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-sky-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-blue-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-indigo-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-violet-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-purple-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-fuchsia-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-pink-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-rose-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-red-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-orange-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-amber-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-yellow-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-lime-"] {
+  background-color: #16213a !important;
+}
+
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-yellow-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-amber-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-orange-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-red-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-rose-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-lime-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-pink-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="text-fuchsia-"] {
+  color: #9dc1f0 !important;
+}
+
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-yellow-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-amber-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-orange-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-red-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-rose-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-lime-"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-pink-"] {
+  border-color: #2a3b57 !important;
+}
+
 .chp-lively-dark-page [class*="shadow-black"] {
   --tw-shadow-color: rgba(0, 0, 0, 0.4) !important;
 }
