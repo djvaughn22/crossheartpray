@@ -503,16 +503,15 @@ html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-b"
 /* END DEEP DIVE VISIBLE CONCORDANCE */
 
 /* CHP_LIVELY_DARK_THEME_START */
+/* Flat, cool, Open-Mirror-style surface. Solid background (no gradient), solid
+   panels (no glassmorphism). Layout, copy, flow, and features are untouched —
+   only the fills/borders change. */
 .chp-lively-dark-page {
-  background:
-    radial-gradient(circle at 18% 0%, rgba(16, 185, 129, 0.16), transparent 30rem),
-    radial-gradient(circle at 82% 6%, rgba(212, 175, 55, 0.12), transparent 28rem),
-    radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.10), transparent 34rem),
-    linear-gradient(135deg, #030712 0%, #07111f 38%, #0b1f1a 72%, #141006 100%) !important;
+  background: #0b1220 !important;
 }
 
 .chp-lively-dark-page::selection {
-  background: rgba(212, 175, 55, 0.35);
+  background: rgba(59, 130, 246, 0.35);
   color: #ffffff;
 }
 
@@ -528,26 +527,40 @@ html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-b"
   text-underline-offset: 0.18em;
 }
 
-.chp-lively-dark-page [class*="bg-white/\[0.03\]"],
-.chp-lively-dark-page [class*="bg-white/\[0.04\]"],
-.chp-lively-dark-page [class*="bg-white/\[0.05\]"] {
-  background-color: rgba(255, 255, 255, 0.055) !important;
+/* Convert translucent glass panels to solid cool fills. Dark mode only so the
+   separate light-theme palette is not disturbed. */
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/\[0.0"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/5"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/8"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/10"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/12"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/15"] {
+  background-color: #141d2e !important;
 }
 
-.chp-lively-dark-page [class*="border-white/10"] {
-  border-color: rgba(255, 255, 255, 0.13) !important;
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/20"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/25"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/30"] {
+  background-color: #1c2740 !important;
+}
+
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-black/1"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-black/2"],
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-black/3"] {
+  background-color: #0c1220 !important;
+}
+
+html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-white/"] {
+  border-color: #26324c !important;
 }
 
 .chp-lively-dark-page [class*="shadow-black"] {
-  --tw-shadow-color: rgba(0, 0, 0, 0.34) !important;
+  --tw-shadow-color: rgba(0, 0, 0, 0.4) !important;
 }
 
 @media (max-width: 640px) {
   .chp-lively-dark-page {
-    background:
-      radial-gradient(circle at 12% 0%, rgba(16, 185, 129, 0.14), transparent 22rem),
-      radial-gradient(circle at 92% 10%, rgba(212, 175, 55, 0.10), transparent 20rem),
-      linear-gradient(145deg, #030712 0%, #07111f 50%, #0b1f1a 100%) !important;
+    background: #0b1220 !important;
   }
 }
 /* CHP_LIVELY_DARK_THEME_END */

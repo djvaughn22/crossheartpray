@@ -1048,23 +1048,23 @@ export default function BibleExplorerPage() {
                     </p>
 
                     <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-left">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-xs font-black leading-5 text-white">
-                          {chpBingoVerseOnlyLabel(passage.label)}
-                        </p>
-                        <div className="flex shrink-0 flex-col items-end gap-1">
+                      <p className="text-xs font-black leading-5 text-white">
+                        {chpBingoVerseOnlyLabel(passage.label)}
+                      </p>
+                      {readInPlan || hasLifeEssentials ? (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1">
                           {readInPlan ? (
-                            <span className="rounded-full border border-emerald-200/25 bg-emerald-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.12em] text-emerald-50">
+                            <span className="inline-flex max-w-full items-center rounded-full border border-emerald-200/25 bg-emerald-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.1em] text-emerald-50">
                               Read
                             </span>
                           ) : null}
                           {hasLifeEssentials ? (
-                            <span className="rounded-full border border-amber-200/25 bg-amber-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.12em] text-amber-50">
+                            <span className="inline-flex max-w-full items-center truncate rounded-full border border-amber-200/25 bg-amber-300/12 px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.1em] text-amber-50">
                               Life Essentials
                             </span>
                           ) : null}
                         </div>
-                      </div>
+                      ) : null}
                       <p className="hidden sm:block bible-card-verse-preview mt-2 text-[0.72rem] font-semibold leading-5 text-slate-100/90">
                         {passage.text}
                       </p>
