@@ -1948,29 +1948,56 @@ a[href]:hover {
   flex-shrink: 0;
 }
 
-/* Fit all 7 lanes on screen: compact reading-plan table. Appended last so it
-   wins the cascade over the earlier duplicate .chp-reading-table td a blocks. */
-.chp-reading-progress-shell .chp-reading-table td a {
-  font-size: 0.66rem !important;
-}
-.chp-reading-progress-shell .chp-reading-table th,
-.chp-reading-progress-shell .chp-reading-table td {
-  padding-left: 4px !important;
-  padding-right: 4px !important;
-}
-.chp-reading-progress-shell .chp-reading-table thead th {
-  font-size: 0.56rem !important;
-  letter-spacing: 0.02em !important;
-}
-.chp-reading-progress-shell .chp-reading-table .chp-getz-icon {
-  font-size: 0.8rem !important;
-  padding-left: 0.2rem !important;
+/* Fit all 7 lanes on screen: compact reading-plan table. Desktop/tablet only —
+   on a phone this is uncrowdable, so mobile scrolls horizontally (block below).
+   Appended last so it wins the cascade over the earlier duplicate blocks. */
+@media (min-width: 768px) {
+  .chp-reading-progress-shell .chp-reading-table td a {
+    font-size: 0.66rem !important;
+  }
+  .chp-reading-progress-shell .chp-reading-table th,
+  .chp-reading-progress-shell .chp-reading-table td {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  .chp-reading-progress-shell .chp-reading-table thead th {
+    font-size: 0.56rem !important;
+    letter-spacing: 0.02em !important;
+  }
+  .chp-reading-progress-shell .chp-reading-table .chp-getz-icon {
+    font-size: 0.8rem !important;
+    padding-left: 0.2rem !important;
+  }
+
+  /* Make all 7 lanes fit the screen instead of forcing a horizontal scroll.
+     Fills the container; table-layout:fixed divides the 7 lanes evenly. */
+  .chp-reading-progress-shell .chp-reading-table table {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
 }
 
-/* Make all 7 lanes fit the screen instead of forcing a 1360px horizontal scroll.
-   Fills the container; table-layout:fixed divides the 7 lanes evenly. */
-.chp-reading-progress-shell .chp-reading-table table {
-  min-width: 0 !important;
-  width: 100% !important;
-  table-layout: fixed !important;
+/* Mobile (≤767px): don't crush 7 lanes into a 375px phone — scroll the table
+   horizontally at a readable size. Highest specificity + appended last so it
+   wins over the compact desktop rules and the older mobile blocks. */
+@media (max-width: 767px) {
+  .chp-reading-progress-shell .chp-reading-table table {
+    min-width: 1180px !important;
+    width: 1180px !important;
+    table-layout: fixed !important;
+  }
+  .chp-reading-progress-shell .chp-reading-table thead th {
+    font-size: 0.72rem !important;
+    letter-spacing: 0.02em !important;
+  }
+  .chp-reading-progress-shell .chp-reading-table td a,
+  .chp-reading-progress-shell .chp-reading-plan-cell a {
+    font-size: 0.82rem !important;
+  }
+  .chp-reading-progress-shell .chp-reading-table th,
+  .chp-reading-progress-shell .chp-reading-table td {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
 }
