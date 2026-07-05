@@ -143,12 +143,22 @@ export default function WelcomePage() {
               </h2>
 
               <p className="mt-4 max-w-xl text-sm font-semibold leading-7 text-slate-200 sm:text-base">
-                Start with one verse. Open the full chapter. Follow the connected reading plan.
-                When Deep Dive verifies a word, it shows the original source, pronunciation,
-                Strong&apos;s number, and meaning.
+                Start with one verse and open the full chapter. Then go deeper — first with{" "}
+                <strong className="text-white">Life Essentials by Dr. Gene Getz</strong>:
+                1,500 Bible principles with official video teaching, matched to the verse.
               </p>
 
+              <p className="mt-3 max-w-xl text-sm font-semibold leading-7 text-slate-300">
+                Next, open the meaning with the original word. When Deep Dive verifies a word it
+                shows the source language, pronunciation, Strong&apos;s number, and meaning.
+              </p>
 
+              <Link
+                href="/gene-getz"
+                className="mt-5 inline-flex rounded-full border border-emerald-200/30 bg-emerald-300/10 px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-50 transition hover:bg-emerald-300/18"
+              >
+                Explore Life Essentials · Gene Getz →
+              </Link>
             </div>
 
             <div className="flex flex-col justify-between p-6">
@@ -236,7 +246,7 @@ export default function WelcomePage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
               <div className="lg:w-[15rem] lg:shrink-0">
                 <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-emerald-100">
-                  Original word example
+                  Next · Original word example
                 </p>
                 <h3 className="mt-1 text-3xl font-black leading-none text-white">
                   Truth
