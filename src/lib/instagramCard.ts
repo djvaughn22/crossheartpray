@@ -117,12 +117,16 @@ export function renderInstagramCard(
   ctx.textAlign = "center";
   const cx = w / 2;
 
-  // ✝️ ❤️ 🙏
+  // ✝️ ❤️ 🙏 — draw each glyph at a fixed symmetric offset around center so the
+  // row stays centered regardless of how the engine measures emoji advance width.
   ctx.font = `72px ${sans}`;
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
   const topY = size === "portrait" ? 180 : 150;
-  ctx.fillText("✝️   ❤️   🙏", cx, topY);
+  const emojiGap = 104;
+  ctx.fillText("✝️", cx - emojiGap, topY);
+  ctx.fillText("❤️", cx, topY);
+  ctx.fillText("🙏", cx + emojiGap, topY);
 
   // Eyebrow.
   ctx.font = `900 30px ${sans}`;
