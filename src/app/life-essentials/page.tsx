@@ -12,7 +12,7 @@ import {
 } from "../../lib/geneGetzLifeEssentials";
 
 export const metadata = {
-  title: "Explore the Bible with Dr. Gene Getz | Cross Heart Pray",
+  title: "Life Essentials | Cross Heart Pray",
   description:
     "Continue from Scripture into Life Essentials principles and official video teaching from Dr. Gene Getz.",
   robots: { index: false, follow: false },
@@ -50,8 +50,11 @@ export default function GeneGetzPage() {
             External study helps
           </p>
           <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-6xl">
-            Explore the Bible with Dr. Gene Getz
+            Life Essentials
           </h1>
+          <p className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+            Principles &amp; video teaching by Dr. Gene Getz
+          </p>
           <p className="mt-5 max-w-3xl text-base font-semibold leading-8 text-slate-200 sm:text-lg sm:leading-9">
             Continue from Scripture into Life Essentials principles and official
             video teaching from Dr. Gene Getz.
@@ -86,9 +89,9 @@ export default function GeneGetzPage() {
             All {total.toLocaleString()} Life Essentials principles
           </h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-            Grouped by book. Tap a book to expand. Each principle opens the
-            official Dr. Gene Getz video. The full study lives on the official
-            site — open the{" "}
+            Grouped by book. Tap a book, then expand any principle to read it in
+            full and open the official Dr. Gene Getz video plus his web-app
+            links. The full study lives on the official site — open the{" "}
             <a
               href={PRINCIPLE_FINDER_BY_BOOK}
               target="_blank"
