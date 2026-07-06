@@ -7,6 +7,7 @@ import SiteHeader from "./SiteHeader";
 
 import { useEffect, useMemo, useState } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
+import InstagramCardButton from "./InstagramCardButton";
 import CentralTimeBadge from "./CentralTimeBadge";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
@@ -666,7 +667,18 @@ export default function DailyHopeRoutine({
                 key={prayer.title}
                 className={`relative overflow-visible rounded-[2rem] border p-6 shadow-2xl shadow-black/20 sm:p-8 ${prayerTone}`}
               >
-                <div className="absolute right-5 top-5">
+                <div className="absolute right-5 top-5 flex items-center gap-2">
+                  <InstagramCardButton
+                    content={{
+                      eyebrow: "Daily Hope",
+                      title: prayer.title,
+                      body: prayer.body,
+                      footer: "crossheartpray.com",
+                      fileBase: `daily-hope-${prayer.title}`,
+                    }}
+                    align="right"
+                    iconOnly
+                  />
                   <BibleBingoShareMenu
                     boardHref={`#${prayerId}`}
                     boardUrl={prayerUrl}
@@ -808,8 +820,20 @@ export default function DailyHopeRoutine({
                         key={item.id}
                         className={`relative overflow-visible rounded-[1.5rem] border p-5 text-center text-slate-100 shadow-lg shadow-black/15 sm:p-6 ${cardTone(globalCardIndex)}`}
                       >
-                        <div className="absolute right-4 top-4">
-
+                        <div className="absolute right-4 top-4 flex items-center gap-2">
+                          <InstagramCardButton
+                            content={{
+                              eyebrow: "Daily Hope",
+                              title: firstPassage?.label ?? item.label,
+                              body: firstPassage?.text ?? "",
+                              tagline:
+                                "Context matters. One verse is the doorway. Read the chapter.",
+                              footer: "crossheartpray.com",
+                              fileBase: `daily-hope-${firstPassage?.label ?? item.label}`,
+                            }}
+                            align="right"
+                            iconOnly
+                          />
                   <BibleBingoShareMenu
                             boardHref={`#${item.id}`}
                             boardUrl={cardUrl}

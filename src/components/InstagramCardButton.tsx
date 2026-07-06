@@ -10,6 +10,7 @@ type InstagramCardButtonProps = {
   content: InstagramCardContent;
   align?: "left" | "right" | "center";
   className?: string;
+  iconOnly?: boolean;
 };
 
 function menuPositionClass(align: InstagramCardButtonProps["align"]) {
@@ -22,6 +23,7 @@ export default function InstagramCardButton({
   content,
   align = "right",
   className = "",
+  iconOnly = false,
 }: InstagramCardButtonProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -43,9 +45,13 @@ export default function InstagramCardButton({
         aria-haspopup="menu"
         aria-expanded={open}
         title="Download an Instagram-ready image"
-        className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30"
+        className={
+          iconOnly
+            ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-white shadow-lg shadow-black/20 transition hover:bg-white/15"
+            : "inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30"
+        }
       >
-        Instagram
+        {iconOnly ? "📷" : "Instagram"}
       </button>
 
       {open ? (
