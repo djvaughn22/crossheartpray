@@ -3,8 +3,6 @@
 import { useState } from "react";
 import {
   formatPrincipleRange,
-  LIFE_ESSENTIALS_APP,
-  LIFE_ESSENTIALS_STUDY_BIBLE,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
 import YouTubeModal from "./YouTubeModal";
@@ -15,9 +13,18 @@ function principleKey(p: LifeEssentialsPrinciple) {
   return `${p.code}-${p.principleNumber}-${p.startChapter}-${p.startVerse}`;
 }
 
-// Full 1,500-principle index, grouped by book (collapsible). Each principle can
-// be expanded to read the full principle summary and open the official Dr. Gene
-// Getz video plus his Bible Principles web-app links.
+// Bible.com (YouVersion, WEBUS) link for the principle's passage range.
+function passageUrl(p: LifeEssentialsPrinciple) {
+  const base = `https://www.bible.com/bible/206/${p.code}.${p.startChapter}`;
+  if (p.startChapter === p.endChapter && p.endVerse > p.startVerse) {
+    return `${base}.${p.startVerse}-${p.endVerse}.WEBUS`;
+  }
+  return `${base}.${p.startVerse}.WEBUS`;
+}
+
+// Full 1,500-principle index, grouped by book (collapsible). Click a principle to
+// open/close it and read the full principle text with a link to the passage; the
+// Watch button plays the official Dr. Gene Getz video in-app.
 export default function GeneGetzFullIndex({
   groups,
   principleFinderUrl,
@@ -104,7 +111,7 @@ export default function GeneGetzFullIndex({
                         rel="noopener noreferrer"
                         className="inline-flex shrink-0 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
                       >
-                        Official page
+                        ▶ Watch
                       </a>
                     )}
                   </div>
@@ -124,53 +131,14 @@ export default function GeneGetzFullIndex({
                         </p>
                       ) : null}
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {p.youtubeId ? (
-                          <button
-                            type="button"
-                            onClick={() => setActive(p)}
-                            className="inline-flex items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
-                          >
-                            ▶ Watch in app
-                          </button>
-                        ) : null}
-
-                        <a
-                          href={p.officialVideoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
-                        >
-                          Official video page →
-                        </a>
-
-                        <a
-                          href={principleFinderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
-                        >
-                          Principle Finder →
-                        </a>
-
-                        <a
-                          href={LIFE_ESSENTIALS_STUDY_BIBLE}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
-                        >
-                          Study Bible →
-                        </a>
-
-                        <a
-                          href={LIFE_ESSENTIALS_APP}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
-                        >
-                          Life Essentials App →
-                        </a>
-                      </div>
+                      <a
+                        href={passageUrl(p)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
+                      >
+                        Read {p.book} {formatPrincipleRange(p)} →
+                      </a>
                     </div>
                   ) : null}
                 </li>

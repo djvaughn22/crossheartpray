@@ -89,9 +89,10 @@ export default function GeneGetzPage() {
             All {total.toLocaleString()} Life Essentials principles
           </h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-            Grouped by book. Tap a book, then expand any principle to read it in
-            full and open the official Dr. Gene Getz video plus his web-app
-            links. The full study lives on the official site — open the{" "}
+            Grouped by book. Tap a book, then tap any principle to read it in
+            full with a link to the passage, and press Watch for the official
+            Dr. Gene Getz video. The full study lives on the official site —
+            open the{" "}
             <a
               href={PRINCIPLE_FINDER_BY_BOOK}
               target="_blank"
