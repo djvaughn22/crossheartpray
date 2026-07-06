@@ -4,6 +4,7 @@ import SiteFooter from "../components/SiteFooter";
 import BibleBingoKingCard from "../components/BibleBingoKingCard";
 import CrossHeartPrayHero from "../components/CrossHeartPrayHero";
 import OpenMirrorBar from "../components/OpenMirrorBar";
+import LazyBibleVerseLookup from "../components/LazyBibleVerseLookup";
 
 export const metadata = {
   title: "✝️ ❤️ 🙏 Welcome | Cross Heart Pray",
@@ -336,6 +337,8 @@ export default function WelcomePage() {
             ))}
           </div>
         </section>
+
+        <LazyBibleVerseLookup className="mt-8" initialReference="Romans 15:7" />
 
         <section className="mx-auto mt-10 max-w-4xl text-center">
           <p className="text-sm font-semibold leading-7 text-slate-400">

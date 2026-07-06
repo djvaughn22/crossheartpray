@@ -9,6 +9,8 @@ import {
   getDefaultWordStudy,
   type VerifiedWordStudy,
 } from "../lib/originalLanguageWordStudy";
+import GeneGetzResourceCard from "./GeneGetzResourceCard";
+import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
 
 type SpinMode = "gospel-epistles" | "gospel" | "epistles" | "proverbs" | "all";
 
@@ -376,6 +378,18 @@ export default function BibleVerseLookup({
           onOpenDeepDive={() => openWordStudy()}
           onWordClick={(wordStudy) => openWordStudy(wordStudy)}
         />
+      )}
+
+      {passage && (
+        <div className="mx-auto mt-4 max-w-3xl text-left">
+          <GeneGetzResourceCard
+            principles={getGeneGetzPrinciplesForVerse(
+              passage.code,
+              passage.chapter,
+              passage.verse,
+            )}
+          />
+        </div>
       )}
 
       {error && (
