@@ -47,12 +47,26 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
+const CONTEXT_TAGLINE = "Context matters. One verse is the doorway. Read the chapter.";
+
 function shareTextFor(passage: BibleBingoCardPassage) {
-  return `${passage.label}\n\n${passage.text}\n\n${verseUrl(passage)}`;
+  return [
+    passage.label,
+    passage.text,
+    "",
+    CONTEXT_TAGLINE,
+    "",
+    "Open in the Holy Bible app:",
+    verseUrl(passage),
+    "",
+    "Read the chapter:",
+    chapterUrl(passage),
+  ].join("\n");
 }
 
 function cardHtmlEmailFor(passage: BibleBingoCardPassage) {
   const cardUrl = verseUrl(passage);
+  const chapUrl = chapterUrl(passage);
 
   return `
     <div style="font-family: Arial, Helvetica, sans-serif; background:#f1f5f9; color:#0f172a; padding:28px 12px;">
@@ -60,10 +74,16 @@ function cardHtmlEmailFor(passage: BibleBingoCardPassage) {
         <p style="font-size:32px; text-align:center; margin:0 0 12px;">✝️ ❤️ 🙏</p>
         <p style="text-align:center; font-size:11px; line-height:1.4; letter-spacing:0.18em; text-transform:uppercase; color:#047857; font-weight:900; margin:0 0 10px;">Bible Bingo Card</p>
         <h1 style="font-family: Georgia, 'Times New Roman', serif; text-align:center; margin:0 0 16px; font-size:30px; line-height:1.15; color:#0f172a;">${escapeHtml(passage.label)}</h1>
-        <p style="font-family: Georgia, 'Times New Roman', serif; color:#334155; line-height:1.7; font-size:18px; margin:0 0 22px;">${escapeHtml(passage.text)}</p>
-        <p style="text-align:center; margin:22px 0;">
+        <p style="font-family: Georgia, 'Times New Roman', serif; color:#334155; line-height:1.7; font-size:18px; margin:0 0 18px;">${escapeHtml(passage.text)}</p>
+        <p style="text-align:center; font-style:italic; color:#475569; font-size:14px; line-height:1.5; margin:0 0 22px;">${escapeHtml(CONTEXT_TAGLINE)}</p>
+        <p style="text-align:center; margin:22px 0 10px;">
           <a href="${cardUrl}" style="display:inline-block; background:#047857; color:#ffffff; padding:13px 22px; border-radius:999px; text-decoration:none; font-weight:800; font-size:15px;">
             Open Verse
+          </a>
+        </p>
+        <p style="text-align:center; margin:0 0 22px;">
+          <a href="${chapUrl}" style="color:#047857; text-decoration:underline; font-weight:800; font-size:14px;">
+            Read the chapter
           </a>
         </p>
         <p style="text-align:center; color:#64748b; font-size:13px;">Cross Heart Pray · Bible Bingo 7</p>
