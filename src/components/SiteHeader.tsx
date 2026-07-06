@@ -10,13 +10,10 @@ type SiteHeaderProps = {
 
 const menuLinks = [
   { href: "/", label: "Home" },
-  { href: "/explorebible", label: "Bible Bingo 7" },
-  { href: "/bible-reading-plan", label: "Bible Reading Plan" },
   { href: "/daily-hope", label: "Daily Hope" },
-  { href: "/cross", label: "Cross" },
-  { href: "/heart", label: "Heart" },
-  { href: "/pray", label: "Pray" },
-  { href: "/gene-getz", label: "Gene Getz" },
+  { href: "/explorebible", label: "Bible Bingo 7" },
+  { href: "/bible-reading-plan", label: "52-Week Bible Reading Plan" },
+  { href: "/gene-getz", label: "Life Essentials" },
   { href: "/about", label: "About" },
   { href: "https://openmirrorllc.com", label: "← Open Mirror LLC" },
 ];
