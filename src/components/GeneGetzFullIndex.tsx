@@ -48,7 +48,7 @@ export default function GeneGetzFullIndex({
   }
 
   return (
-    <div className="mt-6 space-y-3">
+    <div className="mt-6 space-y-3 text-left">
       {groups.map((group) => (
         <details
           key={group.book}
@@ -131,14 +131,35 @@ export default function GeneGetzFullIndex({
                         </p>
                       ) : null}
 
-                      <a
-                        href={passageUrl(p)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
-                      >
-                        Read {p.book} {formatPrincipleRange(p)} →
-                      </a>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <a
+                          href={passageUrl(p)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
+                        >
+                          Read {p.book} {formatPrincipleRange(p)} →
+                        </a>
+
+                        {p.youtubeId ? (
+                          <button
+                            type="button"
+                            onClick={() => setActive(p)}
+                            className="inline-flex items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
+                          >
+                            ▶ Watch here
+                          </button>
+                        ) : null}
+
+                        <a
+                          href={principleFinderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
+                        >
+                          Open in Bible Principles app →
+                        </a>
+                      </div>
                     </div>
                   ) : null}
                 </li>

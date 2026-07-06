@@ -42,10 +42,10 @@ export default function GeneGetzPage() {
 
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mx-auto max-w-4xl px-6 py-8">
         <SiteHeader />
 
-        <section className="max-w-4xl text-left">
+        <section className="text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-amber-200">
             External study helps
           </p>
@@ -55,11 +55,11 @@ export default function GeneGetzPage() {
           <p className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
             Principles &amp; video teaching by Dr. Gene Getz
           </p>
-          <p className="mt-5 max-w-3xl text-base font-semibold leading-8 text-slate-200 sm:text-lg sm:leading-9">
+          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-8 text-slate-200 sm:text-lg sm:leading-9">
             Continue from Scripture into Life Essentials principles and official
             video teaching from Dr. Gene Getz.
           </p>
-          <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-7 text-slate-300">
             Open the Bible first. When a verse connects to a Life Essentials
             principle, continue with Dr. Gene Getz. All {total.toLocaleString()}{" "}
             principles are indexed here and link to official video teaching —
@@ -68,7 +68,7 @@ export default function GeneGetzPage() {
         </section>
 
         {/* Official CTAs */}
-        <section className="mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2">
+        <section className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {ctas.map((cta) => (
             <a
               key={cta.href}
@@ -84,11 +84,11 @@ export default function GeneGetzPage() {
         </section>
 
         {/* Full index, grouped by book */}
-        <section className="mt-12 max-w-4xl border-t border-white/10 pt-8">
+        <section className="mt-12 border-t border-white/10 pt-8 text-center">
           <h2 className="text-2xl font-black text-white">
             All {total.toLocaleString()} Life Essentials principles
           </h2>
-          <p className="mt-2 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+          <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-7 text-slate-300">
             Grouped by book. Tap a book, then tap any principle to read it in
             full with a link to the passage, and press Watch for the official
             Dr. Gene Getz video. The full study lives on the official site —
@@ -110,8 +110,8 @@ export default function GeneGetzPage() {
           />
         </section>
 
-        <section className="mt-12 max-w-4xl border-t border-white/10 pt-8">
-          <p className="text-sm font-semibold leading-7 text-slate-300">
+        <section className="mt-12 border-t border-white/10 pt-8">
+          <p className="mx-auto max-w-2xl text-center text-sm font-semibold leading-7 text-slate-300">
             Gene Getz / Bible Principles resources are linked as external study
             helps. CrossHeartPray opens Scripture first and points to official
             resources when available. Principle index and video links © B&amp;H
