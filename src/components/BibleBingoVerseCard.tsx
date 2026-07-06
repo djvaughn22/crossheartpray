@@ -1,6 +1,9 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
+import CardInfoLegend from "./CardInfoLegend";
+import CardMore from "./CardMore";
+import CardReadMenu from "./CardReadMenu";
 import VerifiedVerseText from "./VerifiedVerseText";
 import {
   hasVerifiedWordStudies,
@@ -28,6 +31,11 @@ type BibleBingoVerseCardProps = {
   onSpinVerse: () => Promise<void> | void;
   onOpenDeepDive: () => void;
   onWordClick: (wordStudy: VerifiedWordStudy) => void;
+  readingPlanHref?: string;
+  /** Label for the expander button, e.g. "More Life Essentials". */
+  moreLabel?: string;
+  /** Extra content (Life Essentials, lane books…) revealed inside More. */
+  children?: ReactNode;
 };
 
 function verseUrl(passage: BibleBingoCardPassage) {
@@ -103,6 +111,9 @@ export default function BibleBingoVerseCard({
   onSpinVerse,
   onOpenDeepDive,
   onWordClick,
+  readingPlanHref,
+  moreLabel,
+  children,
 }: BibleBingoVerseCardProps) {
   const [isCardSpinning, setIsCardSpinning] = useState(false);
 
@@ -145,6 +156,8 @@ export default function BibleBingoVerseCard({
           isCardSpinning ? "bible-bingo-bottom-card-spin" : ""
         }`}
       >
+        <CardInfoLegend className="absolute right-4 top-4" />
+
         <div className="flex justify-center gap-4 text-2xl" aria-hidden="true">
           <span>✝️</span>
           <span>❤️</span>
@@ -167,18 +180,6 @@ export default function BibleBingoVerseCard({
           />
         </div>
 
-        {note && (
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-300">
-            {note}
-          </p>
-        )}
-
-        {spinOdds ? (
-          <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-slate-300">
-            Shuffled from: <span className="text-white">{spinOdds}</span>
-          </p>
-        ) : null}
-
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
@@ -189,23 +190,11 @@ export default function BibleBingoVerseCard({
             {spinningNow ? "Shuffling..." : spinLabel}
           </button>
 
-          <a
-            href={shareLinks.verse}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30"
-          >
-            Verse
-          </a>
-
-          <a
-            href={shareLinks.chapter}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30"
-          >
-            Chapter
-          </a>
+          <CardReadMenu
+            verseHref={shareLinks.verse}
+            chapterHref={shareLinks.chapter}
+            readingPlanHref={readingPlanHref}
+          />
 
           <button
             type="button"
@@ -243,9 +232,24 @@ export default function BibleBingoVerseCard({
             }}
           />
         </div>
-        <p className="mt-3 text-center text-xs text-white/40">
-          Bible.com may follow your Bible App or device theme settings.
-        </p>
+
+        {children || note || spinOdds ? (
+          <CardMore label={moreLabel} className="mt-5">
+            {note ? (
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-300">
+                {note}
+              </p>
+            ) : null}
+
+            {spinOdds ? (
+              <p className="mt-2 text-xs font-black uppercase tracking-[0.18em] text-slate-300">
+                Shuffled from: <span className="text-white">{spinOdds}</span>
+              </p>
+            ) : null}
+
+            {children}
+          </CardMore>
+        ) : null}
       </article>
     </>
   );

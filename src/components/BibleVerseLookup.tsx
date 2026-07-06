@@ -11,6 +11,7 @@ import {
 } from "../lib/originalLanguageWordStudy";
 import GeneGetzResourceCard from "./GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
+import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
 
 type SpinMode = "gospel-epistles" | "gospel" | "epistles" | "proverbs" | "all";
 
@@ -76,27 +77,6 @@ function defaultSpinOdds(spinMode: SpinMode) {
 
   return "Gospel + Epistles";
 }
-
-function defaultDescription(spinMode: SpinMode) {
-  if (spinMode === "proverbs") {
-    return "Open a Proverbs card, shuffle another proverb, and share what stands out.";
-  }
-
-  if (spinMode === "gospel") {
-    return "Open with Romans 15:7, search any verse, or shuffle a Gospel verse from Matthew, Mark, Luke, or John.";
-  }
-
-  if (spinMode === "epistles") {
-    return "Open with Romans 15:7, search any verse, or shuffle an Epistles verse.";
-  }
-
-  if (spinMode === "all") {
-    return "Open with Romans 15:7, search any verse, or shuffle anywhere in the Holy Bible.";
-  }
-
-  return "Open with Romans 15:7, search any verse, or shuffle a Gospel or Epistles verse.";
-}
-
 
 function formatReferenceList(references: string[]) {
   if (references.length === 0) return "";
@@ -322,9 +302,11 @@ export default function BibleVerseLookup({
         {title}
       </h2>
 
-      <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-zinc-300 sm:text-base">
-        {description ?? defaultDescription(spinMode)}
-      </p>
+      {description ? (
+        <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-zinc-300 sm:text-base">
+          {description}
+        </p>
+      ) : null}
 
       {showSearch && (
         <>
@@ -365,32 +347,36 @@ export default function BibleVerseLookup({
         </article>
       )}
 
-      {passage && (
-        <BibleBingoVerseCard
-          passage={passage}
-          wordStudies={wordStudies}
-          isLoadingWordStudies={isLoadingWordStudies}
-          isSpinning={isSpinning}
-          spinLabel={spinLabel ?? defaultSpinLabel(spinMode)}
-          spinOdds={defaultSpinOdds(spinMode)}
-          note={note}
-          onSpinVerse={spinVerse}
-          onOpenDeepDive={() => openWordStudy()}
-          onWordClick={(wordStudy) => openWordStudy(wordStudy)}
-        />
-      )}
+      {passage &&
+        (() => {
+          const principles = getGeneGetzPrinciplesForVerse(
+            passage.code,
+            passage.chapter,
+            passage.verse,
+          );
 
-      {passage && (
-        <div className="mx-auto mt-4 max-w-3xl text-left">
-          <GeneGetzResourceCard
-            principles={getGeneGetzPrinciplesForVerse(
-              passage.code,
-              passage.chapter,
-              passage.verse,
-            )}
-          />
-        </div>
-      )}
+          return (
+            <BibleBingoVerseCard
+              passage={passage}
+              wordStudies={wordStudies}
+              isLoadingWordStudies={isLoadingWordStudies}
+              isSpinning={isSpinning}
+              spinLabel={spinLabel ?? defaultSpinLabel(spinMode)}
+              spinOdds={defaultSpinOdds(spinMode)}
+              note={note}
+              onSpinVerse={spinVerse}
+              onOpenDeepDive={() => openWordStudy()}
+              onWordClick={(wordStudy) => openWordStudy(wordStudy)}
+              readingPlanHref={bibleReadingPlanHrefForReference(
+                passage.code,
+                passage.chapter,
+              )}
+              moreLabel={principles.length ? "More Life Essentials" : undefined}
+            >
+              <GeneGetzResourceCard principles={principles} />
+            </BibleBingoVerseCard>
+          );
+        })()}
 
       {error && (
         <p className="mx-auto mt-5 max-w-xl rounded-2xl border border-red-200/20 bg-red-300/10 px-5 py-3 text-sm font-semibold text-red-100">

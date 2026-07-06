@@ -20,6 +20,8 @@ import {
   bibleReadingPlanHrefForReference,
   bibleReadingPlanLabelForReference,
 } from "../../lib/bibleReadingPlan";
+import CardInfoLegend from "../../components/CardInfoLegend";
+import CardReadMenu from "../../components/CardReadMenu";
 import LazyBibleVerseLookup from "../../components/LazyBibleVerseLookup";
 import OriginalWordStudyModal from "../../components/OriginalWordStudyModal";
 import VerifiedVerseText from "../../components/VerifiedVerseText";
@@ -673,6 +675,7 @@ export default function BibleExplorerPage() {
   const [spinningCards, setSpinningCards] = useState(() => sections.map(() => false));
   const [spinDelays, setSpinDelays] = useState(() => sections.map(() => 0));
   const [focusedCardIndex, setFocusedCardIndex] = useState(() => centralDayIndex());
+  const [focusedMoreSection, setFocusedMoreSection] = useState<"life" | "books" | null>(null);
   const [bingoReadingPlanDone, setBingoReadingPlanDone] = useState<Record<string, boolean>>({});
   const [focusedFlipVersion, setFocusedFlipVersion] = useState(0);
   const focusedCardRef = useRef<HTMLElement | null>(null);
@@ -877,6 +880,7 @@ export default function BibleExplorerPage() {
   function focusDayCard(index: number) {
     setFocusedFlipVersion((version) => version + 1);
     setFocusedCardIndex(index);
+    setFocusedMoreSection(null);
   }
 
   async function openWordStudy(
@@ -948,6 +952,13 @@ export default function BibleExplorerPage() {
   const focusedReadInPlan = focusedCard
     ? isBingoReadingPlanDone(bingoReadingPlanDone, focusedCard.passage.code, focusedCard.passage.chapter)
     : false;
+  const focusedPrinciples = focusedCard
+    ? getGeneGetzPrinciplesForVerse(
+        focusedCard.passage.code,
+        focusedCard.passage.chapter,
+        focusedCard.passage.verse,
+      )
+    : [];
   const focusedBookLinks = focusedCard
     ? bibleBingoBookLinksForSection(focusedCard.section.title)
     : [];
@@ -1121,7 +1132,8 @@ export default function BibleExplorerPage() {
                 animationDelay: spinningCards[focusedIndex] ? `${spinDelays[focusedIndex]}ms` : "0ms",
               }}
             >
-              <div className="mb-4 flex w-full justify-center sm:justify-end">
+              <div className="mb-4 flex w-full items-center justify-center gap-2 sm:justify-end">
+                <CardInfoLegend />
                 <BibleBingoShareMenu
                   boardHref={`${boardPath}?card=${focusedIndex + 1}`}
                   boardUrl={`${boardUrl}?card=${focusedIndex + 1}`}
@@ -1168,11 +1180,7 @@ export default function BibleExplorerPage() {
               <div className="hidden sm:mt-5 sm:block sm:text-5xl">{focusedCard.section.emoji}</div>
 
               <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-slate-300">
-                Bible Bingo Card {focusedIndex + 1}
-              </p>
-
-              <p className="mt-4 text-sm font-black uppercase tracking-[0.24em] text-emerald-100">
-                {focusedTitle?.dayLabel}
+                Card {focusedIndex + 1} · <span className="text-emerald-100">{focusedTitle?.dayLabel}</span>
               </p>
 
               {focusedReadInPlan ? (
@@ -1185,21 +1193,7 @@ export default function BibleExplorerPage() {
                 {focusedTitle?.title ?? focusedCard.section.title}
               </h2>
 
-              <p className="hidden sm:block mx-auto mt-4 max-w-xl text-base font-semibold leading-7 text-slate-300">
-                {focusedCard.section.line}
-              </p>
-
-              
-
-              {chpBingoCountOnlyLabel(focusedCard.passage.label) ? (
-                <div className="mt-6 flex justify-start">
-                  <span className="rounded-full border border-white/15 bg-black/25 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-slate-100">
-                    {chpBingoCountOnlyLabel(focusedCard.passage.label)}
-                  </span>
-                </div>
-              ) : null}
-
-              <p className="mt-3 text-2xl font-black text-white">
+              <p className="mt-4 text-2xl font-black text-white">
                 {chpBingoVerseOnlyLabel(focusedCard.passage.label)}
               </p>
 
@@ -1212,30 +1206,19 @@ export default function BibleExplorerPage() {
               </div>
 
               <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row sm:flex-wrap sm:justify-center">
-                <a
-                  href={verseUrl(focusedCard.passage)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-center justify-center items-center inline-flex rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/30"
+                <button
+                  type="button"
+                  onClick={() => spinOne(focusedIndex)}
+                  className="text-center justify-center items-center inline-flex rounded-full border border-yellow-200/30 bg-yellow-200/15 px-5 py-2 text-sm font-black text-yellow-50 shadow-sm transition hover:bg-yellow-200/25"
                 >
-                  Open Verse
-                </a>
+                  Deal This Card
+                </button>
 
-                <a
-                  href={chapterUrl(focusedCard.passage)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-center justify-center items-center inline-flex rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/30"
-                >
-                  Read Chapter
-                </a>
-
-                <a
-                  href={bibleReadingPlanHrefForReference(focusedCard.passage.code, focusedCard.passage.chapter)}
-                  className="text-center justify-center items-center inline-flex min-h-[44px] rounded-full border border-sky-200/25 bg-sky-300/10 px-5 py-2 text-sm font-semibold text-sky-100 shadow-sm transition hover:bg-sky-300/15 touch-manipulation"
-                >
-                  Open Reading Plan
-                </a>
+                <CardReadMenu
+                  verseHref={verseUrl(focusedCard.passage)}
+                  chapterHref={chapterUrl(focusedCard.passage)}
+                  readingPlanHref={bibleReadingPlanHrefForReference(focusedCard.passage.code, focusedCard.passage.chapter)}
+                />
 
                 <button
                   type="button"
@@ -1251,35 +1234,61 @@ export default function BibleExplorerPage() {
                     ? "Deep Dive…"
                     : "Deep Dive"}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => spinOne(focusedIndex)}
-                  className="text-center justify-center items-center inline-flex rounded-full border border-yellow-200/30 bg-yellow-200/15 px-5 py-2 text-sm font-black text-yellow-50 shadow-sm transition hover:bg-yellow-200/25"
-                >
-                  Deal This Card
-                </button>
               </div>
 
-              <p className="mt-5 text-xs font-black uppercase tracking-[0.16em] text-slate-300">
-                Odds: <span className="text-white">{oddsText(focusedCard.section)}</span>
-              </p>
-              <p className="bible-bingo-focused-lane-position-footnote mt-3 text-xs font-semibold leading-5 text-slate-400">
-                {bibleBingoLaneVerseLabel(focusedCard)}
-              </p>
+              <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row sm:flex-wrap">
+                {focusedPrinciples.length ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFocusedMoreSection((section) => (section === "life" ? null : "life"))
+                    }
+                    aria-expanded={focusedMoreSection === "life"}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-black text-slate-200 shadow-sm transition hover:bg-white/10"
+                  >
+                    More Life Essentials
+                    <span
+                      aria-hidden
+                      className={`text-xs transition-transform duration-200 ${focusedMoreSection === "life" ? "rotate-180" : ""}`}
+                    >
+                      ▾
+                    </span>
+                  </button>
+                ) : null}
 
-              <GeneGetzResourceCard
-                principles={getGeneGetzPrinciplesForVerse(
-                  focusedCard.passage.code,
-                  focusedCard.passage.chapter,
-                  focusedCard.passage.verse,
-                )}
-              />
+                {focusedBookLinks.length ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFocusedMoreSection((section) => (section === "books" ? null : "books"))
+                    }
+                    aria-expanded={focusedMoreSection === "books"}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-black text-slate-200 shadow-sm transition hover:bg-white/10"
+                  >
+                    Books in this Lane
+                    <span
+                      aria-hidden
+                      className={`text-xs transition-transform duration-200 ${focusedMoreSection === "books" ? "rotate-180" : ""}`}
+                    >
+                      ▾
+                    </span>
+                  </button>
+                ) : null}
+              </div>
 
-              {focusedBookLinks.length ? (
-                <div className="bible-bingo-focused-lane-books mt-6 rounded-[1.35rem] border border-white/10 bg-black/15 px-4 py-4 text-center sm:mt-7 sm:rounded-[2rem] sm:px-5 sm:py-5">
+              {focusedMoreSection === "life" ? (
+                <div className="w-full text-left">
+                  <GeneGetzResourceCard principles={focusedPrinciples} />
+                </div>
+              ) : null}
+
+              {focusedMoreSection === "books" ? (
+                <div className="bible-bingo-focused-lane-books mt-5 w-full rounded-[1.35rem] border border-white/10 bg-black/15 px-4 py-4 text-center sm:rounded-[2rem] sm:px-5 sm:py-5">
                   <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-100">
                     Books in this lane
+                  </p>
+                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-300">
+                    {focusedCard.section.line}
                   </p>
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
                     {focusedBookLinks.map((book) => (
@@ -1294,6 +1303,9 @@ export default function BibleExplorerPage() {
                       </a>
                     ))}
                   </div>
+                  <p className="bible-bingo-focused-lane-position-footnote mt-3 text-xs font-semibold leading-5 text-slate-400">
+                    {bibleBingoLaneVerseLabel(focusedCard)}
+                  </p>
                 </div>
               ) : null}
 

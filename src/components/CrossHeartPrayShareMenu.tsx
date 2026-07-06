@@ -714,7 +714,7 @@ export default function CrossHeartPrayShareMenu({
           {instagramContent ? (
             <div className="mt-1 border-t border-white/10 pt-1">
               <p className="px-3 pb-1 pt-2 text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
-                Save as image
+                Social share image
               </p>
 
               <button
@@ -727,9 +727,9 @@ export default function CrossHeartPrayShareMenu({
                 }}
                 className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
               >
-                Instagram square
+                Square image
                 <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-                  1080 × 1080 PNG for feed posts.
+                  1080 × 1080 PNG — feed posts on any social app.
                 </span>
               </button>
 
@@ -743,9 +743,9 @@ export default function CrossHeartPrayShareMenu({
                 }}
                 className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
               >
-                Instagram portrait
+                Portrait image
                 <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-                  1080 × 1350 PNG, story-safe.
+                  1080 × 1350 PNG — stories and reels safe.
                 </span>
               </button>
             </div>

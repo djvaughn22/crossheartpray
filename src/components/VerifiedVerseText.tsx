@@ -96,7 +96,7 @@ export default function VerifiedVerseText({
                 })
               }
               title="Open Behind the Verse"
-              className="inline cursor-help rounded-sm bg-transparent p-0 font-[inherit] text-inherit underline decoration-emerald-200/35 decoration-dotted decoration-1 underline-offset-[3px] transition hover:bg-emerald-300/10 hover:text-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/60"
+              className="inline p-0 font-[inherit] text-inherit underline decoration-emerald-200/25 decoration-dotted decoration-1 underline-offset-[3px] transition hover:text-emerald-100 hover:decoration-emerald-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/60"
             >
               {phraseMatch.text}
             </button>
@@ -122,7 +122,7 @@ export default function VerifiedVerseText({
             type="button"
             onClick={() => onWordClick({ ...wordStudy, englishWord: part })}
             title="Open Behind the Verse"
-            className="inline cursor-help rounded-sm bg-transparent p-0 font-[inherit] text-inherit underline decoration-emerald-200/35 decoration-dotted decoration-1 underline-offset-[3px] transition hover:bg-emerald-300/10 hover:text-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/60"
+            className="inline p-0 font-[inherit] text-inherit underline decoration-emerald-200/25 decoration-dotted decoration-1 underline-offset-[3px] transition hover:text-emerald-100 hover:decoration-emerald-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/60"
           >
             {part}
           </button>

@@ -22,11 +22,7 @@ export default function GeneGetzResourceCard({
   return (
     <div className="mt-6 w-full rounded-[1.5rem] border border-amber-200/25 bg-amber-300/[0.06] px-5 py-5 text-left">
       <p className="text-[10px] font-black uppercase tracking-[0.24em] text-amber-200">
-        Life Essentials connection
-      </p>
-      <p className="mt-2 text-sm font-semibold leading-6 text-slate-200">
-        This verse appears inside a Dr. Gene Getz Life Essentials principle
-        range. Open the Bible first, then continue into the principle.
+        Life Essentials connection · Dr. Gene Getz
       </p>
 
       {principles.map((principle) => (
