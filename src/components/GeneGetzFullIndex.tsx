@@ -141,23 +141,13 @@ export default function GeneGetzFullIndex({
                           Read {p.book} {formatPrincipleRange(p)} →
                         </a>
 
-                        {p.youtubeId ? (
-                          <button
-                            type="button"
-                            onClick={() => setActive(p)}
-                            className="inline-flex items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
-                          >
-                            ▶ Watch here
-                          </button>
-                        ) : null}
-
                         <a
-                          href={principleFinderUrl}
+                          href={p.officialVideoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
                         >
-                          Open in Bible Principles app →
+                          Open this principle in Bible Principles →
                         </a>
                       </div>
                     </div>

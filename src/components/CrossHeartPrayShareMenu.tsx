@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   downloadInstagramCard,
   type InstagramCardContent,
@@ -538,7 +539,29 @@ export default function CrossHeartPrayShareMenu({
 }: CrossHeartPrayShareMenuProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState("");
+  const [coords, setCoords] = useState<{
+    top: number;
+    left?: number;
+    right?: number;
+    center?: number;
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  function toggleOpen() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const top = rect.bottom + 8;
+      if (align === "left") setCoords({ top, left: rect.left });
+      else if (align === "center") setCoords({ top, center: rect.left + rect.width / 2 });
+      else setCoords({ top, right: window.innerWidth - rect.right });
+    }
+    setOpen(true);
+  }
 
   const canonicalUrl = useMemo(() => {
     if (boardUrl) return boardUrl;
@@ -558,25 +581,28 @@ export default function CrossHeartPrayShareMenu({
   const fullText = useMemo(() => plainText(parsed, emailSubject), [parsed, emailSubject]);
   const fileName = `${safeFileName(emailSubject)}.html`;
 
+  // The menu is portaled to <body>, so it escapes card transforms/stacking and
+  // is always the top layer. The backdrop handles outside-click; here we just
+  // close on Escape and when the page scrolls/resizes (fixed coords would drift).
   useEffect(() => {
-    function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
+    if (!open) return;
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
+    function onScrollOrResize() {
+      setOpen(false);
+    }
 
-    document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
     return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
     };
-  }, []);
+  }, [open]);
 
   function flash(message: string) {
     setCopied(message);
@@ -586,13 +612,11 @@ export default function CrossHeartPrayShareMenu({
   const visibleButtonLabel = buttonLabel || `Share ${titleNameFor(itemLabel)}`;
 
   return (
-    <div
-      ref={rootRef}
-      className={`relative inline-flex ${open ? "z-[100]" : ""} ${className}`}
-    >
+    <div ref={rootRef} className={`relative inline-flex ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleOpen}
         className={
           iconOnly
             ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-white shadow-lg shadow-black/20 transition hover:bg-white/15"
@@ -605,19 +629,27 @@ export default function CrossHeartPrayShareMenu({
         {iconOnly ? "↗" : visibleButtonLabel}
       </button>
 
-      {open ? (
-        <>
-          {/* Full-screen click-catcher: tap anywhere off the menu to close. */}
-          <button
-            type="button"
-            aria-label="Close share menu"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-0 cursor-default"
-          />
-          <div
-            role="menu"
-            className={`absolute ${menuPositionClass(align)} top-11 z-10 w-72 max-w-[calc(100vw-1.5rem)] max-h-[75vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60`}
-          >
+      {open && coords && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              {/* Full-screen click-catcher: tap anywhere off the menu to close. */}
+              <button
+                type="button"
+                aria-label="Close share menu"
+                onClick={() => setOpen(false)}
+                className="fixed inset-0 z-[9998] cursor-default"
+              />
+              <div
+                role="menu"
+                style={{
+                  position: "fixed",
+                  top: coords.top,
+                  left: coords.left ?? coords.center,
+                  right: coords.right,
+                  transform: coords.center != null ? "translateX(-50%)" : undefined,
+                }}
+                className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] max-h-[75vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
+              >
           <div className="border-b border-white/10 px-3 py-2">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
               Share
@@ -718,9 +750,11 @@ export default function CrossHeartPrayShareMenu({
               </button>
             </div>
           ) : null}
-          </div>
-        </>
-      ) : null}
+              </div>
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
