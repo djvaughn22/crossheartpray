@@ -1302,7 +1302,7 @@ export default function BibleExplorerPage() {
           />
         )}
 
-        <LazyBibleVerseLookup className="mt-8" initialReference="Mark 16:15" />
+        <LazyBibleVerseLookup className="mt-8" initialReference="Romans 15:7" />
 
         <section className="mt-16 border-t border-white/10 px-4 pt-14 pb-8 text-center">
           <h2 className="text-xl font-bold text-white">How it works</h2>
