@@ -586,7 +586,10 @@ export default function CrossHeartPrayShareMenu({
   const visibleButtonLabel = buttonLabel || `Share ${titleNameFor(itemLabel)}`;
 
   return (
-    <div ref={rootRef} className={`relative inline-flex ${className}`}>
+    <div
+      ref={rootRef}
+      className={`relative inline-flex ${open ? "z-[100]" : ""} ${className}`}
+    >
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -603,10 +606,18 @@ export default function CrossHeartPrayShareMenu({
       </button>
 
       {open ? (
-        <div
-          role="menu"
-          className={`absolute ${menuPositionClass(align)} top-11 z-50 w-72 max-w-[calc(100vw-1.5rem)] max-h-[75vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950/95 p-2 text-left shadow-2xl shadow-black/45 backdrop-blur`}
-        >
+        <>
+          {/* Full-screen click-catcher: tap anywhere off the menu to close. */}
+          <button
+            type="button"
+            aria-label="Close share menu"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-0 cursor-default"
+          />
+          <div
+            role="menu"
+            className={`absolute ${menuPositionClass(align)} top-11 z-10 w-72 max-w-[calc(100vw-1.5rem)] max-h-[75vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60`}
+          >
           <div className="border-b border-white/10 px-3 py-2">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
               Share
@@ -707,7 +718,8 @@ export default function CrossHeartPrayShareMenu({
               </button>
             </div>
           ) : null}
-        </div>
+          </div>
+        </>
       ) : null}
     </div>
   );
