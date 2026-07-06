@@ -1015,7 +1015,7 @@ export default function BibleExplorerPage() {
               Choose a day card
             </p>
 
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+            <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-7">
               {displayIndexes.map((cardIndex) => {
                 const item = path[cardIndex];
 

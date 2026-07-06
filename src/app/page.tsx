@@ -132,6 +132,8 @@ export default function WelcomePage() {
           })}
         </section>
 
+        <LazyBibleVerseLookup className="mt-12" initialReference="Romans 15:7" />
+
         <section className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-[2rem] border border-emerald-200/15 bg-slate-950/35 shadow-2xl shadow-emerald-950/15 sm:mt-14">
           <div className="grid gap-0 lg:grid-cols-[1fr_1.15fr]">
             <div className="border-b border-white/10 bg-emerald-300/[0.08] p-6 lg:border-b-0 lg:border-r lg:border-white/10">
@@ -337,8 +339,6 @@ export default function WelcomePage() {
             ))}
           </div>
         </section>
-
-        <LazyBibleVerseLookup className="mt-8" initialReference="Romans 15:7" />
 
         <section className="mx-auto mt-10 max-w-4xl text-center">
           <p className="text-sm font-semibold leading-7 text-slate-400">
