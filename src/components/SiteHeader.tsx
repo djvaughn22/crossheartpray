@@ -13,7 +13,7 @@ const menuLinks = [
   { href: "/daily-hope", label: "Daily Hope" },
   { href: "/explorebible", label: "Bible Bingo 7" },
   { href: "/bible-reading-plan", label: "52-Week Bible Reading Plan" },
-  { href: "/gene-getz", label: "Life Essentials" },
+  { href: "/life-essentials", label: "Life Essentials" },
   { href: "/about", label: "About" },
   { href: "https://openmirrorllc.com", label: "← Open Mirror LLC" },
 ];

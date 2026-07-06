@@ -223,7 +223,7 @@ export default function AboutPage() {
             </div>
 
             <Link
-              href="/gene-getz"
+              href="/life-essentials"
               className="mt-6 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-bold text-white transition hover:bg-white/10"
             >
               Explore the Bible with Dr. Gene Getz →

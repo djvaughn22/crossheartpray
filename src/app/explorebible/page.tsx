@@ -24,7 +24,6 @@ import LazyBibleVerseLookup from "../../components/LazyBibleVerseLookup";
 import OriginalWordStudyModal from "../../components/OriginalWordStudyModal";
 import VerifiedVerseText from "../../components/VerifiedVerseText";
 import BibleBingoShareMenu from "../../components/BibleBingoShareMenu";
-import InstagramCardButton from "../../components/InstagramCardButton";
 import CentralTimeBadge from "../../components/CentralTimeBadge";
 import PageNucleusHero from "../../components/PageNucleusHero";
 import {
@@ -1148,6 +1147,15 @@ export default function BibleExplorerPage() {
                   buttonLabel="Share"
                   enableSignature
                   iconOnly
+                  instagramContent={{
+                    eyebrow: "Bible Bingo 7",
+                    title: focusedCard.passage.label,
+                    body: focusedCard.passage.text,
+                    tagline:
+                      "Context matters. One verse is the doorway. Read the chapter.",
+                    footer: "crossheartpray.com",
+                    fileBase: `bible-bingo-${focusedCard.passage.label}`,
+                  }}
                 />
               </div>
 
@@ -1228,19 +1236,6 @@ export default function BibleExplorerPage() {
                 >
                   Open Reading Plan
                 </a>
-
-                <InstagramCardButton
-                  content={{
-                    eyebrow: "Bible Bingo 7",
-                    title: focusedCard.passage.label,
-                    body: focusedCard.passage.text,
-                    tagline:
-                      "Context matters. One verse is the doorway. Read the chapter.",
-                    footer: "crossheartpray.com",
-                    fileBase: `bible-bingo-${focusedCard.passage.label}`,
-                  }}
-                  align="center"
-                />
 
                 <button
                   type="button"

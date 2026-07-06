@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local surgery backups (do not commit)
+.microsurgery-backups/
+.surgery-backups/
+*.backup
+*.before-*

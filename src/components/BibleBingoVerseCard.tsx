@@ -1,7 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
-import InstagramCardButton from "./InstagramCardButton";
 import VerifiedVerseText from "./VerifiedVerseText";
 import {
   hasVerifiedWordStudies,
@@ -223,18 +222,6 @@ export default function BibleBingoVerseCard({
             Deep Dive
           </button>
 
-          <InstagramCardButton
-            content={{
-              eyebrow: "Bible Bingo 7",
-              title: passage.label,
-              body: passage.text,
-              tagline: CONTEXT_TAGLINE,
-              footer: "crossheartpray.com",
-              fileBase: `bible-bingo-${passage.label}`,
-            }}
-            align="right"
-          />
-
           <BibleBingoShareMenu
             boardHref={shareLinks.verse}
             boardUrl={shareLinks.verse}
@@ -246,6 +233,14 @@ export default function BibleBingoVerseCard({
             buttonLabel="Share"
             enableSignature
             showOpenOption={false}
+            instagramContent={{
+              eyebrow: "Bible Bingo 7",
+              title: passage.label,
+              body: passage.text,
+              tagline: CONTEXT_TAGLINE,
+              footer: "crossheartpray.com",
+              fileBase: `bible-bingo-${passage.label}`,
+            }}
           />
         </div>
         <p className="mt-3 text-center text-xs text-white/40">

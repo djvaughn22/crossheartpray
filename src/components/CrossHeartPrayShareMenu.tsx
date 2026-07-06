@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  downloadInstagramCard,
+  type InstagramCardContent,
+} from "../lib/instagramCard";
 
 export type ShareItemLabel = "board" | "card" | "dailyHope" | string;
 
@@ -15,6 +19,7 @@ export type CrossHeartPrayShareMenuProps = {
   buttonLabel?: string;
   iconOnly?: boolean;
   className?: string;
+  instagramContent?: InstagramCardContent;
   [key: string]: unknown;
 };
 
@@ -529,6 +534,7 @@ export default function CrossHeartPrayShareMenu({
   buttonLabel,
   iconOnly = false,
   className = "",
+  instagramContent,
 }: CrossHeartPrayShareMenuProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState("");
@@ -560,8 +566,16 @@ export default function CrossHeartPrayShareMenu({
       }
     }
 
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   function flash(message: string) {
@@ -591,7 +605,7 @@ export default function CrossHeartPrayShareMenu({
       {open ? (
         <div
           role="menu"
-          className={`absolute ${menuPositionClass(align)} top-11 z-50 w-64 overflow-hidden rounded-2xl border border-white/15 bg-slate-950/95 p-2 text-left shadow-2xl shadow-black/45 backdrop-blur`}
+          className={`absolute ${menuPositionClass(align)} top-11 z-50 w-72 max-w-[calc(100vw-1.5rem)] max-h-[75vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950/95 p-2 text-left shadow-2xl shadow-black/45 backdrop-blur`}
         >
           <div className="border-b border-white/10 px-3 py-2">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
@@ -653,6 +667,46 @@ export default function CrossHeartPrayShareMenu({
               Link only.
             </span>
           </button>
+
+          {instagramContent ? (
+            <div className="mt-1 border-t border-white/10 pt-1">
+              <p className="px-3 pb-1 pt-2 text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
+                Save as image
+              </p>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  downloadInstagramCard(instagramContent, "square");
+                  flash("Saved square image (1080 × 1080).");
+                  setOpen(false);
+                }}
+                className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
+              >
+                Instagram square
+                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
+                  1080 × 1080 PNG for feed posts.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  downloadInstagramCard(instagramContent, "portrait");
+                  flash("Saved portrait image (1080 × 1350).");
+                  setOpen(false);
+                }}
+                className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
+              >
+                Instagram portrait
+                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
+                  1080 × 1350 PNG, story-safe.
+                </span>
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

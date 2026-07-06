@@ -31,13 +31,13 @@ const dailyWays = [
     cta: "Open Bible Reading",
   },
   {
-    href: "/gene-getz",
+    href: "/life-essentials",
     icon: "🎬",
     eyebrow: "Deeper study",
     title: "Life Essentials",
     body:
       "Open the Bible first, then continue with Dr. Gene Getz — 1,500 Life Essentials principles with official video teaching, matched to the verse.",
-    cta: "Explore Gene Getz",
+    cta: "Explore Life Essentials",
   },
   {
     href: "/explorebible?passage=Matthew%205",
@@ -157,7 +157,7 @@ export default function WelcomePage() {
               </p>
 
               <Link
-                href="/gene-getz"
+                href="/life-essentials"
                 className="mt-5 inline-flex rounded-full border border-emerald-200/30 bg-emerald-300/10 px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-50 transition hover:bg-emerald-300/18"
               >
                 Explore Life Essentials · Gene Getz →
