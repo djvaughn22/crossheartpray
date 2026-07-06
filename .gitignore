@@ -45,3 +45,6 @@ next-env.d.ts
 .surgery-backups/
 *.backup
 *.before-*
+
+# local Claude Code preview config
+.claude/
