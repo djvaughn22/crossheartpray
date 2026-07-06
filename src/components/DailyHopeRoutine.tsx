@@ -7,7 +7,11 @@ import SiteHeader from "./SiteHeader";
 
 import { useEffect, useMemo, useState } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
+import CardInfoLegend from "./CardInfoLegend";
+import CardMore from "./CardMore";
+import CardReadMenu from "./CardReadMenu";
 import CentralTimeBadge from "./CentralTimeBadge";
+import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
 import PageNucleusHero from "./PageNucleusHero";
@@ -807,7 +811,6 @@ export default function DailyHopeRoutine({
                     const cardUrl = `${pageUrl}#${item.id}`;
                     const globalCardIndex = dayIndex * 3 + itemIndex;
                     const literalWords = literalWordsForItem(item);
-                    const openIcon = DAILY_HOPE_OPEN_ICONS[globalCardIndex % DAILY_HOPE_OPEN_ICONS.length];
 
                     return (
                       <article
@@ -815,7 +818,8 @@ export default function DailyHopeRoutine({
                         key={item.id}
                         className={`relative overflow-visible rounded-[1.5rem] border p-5 text-center text-slate-100 shadow-lg shadow-black/15 sm:p-6 ${cardTone(globalCardIndex)}`}
                       >
-                        <div className="absolute right-4 top-4">
+                        <div className="absolute right-4 top-4 flex items-center gap-2">
+                          <CardInfoLegend />
                   <BibleBingoShareMenu
                             boardHref={`#${item.id}`}
                             boardUrl={cardUrl}
@@ -837,13 +841,13 @@ export default function DailyHopeRoutine({
                           />
                         </div>
 
-                        <div className="flex justify-center" aria-hidden="true">
-                          <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-3xl shadow-lg shadow-black/15">
-                            {openIcon}
-                          </span>
+                        <div className="flex justify-center gap-3 text-xl" aria-hidden="true">
+                          <span>✝️</span>
+                          <span>❤️</span>
+                          <span>🙏</span>
                         </div>
 
-                        <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
+                        <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-emerald-100">
                           Daily Hope Card
                         </p>
 
@@ -857,16 +861,6 @@ export default function DailyHopeRoutine({
                             </span>
                           ))}
                         </div>
-
-                        <div className="mt-4 flex justify-center gap-3 text-xl" aria-hidden="true">
-                          <span>✝️</span>
-                          <span>❤️</span>
-                          <span>🙏</span>
-                        </div>
-
-                        <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-emerald-100">
-                          Daily Hope Card
-                        </p>
 
                         <h3 className="mt-3 pr-10 text-xl font-extrabold text-slate-50 sm:text-2xl">
                           {item.label}
@@ -894,25 +888,14 @@ export default function DailyHopeRoutine({
 
                         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
                           {firstPassage ? (
-                            <>
-                              <a
-                                href={verseUrl(firstPassage)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-5 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-white/15"
-                              >
-                                Verse
-                              </a>
-
-                              <a
-                                href={chapterUrl(firstPassage)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-5 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-white/15"
-                              >
-                                Chapter
-                              </a>
-                            </>
+                            <CardReadMenu
+                              verseHref={verseUrl(firstPassage)}
+                              chapterHref={chapterUrl(firstPassage)}
+                              readingPlanHref={bibleReadingPlanHrefForReference(
+                                firstPassage.code,
+                                firstPassage.chapter,
+                              )}
+                            />
                           ) : null}
 
                           <button
@@ -929,15 +912,21 @@ export default function DailyHopeRoutine({
                           </button>
                         </div>
 
-                        {firstPassage ? (
-                          <GeneGetzResourceCard
-                            principles={getGeneGetzPrinciplesForVerse(
-                              firstPassage.code,
-                              firstPassage.chapter,
-                              firstPassage.verse,
-                            )}
-                          />
-                        ) : null}
+                        {firstPassage
+                          ? (() => {
+                              const principles = getGeneGetzPrinciplesForVerse(
+                                firstPassage.code,
+                                firstPassage.chapter,
+                                firstPassage.verse,
+                              );
+
+                              return principles.length ? (
+                                <CardMore label="More Life Essentials" className="mt-5">
+                                  <GeneGetzResourceCard principles={principles} />
+                                </CardMore>
+                              ) : null;
+                            })()
+                          : null}
                       </article>
                     );
                   })}

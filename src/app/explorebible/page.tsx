@@ -534,20 +534,6 @@ function splitBibleBingoSectionTitle(title: string) {
   };
 }
 
-function shortBibleBingoSectionLine(title: string) {
-  const cleanTitle = splitBibleBingoSectionTitle(title).title.toLowerCase();
-
-  if (cleanTitle.includes("law")) return "Law and covenant.";
-  if (cleanTitle.includes("history")) return "God’s people.";
-  if (cleanTitle.includes("psalms")) return "Prayer and praise.";
-  if (cleanTitle.includes("poetry")) return "Wisdom and wonder.";
-  if (cleanTitle.includes("prophecy")) return "Warning and hope.";
-  if (cleanTitle.includes("gospels")) return "Jesus and good news.";
-  if (cleanTitle.includes("epistles")) return "Letters for faith.";
-
-  return "Open Scripture.";
-}
-
 const BINGO_READING_PLAN_STORAGE_KEY = "crossheartpray:bible-reading-plan:v1";
 
 function loadBingoReadingPlanDone(): Record<string, boolean> {
@@ -607,14 +593,6 @@ function chpBingoVerseOnlyLabel(label: string) {
   return label.replace(/\s+[·•-]\s+\d[\d,]*\s+of\s+\d[\d,]*\s*$/i, "").trim();
 }
 
-function chpBingoCountOnlyLabel(label: string) {
-  const match = label.match(/\d[\d,]*\s+of\s+\d[\d,]*\s*$/i);
-  return match ? match[0].trim() : "";
-}
-
-function oddsText(_section: Section) {
-  return "";
-}
 
 function buildDailyPath() {
   const seed = centralDateSeed();
@@ -991,7 +969,6 @@ export default function BibleExplorerPage() {
         <PageNucleusHero
           title="Bible Bingo 7"
           subhead="Deal 7 cards. See where they land. Read and fill the 52-week board."
-          body="Read and fill the 52-week board."
         >
 <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
@@ -1038,7 +1015,6 @@ export default function BibleExplorerPage() {
                 const index = cardIndex;
                 const isFocused = index === focusedIndex;
                 const cardTitle = splitBibleBingoSectionTitle(section.title);
-                const cardSummary = shortBibleBingoSectionLine(section.title);
                 const readInPlan = isBingoReadingPlanDone(bingoReadingPlanDone, passage.code, passage.chapter);
                 const hasLifeEssentials =
                   getGeneGetzPrinciplesForVerse(passage.code, passage.chapter, passage.verse).length > 0;
@@ -1085,10 +1061,6 @@ export default function BibleExplorerPage() {
                       {cardTitle.title}
                     </h2>
 
-                    <p className="mt-3 min-h-[2.25rem] text-[0.72rem] font-semibold leading-5 text-slate-300">
-                      {cardSummary}
-                    </p>
-
                     <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-left">
                       <p className="text-xs font-black leading-5 text-white">
                         {chpBingoVerseOnlyLabel(passage.label)}
@@ -1105,13 +1077,6 @@ export default function BibleExplorerPage() {
                       </p>
                     </div>
 
-                    {chpBingoCountOnlyLabel(passage.label) ? (
-                      <div className="mt-auto flex justify-start pt-3">
-                        <span className="rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-slate-100">
-                          {chpBingoCountOnlyLabel(passage.label)}
-                        </span>
-                      </div>
-                    ) : null}
                   </button>
                 );
               })}
