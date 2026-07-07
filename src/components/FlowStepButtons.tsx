@@ -7,6 +7,7 @@ const steps = [
   { href: "/bible-reading-plan", label: "Bible Reading" },
   { href: "/daily-hope", label: "Daily Hope" },
   { href: "/explorebible", label: "Bible Bingo 7" },
+  { href: "/life-essentials", label: "Life Essentials" },
   { href: "/about", label: "About" },
 ];
 
@@ -22,7 +23,8 @@ export default function FlowStepButtons() {
   if (index < 0 || currentPath === "/") return null;
 
   const previous = index > 0 ? steps[index - 1] : null;
-  const next = index < steps.length - 1 ? steps[index + 1] : null;
+  // Last step wraps around so every page has a "next".
+  const next = index < steps.length - 1 ? steps[index + 1] : steps[0];
 
   if (!previous && !next) return null;
 

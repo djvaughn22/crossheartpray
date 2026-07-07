@@ -2021,3 +2021,19 @@ a[href]:hover {
     padding-right: 6px !important;
   }
 }
+
+/* Family Open Mirror bar follows the CHP light theme */
+html[data-chp-visual-theme="light"] .om-bar {
+  background: #ffffff !important;
+  border-bottom-color: #dbe2ea !important;
+}
+html[data-chp-visual-theme="light"] .om-bar a {
+  color: #0f172a !important;
+}
+html[data-chp-visual-theme="light"] .om-bar .om-bar-label {
+  color: #475569 !important;
+}
+html[data-chp-visual-theme="light"] .om-bar button {
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}

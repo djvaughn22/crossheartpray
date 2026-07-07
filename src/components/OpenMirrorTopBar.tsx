@@ -8,7 +8,7 @@ import VisualThemeIconButton from "./VisualThemeIconButton";
 export default function OpenMirrorTopBar() {
   return (
     <header
-      className="print:hidden"
+      className="om-bar print:hidden"
       style={{ position: "sticky", top: 0, zIndex: 50, borderBottom: "1px solid #26324c", background: "#0b1220" }}
     >
       <div style={{ maxWidth: 1152, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px" }}>
@@ -16,7 +16,7 @@ export default function OpenMirrorTopBar() {
           <span>Open Mirror LLC</span>
         </a>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.2em", color: "#94a3b8" }}>
+          <span className="om-bar-label" style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.2em", color: "#94a3b8" }}>
             CrossHeartPray.com
           </span>
           <VisualThemeIconButton />

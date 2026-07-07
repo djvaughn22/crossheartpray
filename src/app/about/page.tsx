@@ -41,19 +41,10 @@ export default function AboutPage() {
             </h1>
 
             <p className="mx-auto mt-5 max-w-lg text-lg font-semibold leading-8 text-slate-200">
-              CrossHeartPray brings the Bible everywhere.
-            </p>
-            <p className="mx-auto mt-3 max-w-lg text-sm font-semibold leading-7 text-slate-300">
-              Start with the Bible Reading Plan, return to Daily Hope, deal Bible Bingo 7, open the
-              chapter, use Deep Dive when source-backed original-language data is available, and
-              track progress as you go.
-            </p>
-            <p className="mx-auto mt-3 max-w-lg text-sm font-semibold leading-7 text-slate-300">
-              Everything connects through 31,103 Holy Bible verses: reading lanes, chapters, daily
-              prayer, source notes, and progress.
+              CrossHeartPray brings the Bible everywhere. 31,103 Holy Bible verses, all connected.
             </p>
             <p className="mt-5 text-sm font-black uppercase tracking-[0.08em] text-emerald-100">
-              Bible Reading Plan → Daily Hope → Bible Bingo 7 → Deep Dive → Track progress
+              Bible Reading Plan → Daily Hope → Bible Bingo 7 → Life Essentials → Deep Dive → Track progress
             </p>
           </section>
 
@@ -136,6 +127,50 @@ export default function AboutPage() {
             </section>
 
             <section className={cardClass}>
+              <h2 className="text-2xl font-black text-white">Life Essentials · Dr. Gene Getz</h2>
+
+              <div className="mt-4 space-y-4 text-base leading-8 text-slate-300">
+                <p>
+                  <a
+                    href="https://en.wikipedia.org/wiki/Gene_Getz"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
+                  >
+                    Dr. Gene Getz
+                  </a>
+                  &apos;s <span className="font-semibold text-white">Life Essentials</span> has shaped a
+                  big part of this project. It is his life&apos;s work — more than{" "}
+                  <span className="font-semibold text-white">1,500 Bible principles</span> drawn straight
+                  from Scripture, paired with hundreds of hours of video teaching.
+                </p>
+                <p>
+                  I was blessed to meet Dr. Getz in person and to hold his own{" "}
+                  <span className="font-semibold text-white">personally signed Life Essentials Study Bible</span>.
+                  We sat together with his men&apos;s ski group — which included Apollo 16 moonwalker{" "}
+                  <a
+                    href="https://en.wikipedia.org/wiki/Charlie_Duke"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
+                  >
+                    astronaut Charlie Duke
+                  </a>
+                  . It is a moment I will never forget, and a big reason Life Essentials runs all
+                  through CrossHeartPray.
+                </p>
+                <p className="font-semibold text-emerald-100">
+                  Open the Bible first. When a verse connects to a Life Essentials principle, continue
+                  with Dr. Gene Getz.
+                </p>
+              </div>
+
+              <Link href="/life-essentials" className={buttonClass}>
+                Explore the Bible with Dr. Gene Getz →
+              </Link>
+            </section>
+
+            <section className={cardClass}>
               <h2 className="text-2xl font-black text-white">Deep Dive</h2>
 
               <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
@@ -190,50 +225,6 @@ export default function AboutPage() {
                   <span className="font-semibold text-emerald-100">Pray all the time.</span>
                 </li>
               </ul>
-            </section>
-
-            <section className={cardClass}>
-              <h2 className="text-2xl font-black text-white">Dr. Gene Getz &amp; Life Essentials</h2>
-
-              <div className="mt-4 space-y-4 text-base leading-8 text-slate-300">
-                <p>
-                  <a
-                    href="https://en.wikipedia.org/wiki/Gene_Getz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
-                  >
-                    Dr. Gene Getz
-                  </a>
-                  &apos;s <span className="font-semibold text-white">Life Essentials</span> has shaped a
-                  big part of this project. It is his life&apos;s work — more than{" "}
-                  <span className="font-semibold text-white">1,500 Bible principles</span> drawn straight
-                  from Scripture, paired with hundreds of hours of video teaching.
-                </p>
-                <p>
-                  I was blessed to meet Dr. Getz in person and to hold his own{" "}
-                  <span className="font-semibold text-white">personally signed Life Essentials Study Bible</span>.
-                  We sat together with his men&apos;s ski group — which included Apollo 16 moonwalker{" "}
-                  <a
-                    href="https://en.wikipedia.org/wiki/Charlie_Duke"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
-                  >
-                    astronaut Charlie Duke
-                  </a>
-                  . It is a moment I will never forget, and a big reason Life Essentials runs all
-                  through CrossHeartPray.
-                </p>
-                <p className="font-semibold text-emerald-100">
-                  Open the Bible first. When a verse connects to a Life Essentials principle, continue
-                  with Dr. Gene Getz.
-                </p>
-              </div>
-
-              <Link href="/life-essentials" className={buttonClass}>
-                Explore the Bible with Dr. Gene Getz →
-              </Link>
             </section>
 
             <section className={cardClass}>
