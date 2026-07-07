@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import OpenMirrorTopBar from "../components/OpenMirrorTopBar";
 import VisualThemeProvider from "../components/VisualThemeProvider";
 
 const geistSans = Geist({
@@ -29,7 +30,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <VisualThemeProvider>{children}</VisualThemeProvider>
+        <VisualThemeProvider>
+          <OpenMirrorTopBar />
+          {children}
+        </VisualThemeProvider>
       </body>
     </html>
   );
