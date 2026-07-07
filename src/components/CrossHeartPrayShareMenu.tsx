@@ -544,9 +544,11 @@ export default function CrossHeartPrayShareMenu({
     left?: number;
     right?: number;
     center?: number;
+    maxHeight: number;
   } | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   function toggleOpen() {
     if (open) {
@@ -555,10 +557,19 @@ export default function CrossHeartPrayShareMenu({
     }
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      const top = rect.bottom + 8;
-      if (align === "left") setCoords({ top, left: rect.left });
-      else if (align === "center") setCoords({ top, center: rect.left + rect.width / 2 });
-      else setCoords({ top, right: window.innerWidth - rect.right });
+      // Keep the whole menu inside the viewport: if there isn't enough room
+      // below the trigger (e.g. cards at the bottom of Daily Hope), shift it
+      // up; always cap its height to the space actually available.
+      const vh = window.innerHeight;
+      const menuCap = Math.min(Math.round(vh * 0.75), 640);
+      let top = rect.bottom + 8;
+      if (top + Math.min(menuCap, 360) > vh - 12) {
+        top = Math.max(12, vh - menuCap - 12);
+      }
+      const maxHeight = Math.max(220, Math.min(menuCap, vh - top - 12));
+      if (align === "left") setCoords({ top, left: rect.left, maxHeight });
+      else if (align === "center") setCoords({ top, center: rect.left + rect.width / 2, maxHeight });
+      else setCoords({ top, right: window.innerWidth - rect.right, maxHeight });
     }
     setOpen(true);
   }
@@ -590,7 +601,16 @@ export default function CrossHeartPrayShareMenu({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
-    function onScrollOrResize() {
+    function onScrollOrResize(event?: Event) {
+      // Scrolling INSIDE the menu must not close it — only page scroll does.
+      if (
+        event &&
+        panelRef.current &&
+        event.target instanceof Node &&
+        panelRef.current.contains(event.target)
+      ) {
+        return;
+      }
       setOpen(false);
     }
 
@@ -641,14 +661,16 @@ export default function CrossHeartPrayShareMenu({
               />
               <div
                 role="menu"
+                ref={panelRef}
                 style={{
                   position: "fixed",
                   top: coords.top,
                   left: coords.left ?? coords.center,
                   right: coords.right,
+                  maxHeight: coords.maxHeight,
                   transform: coords.center != null ? "translateX(-50%)" : undefined,
                 }}
-                className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] max-h-[75vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
+                className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
               >
           <div className="border-b border-white/10 px-3 py-2">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">

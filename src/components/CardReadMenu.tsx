@@ -21,6 +21,7 @@ export default function CardReadMenu({
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; center: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   function toggleOpen() {
     if (open) {
@@ -29,7 +30,10 @@ export default function CardReadMenu({
     }
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      setCoords({ top: rect.bottom + 8, center: rect.left + rect.width / 2 });
+      // Keep the menu on-screen when the trigger sits near the bottom.
+      const estimatedHeight = 250;
+      const top = Math.min(rect.bottom + 8, Math.max(12, window.innerHeight - estimatedHeight - 12));
+      setCoords({ top, center: rect.left + rect.width / 2 });
     }
     setOpen(true);
   }
@@ -40,7 +44,15 @@ export default function CardReadMenu({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
-    function onScrollOrResize() {
+    function onScrollOrResize(event?: Event) {
+      if (
+        event &&
+        panelRef.current &&
+        event.target instanceof Node &&
+        panelRef.current.contains(event.target)
+      ) {
+        return;
+      }
       setOpen(false);
     }
 
@@ -82,6 +94,7 @@ export default function CardReadMenu({
               />
               <div
                 role="menu"
+                ref={panelRef}
                 style={{
                   position: "fixed",
                   top: coords.top,
