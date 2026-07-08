@@ -163,7 +163,7 @@ export default function AboutPage() {
                   >
                     astronaut Charlie Duke
                   </a>
-                  . It is a moment I will never forget, and a big reason Life Essentials runs all
+                  . It is a night I will never forget, and a big reason Life Essentials runs all
                   through CrossHeartPray.
                 </p>
                 <p className="font-semibold text-emerald-100">
