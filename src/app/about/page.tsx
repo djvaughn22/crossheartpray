@@ -41,7 +41,14 @@ export default function AboutPage() {
             </h1>
 
             <p className="mx-auto mt-5 max-w-lg text-lg font-semibold leading-8 text-slate-200">
-              CrossHeartPray brings the Bible everywhere. 31,103 Holy Bible verses, all connected.
+              CrossHeartPray is the flagship project of Open Mirror.
+            </p>
+            <p className="mx-auto mt-3 max-w-lg text-base font-semibold leading-8 text-slate-300">
+              It started with a daily rhythm: read Scripture, pray, reflect, and stay consistent.
+            </p>
+            <p className="mx-auto mt-3 max-w-lg text-base font-semibold leading-8 text-slate-300">
+              The app is built to make that rhythm easier to return to every day, with simple
+              Bible-first tools for reading, prayer, reflection, and growth.
             </p>
             <p className="mt-5 text-sm font-black uppercase tracking-[0.08em] text-emerald-100">
               Bible Reading Plan → Daily Hope → Bible Bingo 7 → Life Essentials → Deep Dive → Track progress
