@@ -20,7 +20,6 @@ export const metadata = {
 
 const ctas = [
   { label: "Open official Bible Principles", href: BIBLE_PRINCIPLES_HOME },
-  { label: "Open Principle Finder", href: PRINCIPLE_FINDER_BY_BOOK },
   { label: "Download Life Essentials App", href: LIFE_ESSENTIALS_APP },
   { label: "Official YouTube Channel", href: LIFE_ESSENTIALS_YOUTUBE },
 ];
@@ -55,33 +54,13 @@ export default function GeneGetzPage() {
           <p className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
             Principles &amp; video teaching by Dr. Gene Getz
           </p>
-          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-8 text-slate-200 sm:text-lg sm:leading-9">
-            Continue from Scripture into Life Essentials principles and official
-            video teaching from Dr. Gene Getz.
-          </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-7 text-slate-300">
-            Open the Bible first. When a verse connects to a Life Essentials
-            principle, continue with Dr. Gene Getz. All {total.toLocaleString()}{" "}
-            principles are indexed here and link to official video teaching —
-            external study helps, not a replacement for Scripture.
+          <p className="mx-auto mt-5 max-w-xl text-base font-semibold leading-8 text-slate-200 sm:text-lg sm:leading-9">
+            All {total.toLocaleString()} principles, each with Dr. Getz&apos;s
+            official video. Bible first — these are study helps, not a
+            replacement for Scripture.
           </p>
         </section>
 
-        {/* Official CTAs */}
-        <section className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {ctas.map((cta) => (
-            <a
-              key={cta.href}
-              href={cta.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-between rounded-2xl border border-amber-200/25 bg-amber-300/[0.06] px-5 py-4 text-sm font-bold text-amber-50 shadow-sm transition hover:bg-amber-300/15"
-            >
-              <span>{cta.label}</span>
-              <span aria-hidden="true">→</span>
-            </a>
-          ))}
-        </section>
 
         {/* Full index, grouped by book */}
         <section className="mt-12 border-t border-white/10 pt-8 text-center">
@@ -89,19 +68,8 @@ export default function GeneGetzPage() {
             All {total.toLocaleString()} Life Essentials principles
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-7 text-slate-300">
-            Grouped by book. Tap a book, then tap any principle to read it in
-            full with a link to the passage, and press Watch for the official
-            Dr. Gene Getz video. The full study lives on the official site —
-            open the{" "}
-            <a
-              href={PRINCIPLE_FINDER_BY_BOOK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-amber-100 underline decoration-white/20 underline-offset-4 hover:text-amber-50"
-            >
-              official Principle Finder
-            </a>
-            .
+            Tap a book, then any principle — full text, the passage, and the
+            official video.
           </p>
 
           <GeneGetzFullIndex
@@ -110,8 +78,24 @@ export default function GeneGetzPage() {
           />
         </section>
 
-        <section className="mt-12 border-t border-white/10 pt-8">
-          <p className="mx-auto max-w-2xl text-center text-sm font-semibold leading-7 text-slate-300">
+        <section className="mt-12 border-t border-white/10 pt-8 text-center">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-200">
+            Official Life Essentials links
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {ctas.map((cta) => (
+              <a
+                key={cta.href}
+                href={cta.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-amber-200/25 bg-amber-300/[0.06] px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-300/15"
+              >
+                {cta.label} <span aria-hidden="true">→</span>
+              </a>
+            ))}
+          </div>
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm font-semibold leading-7 text-slate-300">
             Gene Getz / Bible Principles resources are linked as external study
             helps. CrossHeartPray opens Scripture first and points to official
             resources when available. Principle index and video links © B&amp;H
