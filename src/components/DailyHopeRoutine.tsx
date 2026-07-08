@@ -685,15 +685,19 @@ export default function DailyHopeRoutine({
                   isPrayerExpanded ? "rounded-[2rem] p-6 sm:p-8" : "rounded-2xl p-3.5 sm:p-4"
                 }`}
               >
+                <button
+                  type="button"
+                  onClick={() => togglePrayer(prayerId)}
+                  aria-label={isPrayerExpanded ? `Hide ${prayer.title}` : `Read ${prayer.title}`}
+                  aria-expanded={isPrayerExpanded}
+                  aria-controls={`${prayerId}-body`}
+                  className="absolute right-3.5 top-[17px] inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] text-xl font-black leading-none text-slate-300 transition hover:border-emerald-200/30 hover:bg-emerald-300/10 hover:text-emerald-50"
+                >
+                  {isPrayerExpanded ? "−" : "+"}
+                </button>
+
                 {!isPrayerExpanded ? (
-                  <button
-                    type="button"
-                    onClick={() => togglePrayer(prayerId)}
-                    aria-label={`Read ${prayer.title}`}
-                    aria-expanded={false}
-                    aria-controls={`${prayerId}-body`}
-                    className="flex w-full items-center gap-3 text-left"
-                  >
+                  <div className="flex w-full items-center gap-3 pr-12 text-left">
                     <span
                       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg"
                       aria-hidden="true"
@@ -704,32 +708,9 @@ export default function DailyHopeRoutine({
                       <span className="block text-lg font-extrabold leading-6 text-slate-50">{prayer.title}</span>
                       <span className="block truncate text-xs font-bold text-slate-300">{prayerCue}</span>
                     </span>
-                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] text-xl font-black leading-none text-slate-300">
-                      +
-                    </span>
-                  </button>
+                  </div>
                 ) : (
                 <>
-                <div className="absolute right-5 top-5">
-                  <BibleBingoShareMenu
-                    boardHref={`#${prayerId}`}
-                    boardUrl={prayerUrl}
-                    shareText={dailyHopePrayerFullShareText(prayer, prayerUrl)}
-                    emailSubject={`Daily Hope - ${prayer.title}`}
-                    align="right"
-                    itemLabel="dailyHope"
-                    buttonLabel="Share full Daily Hope"
-                    iconOnly
-                    instagramContent={{
-                      eyebrow: "Daily Hope",
-                      title: prayer.title,
-                      body: prayer.body,
-                      footer: "crossheartpray.com",
-                      fileBase: `daily-hope-${prayer.title}`,
-                    }}
-                  />
-                </div>
-
                 <div className="flex items-start gap-4 pr-12">
                   <span
                     className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-2xl shadow-lg shadow-black/15"
@@ -748,22 +729,9 @@ export default function DailyHopeRoutine({
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-3 pr-12 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-2xl font-extrabold text-slate-50">
-                    {prayer.title}
-                  </h2>
-
-                  <button
-                    type="button"
-                    onClick={() => togglePrayer(prayerId)}
-                    aria-label={isPrayerExpanded ? `Hide ${prayer.title}` : `Read ${prayer.title}`}
-                    aria-expanded={isPrayerExpanded}
-                    aria-controls={`${prayerId}-body`}
-                    className="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-white/12 bg-white/[0.03] text-xl font-black leading-none text-slate-300 transition hover:border-emerald-200/30 hover:bg-emerald-300/10 hover:text-emerald-50 sm:self-auto"
-                  >
-                    {isPrayerExpanded ? "−" : "+"}
-                  </button>
-                </div>
+                <h2 className="mt-4 pr-12 text-2xl font-extrabold text-slate-50">
+                  {prayer.title}
+                </h2>
 
                 <p
                   id={`${prayerId}-body`}
@@ -771,6 +739,25 @@ export default function DailyHopeRoutine({
                 >
                   {prayer.body}
                 </p>
+                <div className="mt-5 flex justify-end">
+                  <BibleBingoShareMenu
+                    boardHref={`#${prayerId}`}
+                    boardUrl={prayerUrl}
+                    shareText={dailyHopePrayerFullShareText(prayer, prayerUrl)}
+                    emailSubject={`Daily Hope - ${prayer.title}`}
+                    align="right"
+                    itemLabel="dailyHope"
+                    buttonLabel="Share full Daily Hope"
+                    iconOnly
+                    instagramContent={{
+                      eyebrow: "Daily Hope",
+                      title: prayer.title,
+                      body: prayer.body,
+                      footer: "crossheartpray.com",
+                      fileBase: `daily-hope-${prayer.title}`,
+                    }}
+                  />
+                </div>
                 </>
                 )}
               </article>
