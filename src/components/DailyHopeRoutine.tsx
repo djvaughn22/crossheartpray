@@ -14,7 +14,6 @@ import CentralTimeBadge from "./CentralTimeBadge";
 import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
-import PageNucleusHero from "./PageNucleusHero";
 import GeneGetzResourceCard from "./GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
 import {
@@ -423,7 +422,12 @@ export default function DailyHopeRoutine({
   const pagePath = "/daily-hope";
   const pageUrl = "https://crossheartpray.com/daily-hope";
 
-  const visibleDays = days;
+  // Today leads; the rest follow in week order and roll as the day changes.
+  const visibleDays = useMemo(() => {
+    const idx = days.findIndex((d) => d.slug === todaySlug);
+    if (idx <= 0) return days;
+    return [...days.slice(idx), ...days.slice(0, idx)];
+  }, [days, todaySlug]);
 
   const allPassages = useMemo(() => {
     const uniquePassages = new Map<string, DailyHopePassage>();
@@ -583,12 +587,19 @@ export default function DailyHopeRoutine({
 
   return (
     <main className="chp-daily-hope-print-root chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
+      <style>{`@keyframes chpDealIn{0%{opacity:0;transform:translateY(-16px) rotate(-2.5deg) scale(.98)}55%{opacity:1;transform:translateY(3px) rotate(1deg)}100%{opacity:1;transform:none}}
+.chp-deal{animation:chpDealIn .5s cubic-bezier(.2,.8,.3,1) both}
+@media (prefers-reduced-motion: reduce){.chp-deal{animation:none}}`}</style>
       <section className="mx-auto max-w-6xl px-6 py-8">
         <SiteHeader className="mb-10 sm:mb-12" />
-        <PageNucleusHero
-          title="Daily Hope"
-          subhead="A prayer and Scripture rhythm for the day."
-        >
+        <div className="text-center">
+          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.62rem] font-black uppercase tracking-[0.18em] text-white sm:text-[0.66rem]">
+            <span className="inline-flex items-center gap-1"><span className="text-xl tracking-normal">✝️</span> Cross</span>
+            <span className="inline-flex items-center gap-1"><span className="text-xl tracking-normal">❤️</span> Heart</span>
+            <span className="inline-flex items-center gap-1"><span className="text-xl tracking-normal">🙏</span> Pray</span>
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Daily Hope</h1>
+          <p className="mt-1 text-sm font-bold text-emerald-100">A prayer and Scripture rhythm for the day.</p>
 <CentralTimeBadge className="mt-3" />
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -645,7 +656,7 @@ export default function DailyHopeRoutine({
               htmlEmail={boardHtml}
             />
           </div>
-        </PageNucleusHero>
+        </div>
 
         {missingReferences.length > 0 ? (
           <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-yellow-200/30 bg-yellow-200/10 p-4 text-sm font-semibold leading-6 text-yellow-50">
@@ -668,8 +679,36 @@ export default function DailyHopeRoutine({
               <article
                 id={prayerId}
                 key={prayer.title}
-                className={`relative overflow-visible rounded-[2rem] border p-6 shadow-2xl shadow-black/20 sm:p-8 ${prayerTone}`}
+                style={{ animationDelay: `${index * 60}ms` }}
+                className={`chp-deal relative overflow-visible border shadow-2xl shadow-black/20 ${prayerTone} ${
+                  isPrayerExpanded ? "rounded-[2rem] p-6 sm:p-8" : "rounded-2xl p-3.5 sm:p-4"
+                }`}
               >
+                {!isPrayerExpanded ? (
+                  <button
+                    type="button"
+                    onClick={() => togglePrayer(prayerId)}
+                    aria-label={`Read ${prayer.title}`}
+                    aria-expanded={false}
+                    aria-controls={`${prayerId}-body`}
+                    className="flex w-full items-center gap-3 text-left"
+                  >
+                    <span
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg"
+                      aria-hidden="true"
+                    >
+                      {prayerIcon}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-lg font-extrabold leading-6 text-slate-50">{prayer.title}</span>
+                      <span className="block truncate text-xs font-bold text-slate-300">{prayerCue}</span>
+                    </span>
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] text-xl font-black leading-none text-slate-300">
+                      +
+                    </span>
+                  </button>
+                ) : (
+                <>
                 <div className="absolute right-5 top-5">
                   <BibleBingoShareMenu
                     boardHref={`#${prayerId}`}
@@ -725,14 +764,14 @@ export default function DailyHopeRoutine({
                   </button>
                 </div>
 
-                {isPrayerExpanded ? (
-                  <p
-                    id={`${prayerId}-body`}
-                    className="mt-5 text-base font-medium leading-8 text-slate-300"
-                  >
-                    {prayer.body}
-                  </p>
-                ) : null}
+                <p
+                  id={`${prayerId}-body`}
+                  className="mt-5 text-base font-medium leading-8 text-slate-300"
+                >
+                  {prayer.body}
+                </p>
+                </>
+                )}
               </article>
             );
           })}
@@ -749,7 +788,8 @@ export default function DailyHopeRoutine({
               <section
                 id={day.slug}
                 key={day.slug}
-                className={`scroll-mt-24 rounded-[2rem] border p-5 shadow-2xl sm:p-7 ${
+                style={{ animationDelay: `${dayIndex * 80}ms` }}
+                className={`chp-deal scroll-mt-24 rounded-[2rem] border p-5 shadow-2xl sm:p-7 ${
                   isToday
                     ? "border-emerald-200/35 bg-emerald-300/[0.08] shadow-emerald-950/25"
                     : "border-white/10 bg-white/[0.03] shadow-black/20"
