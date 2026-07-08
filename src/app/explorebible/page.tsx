@@ -1171,14 +1171,6 @@ export default function BibleExplorerPage() {
               </div>
 
               <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row sm:flex-wrap sm:justify-center">
-                <button
-                  type="button"
-                  onClick={() => spinOne(focusedIndex)}
-                  className="text-center justify-center items-center inline-flex rounded-full border border-yellow-200/30 bg-yellow-200/15 px-5 py-2 text-sm font-black text-yellow-50 shadow-sm transition hover:bg-yellow-200/25"
-                >
-                  Deal This Card
-                </button>
-
                 <CardReadMenu
                   verseHref={verseUrl(focusedCard.passage)}
                   chapterHref={chapterUrl(focusedCard.passage)}
@@ -1239,6 +1231,17 @@ export default function BibleExplorerPage() {
                     </span>
                   </button>
                 ) : null}
+              </div>
+
+              {/* Dealing again is the fun last resort — easy to find, never the hero. */}
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => spinOne(focusedIndex)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-slate-400 transition hover:border-yellow-200/40 hover:bg-yellow-200/10 hover:text-yellow-100"
+                >
+                  🎲 Deal a new card
+                </button>
               </div>
 
               {focusedMoreSection === "life" ? (
