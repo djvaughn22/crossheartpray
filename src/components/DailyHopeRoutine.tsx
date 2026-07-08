@@ -113,7 +113,7 @@ function prayerOpenIcon(title: string) {
 function prayerLiteralCue(title: string) {
   const lower = title.toLowerCase();
 
-  if (lower.includes("sinner")) return "Recognize sin. Ask forgiveness.";
+  if (lower.includes("sinner")) return "Confess sin. Ask forgiveness.";
   if (lower.includes("salvation")) return "Receive Jesus as Lord and Savior.";
   if (lower.includes("moment")) return "Live this day. Keep a heavenly perspective.";
 

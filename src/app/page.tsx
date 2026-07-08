@@ -65,9 +65,9 @@ const deepDiveLinks = [
 ];
 
 const crossHeartPrayCards = [
-  { icon: "✝️", title: "Call out to Jesus" },
-  { icon: "❤️", title: "Receive God’s love" },
-  { icon: "🙏", title: "Pray all the time" },
+  { icon: "✝️", title: "Come to Jesus…" },
+  { icon: "❤️", title: "Receive God’s Love…" },
+  { icon: "🙏", title: "Dear God…" },
 ];
 
 export default function WelcomePage() {
@@ -133,17 +133,30 @@ export default function WelcomePage() {
         <LazyBibleVerseLookup className="mt-12" initialReference="Romans 15:7" />
 
         <section className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-[2rem] border border-emerald-200/15 bg-slate-950/35 shadow-2xl shadow-emerald-950/15 sm:mt-14">
-          <div className="grid gap-0 lg:grid-cols-[1fr_1.15fr]">
-            <div className="border-b border-white/10 bg-emerald-300/[0.08] p-6 lg:border-b-0 lg:border-r lg:border-white/10">
+          <details className="group">
+            <summary className="cursor-pointer select-none list-none p-6 [&::-webkit-details-marker]:hidden">
               <p className="text-xs font-black uppercase tracking-[0.26em] text-emerald-100">
                 Open the Word
               </p>
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <h2 className="text-3xl font-black leading-tight text-white sm:text-4xl">
+                  Behind the Verse
+                </h2>
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl font-black leading-none text-slate-200 transition-transform duration-200 group-open:rotate-45"
+                >
+                  +
+                </span>
+              </div>
+              <p className="mt-2 max-w-xl text-sm font-semibold leading-7 text-slate-300">
+                One verse opens the chapter — Life Essentials and the original words take you deeper.
+              </p>
+            </summary>
 
-              <h2 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl">
-                Behind the Verse
-              </h2>
-
-              <p className="mt-4 max-w-xl text-sm font-semibold leading-7 text-slate-200 sm:text-base">
+          <div className="grid gap-0 border-t border-white/10 lg:grid-cols-[1fr_1.15fr]">
+            <div className="border-b border-white/10 bg-emerald-300/[0.08] p-6 lg:border-b-0 lg:border-r lg:border-white/10">
+              <p className="max-w-xl text-sm font-semibold leading-7 text-slate-200 sm:text-base">
                 Start with one verse and open the full chapter. Then go deeper — first with{" "}
                 <strong className="text-white">Life Essentials by Dr. Gene Getz</strong>:
                 1,500 Bible principles with official video teaching, matched to the verse.
@@ -323,6 +336,7 @@ export default function WelcomePage() {
             </div>
           </div>
           {/* CHP behind verse truth example end */}
+          </details>
         </section>
         <section className="mx-auto mt-12 max-w-5xl">
           <div className="flex flex-wrap items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.025] px-4 py-3 text-center">
