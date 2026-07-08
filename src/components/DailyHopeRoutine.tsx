@@ -422,12 +422,17 @@ export default function DailyHopeRoutine({
   const pagePath = "/daily-hope";
   const pageUrl = "https://crossheartpray.com/daily-hope";
 
-  // Today leads; the rest follow in week order and roll as the day changes.
+  // The chosen day leads the deck (today by default); the rest follow in
+  // week order. Picking a day reorders the cards — no scrolling.
+  const pivotSlug =
+    activeDaySlug && activeDaySlug !== "all-expanded" && activeDaySlug !== "all-minimized"
+      ? activeDaySlug
+      : todaySlug;
   const visibleDays = useMemo(() => {
-    const idx = days.findIndex((d) => d.slug === todaySlug);
+    const idx = days.findIndex((d) => d.slug === pivotSlug);
     if (idx <= 0) return days;
     return [...days.slice(idx), ...days.slice(0, idx)];
-  }, [days, todaySlug]);
+  }, [days, pivotSlug]);
 
   const allPassages = useMemo(() => {
     const uniquePassages = new Map<string, DailyHopePassage>();
@@ -499,11 +504,7 @@ export default function DailyHopeRoutine({
 
   function chooseDay(daySlug: string) {
     setActiveDaySlug(daySlug);
-
-    window.requestAnimationFrame(() => {
-      document.getElementById(daySlug)?.scrollIntoView({ block: "start" });
-      window.history.replaceState(null, "", `#${daySlug}`);
-    });
+    window.history.replaceState(null, "", `#${daySlug}`);
   }
 
   function chooseToday() {
@@ -787,7 +788,7 @@ export default function DailyHopeRoutine({
             return (
               <section
                 id={day.slug}
-                key={day.slug}
+                key={`${day.slug}-${pivotSlug}`}
                 style={{ animationDelay: `${dayIndex * 80}ms` }}
                 className={`chp-deal scroll-mt-24 rounded-[2rem] border p-5 shadow-2xl sm:p-7 ${
                   isToday
