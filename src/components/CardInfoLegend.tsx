@@ -14,7 +14,7 @@ type CardInfoLegendProps = {
 };
 
 // The one static place that explains every card control, so the cards
-// themselves stay clean. Opens from a small "?" button.
+// themselves stay clean. Opens from a small "i" info button.
 export const DEFAULT_CARD_LEGEND: CardLegendItem[] = [
   {
     term: "Shuffle / Deal",
@@ -76,9 +76,9 @@ export default function CardInfoLegend({
         onClick={() => setOpen(true)}
         aria-label="How this card works"
         title="How this card works"
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-slate-200 shadow-lg shadow-black/20 transition hover:bg-white/15 ${className}`}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 font-serif text-sm font-black italic text-slate-200 shadow-lg shadow-black/20 transition hover:bg-white/15 ${className}`}
       >
-        ?
+        i
       </button>
 
       {open && typeof document !== "undefined"
