@@ -3,11 +3,12 @@
 import { usePathname } from "next/navigation";
 
 const steps = [
+  // Same order as the banners on the home page.
   { href: "/", label: "Home" },
-  { href: "/bible-reading-plan", label: "Bible Reading" },
   { href: "/daily-hope", label: "Daily Hope" },
-  { href: "/explorebible", label: "Bible Bingo 7" },
+  { href: "/bible-reading-plan", label: "Bible Reading" },
   { href: "/life-essentials", label: "Life Essentials" },
+  { href: "/explorebible", label: "Bible Bingo 7" },
   { href: "/about", label: "About" },
 ];
 
