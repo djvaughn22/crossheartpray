@@ -39,7 +39,7 @@ const dailyWays = [
     cta: "Explore Life Essentials",
   },
   {
-    href: "/explorebible?passage=Matthew%205",
+    href: "/explorebible",
     icon: "king-of-hearts",
     eyebrow: "7-card deck",
     title: "Bible Bingo 7",
@@ -52,7 +52,7 @@ const dailyWays = [
 const deepDiveLinks = [
   {
     label: "Open Bible Bingo 7",
-    href: "/explorebible?passage=Matthew%205",
+    href: "/explorebible",
   },
   {
     label: "Study the verse in the Bible app",
@@ -199,7 +199,7 @@ export default function WelcomePage() {
                     Bible study
                   </p>
                   <Link
-                    href="/explorebible?passage=Matthew%205"
+                    href="/explorebible"
                     className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
                   >
                     Explore Bible

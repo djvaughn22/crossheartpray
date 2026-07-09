@@ -1,4 +1,5 @@
 import SiteHeader from "../../components/SiteHeader";
+import PageNucleusHero from "../../components/PageNucleusHero";
 import SiteFooter from "../../components/SiteFooter";
 import GeneGetzFullIndex from "../../components/GeneGetzFullIndex";
 import {
@@ -42,24 +43,13 @@ export default function GeneGetzPage() {
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-4xl px-6 py-8">
-        <SiteHeader />
+        <SiteHeader className="mb-10 sm:mb-12" />
 
-        <section className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-amber-200">
-            External study helps
-          </p>
-          <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-6xl">
-            Life Essentials
-          </h1>
-          <p className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
-            Principles &amp; video teaching by Dr. Gene Getz
-          </p>
-          <p className="mx-auto mt-5 max-w-xl text-base font-semibold leading-8 text-slate-200 sm:text-lg sm:leading-9">
-            All {total.toLocaleString()} principles, each with Dr. Getz&apos;s
-            official video. Bible first — these are study helps, not a
-            replacement for Scripture.
-          </p>
-        </section>
+        <PageNucleusHero
+          title="Life Essentials"
+          subhead="Principles & video teaching by Dr. Gene Getz"
+          body={`All ${total.toLocaleString()} principles, each with Dr. Getz's official video. Bible first — these are study helps, not a replacement for Scripture.`}
+        />
 
 
         {/* Full index, grouped by book */}

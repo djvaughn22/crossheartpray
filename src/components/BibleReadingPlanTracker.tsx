@@ -4,6 +4,7 @@ import BibleReadingPlanProgress from "./BibleReadingPlanProgress";
 import PrintButton from "./PrintButton";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
+import PageNucleusHero from "./PageNucleusHero";
 
 const BIBLE_READING_PLAN_EXPORT_ASSET = CHP_OFFICIAL_BIBLE_READING_PLAN_PDF;
 
@@ -24,49 +25,22 @@ const READING_PLAN_LANES = [
 export default function BibleReadingPlanTracker({ weeks }: BibleReadingPlanTrackerProps) {
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100 print:bg-white print:text-black">
-      <section className="mx-auto max-w-[82rem] px-4 py-4 print:max-w-none print:px-0 print:py-0 sm:px-6 sm:py-6">
-        <SiteHeader className="mb-3 sm:mb-5 print:hidden" />
+      <section className="mx-auto max-w-[82rem] px-4 py-8 print:max-w-none print:px-0 print:py-0 sm:px-6 sm:py-8">
+        <SiteHeader className="mb-10 sm:mb-12 print:hidden" />
 
         <div className="chp-reading-print-brand hidden items-center gap-2 pb-2 text-xs font-black uppercase tracking-[0.16em] text-black print:flex">
           <span className="text-base">✝️ ❤️ 🙏</span>
           <span>Cross Heart Pray</span>
         </div>
 
-        <section className="relative overflow-hidden rounded-[1.25rem] border border-white/10 bg-slate-950/45 p-3 shadow-xl shadow-black/20 print:hidden sm:rounded-[1.6rem] sm:p-4">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_18rem),radial-gradient(circle_at_bottom_right,rgba(212,175,55,0.12),transparent_18rem)]" />
-
-          <div className="relative">
-            <div
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.68rem] font-black uppercase tracking-[0.22em] text-white sm:text-xs"
-              aria-hidden="true"
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <span className="text-xl tracking-normal sm:text-2xl">✝️</span>
-                <span>Cross</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="text-xl tracking-normal sm:text-2xl">❤️</span>
-                <span>Heart</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="text-xl tracking-normal sm:text-2xl">🙏</span>
-                <span>Pray</span>
-              </span>
-            </div>
-
-            <h1 className="mt-2 max-w-3xl text-3xl font-black leading-none tracking-tight text-white sm:text-4xl">
-              Bible Reading Plan
-            </h1>
-
-            <p className="mt-1.5 max-w-2xl text-sm font-black leading-snug text-emerald-100 sm:text-base">
-              Start with one day. Keep the rhythm.
-            </p>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <PrintButton />
-            </div>
-          </div>
-        </section>
+        <div className="print:hidden">
+          <PageNucleusHero
+            title="Bible Reading Plan"
+            subhead="Start with one day. Keep the rhythm."
+          >
+            <PrintButton />
+          </PageNucleusHero>
+        </div>
 
         <details className="chp-lane-guide-details mt-4 rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-4 print:hidden">
           <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.18em] text-emerald-100">

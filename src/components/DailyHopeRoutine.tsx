@@ -7,6 +7,7 @@ import SiteHeader from "./SiteHeader";
 
 import { useEffect, useMemo, useState } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
+import PageNucleusHero from "./PageNucleusHero";
 import CardInfoLegend from "./CardInfoLegend";
 import CardMore from "./CardMore";
 import CardReadMenu from "./CardReadMenu";
@@ -593,14 +594,10 @@ export default function DailyHopeRoutine({
 @media (prefers-reduced-motion: reduce){.chp-deal{animation:none}}`}</style>
       <section className="mx-auto max-w-6xl px-6 py-8">
         <SiteHeader className="mb-10 sm:mb-12" />
-        <div className="text-center">
-          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.62rem] font-black uppercase tracking-[0.18em] text-white sm:text-[0.66rem]">
-            <span className="inline-flex items-center gap-1"><span className="text-xl tracking-normal">✝️</span> Cross</span>
-            <span className="inline-flex items-center gap-1"><span className="text-xl tracking-normal">❤️</span> Heart</span>
-            <span className="inline-flex items-center gap-1"><span className="text-xl tracking-normal">🙏</span> Pray</span>
-          </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Daily Hope</h1>
-          <p className="mt-1 text-sm font-bold text-emerald-100">A prayer and Scripture rhythm for the day.</p>
+        <PageNucleusHero
+          title="Daily Hope"
+          subhead="A prayer and Scripture rhythm for the day."
+        >
 <CentralTimeBadge className="mt-3" />
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -657,7 +654,7 @@ export default function DailyHopeRoutine({
               htmlEmail={boardHtml}
             />
           </div>
-        </div>
+        </PageNucleusHero>
 
         {missingReferences.length > 0 ? (
           <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-yellow-200/30 bg-yellow-200/10 p-4 text-sm font-semibold leading-6 text-yellow-50">
