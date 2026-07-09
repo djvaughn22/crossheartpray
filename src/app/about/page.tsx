@@ -41,7 +41,7 @@ export default function AboutPage() {
             </h1>
 
             <p className="mx-auto mt-5 max-w-lg text-lg font-semibold leading-8 text-slate-200">
-              CrossHeartPray is the flagship project of Open Mirror.
+              CrossHeartPray is the foundation of Open Mirror.
             </p>
             <p className="mx-auto mt-3 max-w-lg text-base font-semibold leading-8 text-slate-300">
               It started with a daily rhythm: read Scripture, pray, reflect, and stay consistent.
