@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   formatPrincipleRange,
+  getAdjacentPlayablePrinciple,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
 import YouTubeModal from "./YouTubeModal";
@@ -164,6 +165,8 @@ export default function GeneGetzFullIndex({
           videoId={active.youtubeId}
           title={`Principle ${active.principleNumber} · ${active.principleTitle}`}
           onClose={() => setActive(null)}
+          onPrev={() => setActive(getAdjacentPlayablePrinciple(active, -1))}
+          onNext={() => setActive(getAdjacentPlayablePrinciple(active, 1))}
         />
       ) : null}
 

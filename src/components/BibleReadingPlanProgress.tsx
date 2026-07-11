@@ -16,6 +16,7 @@ const BIBLE_READING_PLAN_EXPORT_ASSET = CHP_OFFICIAL_BIBLE_READING_PLAN_PDF;
 import { useEffect, useMemo, useState } from "react";
 import type { BibleReadingPlanWeek } from "../lib/bibleReadingPlan";
 import {
+  getAdjacentPlayablePrinciple,
   getGeneGetzPrinciplesForChapter,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
@@ -1032,6 +1033,8 @@ async function shareOriginalReadingPlanPdf() {
           videoId={activeVideo.youtubeId}
           title={`Principle ${activeVideo.principleNumber} · ${activeVideo.principleTitle}`}
           onClose={() => setActiveVideo(null)}
+          onPrev={() => setActiveVideo(getAdjacentPlayablePrinciple(activeVideo, -1))}
+          onNext={() => setActiveVideo(getAdjacentPlayablePrinciple(activeVideo, 1))}
         />
       ) : null}
     </section>
