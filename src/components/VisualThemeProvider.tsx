@@ -22,6 +22,10 @@ function cleanTheme(value: string | null | undefined): VisualTheme {
 
 function applyTheme(theme: VisualTheme) {
   document.documentElement.dataset.chpVisualTheme = theme;
+  // Keep the shared Open Mirror family theme (data-om-theme) in agreement so
+  // om-styled chrome (nav bar, footer, family pages) follows the same choice.
+  document.documentElement.dataset.omTheme = theme;
+  window.localStorage.setItem("om-theme", theme);
 }
 
 export default function VisualThemeProvider({
