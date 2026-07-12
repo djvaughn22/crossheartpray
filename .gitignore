@@ -48,3 +48,7 @@ next-env.d.ts
 
 # local Claude Code preview config
 .claude/
+!.env.example
+
+# local daily-post packages for manual Instagram upload
+/social-drafts/
