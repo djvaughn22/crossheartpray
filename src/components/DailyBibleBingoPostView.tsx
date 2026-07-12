@@ -1,3 +1,4 @@
+import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import DailyBingoActions from "./DailyBingoActions";
@@ -59,12 +60,12 @@ export default function DailyBibleBingoPostView({
 
           {isArchive ? (
             <p className="mt-4">
-              <a
+              <Link
                 href="/today"
                 className="inline-flex items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-300/10 px-5 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/15"
               >
                 See today’s board →
-              </a>
+              </Link>
             </p>
           ) : null}
         </header>
