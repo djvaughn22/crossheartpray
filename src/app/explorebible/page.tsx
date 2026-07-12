@@ -27,6 +27,11 @@ import OriginalWordStudyModal from "../../components/OriginalWordStudyModal";
 import VerifiedVerseText from "../../components/VerifiedVerseText";
 import BibleBingoShareMenu from "../../components/BibleBingoShareMenu";
 import CentralTimeBadge from "../../components/CentralTimeBadge";
+import {
+  BIBLE_BINGO_SECTIONS,
+  chicagoDateKey,
+  chicagoTodayWeekdayIndex,
+} from "../../lib/dailyBibleBingo";
 import PageNucleusHero from "../../components/PageNucleusHero";
 import {
   buildDeepDiveWordStudiesUrl,
@@ -221,50 +226,9 @@ type ActiveWordStudy = {
   wordStudy: VerifiedWordStudy;
 };
 
-const sections: Section[] = [
-  {
-    title: "Sunday — Epistles",
-    emoji: "✉️",
-    line: "Letters to the Church: faith, grace, love, endurance, and life in Christ.",
-    odds: "Sunday • Epistles",
-  },
-  {
-    title: "Monday — Law",
-    emoji: "📜",
-    line: "The beginning, covenant, commandments, rescue, worship, and God’s holy way.",
-    odds: "Monday • Law",
-  },
-  {
-    title: "Tuesday — History",
-    emoji: "🏛️",
-    line: "God’s people in real stories of courage, failure, mercy, kings, and return.",
-    odds: "Tuesday • History",
-  },
-  {
-    title: "Wednesday — Psalms",
-    emoji: "🎶",
-    line: "Prayer, praise, lament, worship, hope, and honest words with God.",
-    odds: "Wednesday • Psalms",
-  },
-  {
-    title: "Thursday — Poetry",
-    emoji: "💡",
-    line: "Wisdom, suffering, words, choices, work, wonder, and the heart.",
-    odds: "Thursday • Poetry",
-  },
-  {
-    title: "Friday — Prophecy",
-    emoji: "🔥",
-    line: "Warnings, promises, restoration, justice, hope, and God making all things new.",
-    odds: "Friday • Prophecy",
-  },
-  {
-    title: "Saturday — Gospels",
-    emoji: "✝️",
-    line: "Walk with Jesus through His words, works, cross, and resurrection.",
-    odds: "Saturday • Gospels",
-  },
-];
+// Canonical lane definitions live in dailyBibleBingo.ts — shared with
+// /today and the daily Instagram publisher so boards can never diverge.
+const sections: Section[] = BIBLE_BINGO_SECTIONS;
 const CARD_TONES = [
   "border-emerald-200/15 bg-emerald-300/10",
   "border-yellow-200/15 bg-yellow-200/10",
@@ -504,19 +468,9 @@ function buildPath(currentPath?: { section: Section; passage: Passage }[]) {
   });
 }
 
-function centralDateSeed() {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-
-  const value = (type: string) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-
-  return `${value("year")}-${value("month")}-${value("day")}`;
-}
+// Shared with dailyBibleBingo.ts so the on-site daily board and the daily
+// Instagram post always seed from the same America/Chicago calendar date.
+const centralDateSeed = chicagoDateKey;
 
 function splitBibleBingoSectionTitle(title: string) {
   const parts = title.split("—").map((part) => part.trim()).filter(Boolean);
@@ -565,22 +519,7 @@ function isBingoReadingPlanDone(done: Record<string, boolean>, code: string, cha
   return Boolean(key && done[key]);
 }
 
-function centralDayIndex() {
-  const weekday = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    weekday: "long",
-  }).format(new Date());
-
-  return [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ].indexOf(weekday);
-}
+const centralDayIndex = chicagoTodayWeekdayIndex;
 
 function displayIndexesStartingWith(startIndex: number) {
   const safeStart = startIndex >= 0 ? startIndex : 0;

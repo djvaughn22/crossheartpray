@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import BibleBingoShareBoard from "../../../components/BibleBingoShareBoard";
 import BibleBingoShareMenu from "../../../components/BibleBingoShareMenu";
 import { passagesForBibleBingoBoardId } from "../../../lib/bibleRandom";
+import { BIBLE_BINGO_SECTIONS } from "../../../lib/dailyBibleBingo";
 import SiteHeader from "../../../components/SiteHeader";
 import SiteFooter from "../../../components/SiteFooter";
 
@@ -20,43 +21,8 @@ type PassageForUrl = {
   verse: string | number;
 };
 
-const shareSections = [
-  {
-    title: "Sunday — Epistles",
-    emoji: "✉️",
-    line: "Letters to the Church: faith, grace, love, endurance, and life in Christ.",
-  },
-  {
-    title: "Monday — Law",
-    emoji: "📜",
-    line: "The beginning, covenant, commandments, rescue, worship, and God’s holy way.",
-  },
-  {
-    title: "Tuesday — History",
-    emoji: "🏛️",
-    line: "God’s people in real stories of courage, failure, mercy, kings, and return.",
-  },
-  {
-    title: "Wednesday — Psalms",
-    emoji: "🎶",
-    line: "Prayer, praise, lament, worship, hope, and honest words with God.",
-  },
-  {
-    title: "Thursday — Poetry",
-    emoji: "💡",
-    line: "Wisdom, suffering, words, choices, work, wonder, and the heart.",
-  },
-  {
-    title: "Friday — Prophecy",
-    emoji: "🔥",
-    line: "Warnings, promises, restoration, justice, hope, and God making all things new.",
-  },
-  {
-    title: "Saturday — Gospels",
-    emoji: "✝️",
-    line: "Walk with Jesus through His words, works, cross, and resurrection.",
-  },
-];
+// Canonical lane definitions shared with the daily system.
+const shareSections = BIBLE_BINGO_SECTIONS;
 
 const cardTones = [
   "border-emerald-200/15 bg-emerald-300/10",
