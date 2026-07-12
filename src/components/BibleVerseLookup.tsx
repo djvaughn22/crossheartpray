@@ -12,6 +12,7 @@ import {
 import GeneGetzResourceCard from "./GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
 import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
+import { track } from "../lib/analytics";
 
 type SpinMode = "gospel-epistles" | "gospel" | "epistles" | "proverbs" | "all";
 
@@ -241,6 +242,7 @@ export default function BibleVerseLookup({
 
     try {
       await loadPassageByReference(trimmedQuery);
+      track("verse_lookup", { search_term: trimmedQuery });
     } catch (caught) {
       setPassage(null);
       setError(caught instanceof Error ? caught.message : "No local verse match found.");
@@ -266,6 +268,7 @@ export default function BibleVerseLookup({
       }
 
       setPassage(data.passage);
+      track("verse_spin", { mode: spinMode });
       setNote(data.note ?? "");
       setQuery("");
     } catch (caught) {
@@ -286,6 +289,7 @@ export default function BibleVerseLookup({
       return;
     }
 
+    track("word_study_open", { word: wordStudy.englishWord, reference: wordStudy.reference });
     setActiveWordStudy({
       passage,
       wordStudy,

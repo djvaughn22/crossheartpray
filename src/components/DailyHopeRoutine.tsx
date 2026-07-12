@@ -30,6 +30,7 @@ import type {
   DailyHopePrayerCard,
 } from "../lib/dailyHopeRoutine";
 
+import { track } from "../lib/analytics";
 type DailyHopeRoutineProps = {
   openingPrayers: DailyHopePrayerCard[];
   closingPrayer: DailyHopePrayerCard;
@@ -480,6 +481,7 @@ export default function DailyHopeRoutine({
       return;
     }
 
+    track("word_study_open", { word: wordStudy.englishWord, reference: wordStudy.reference });
     setActiveWordStudy({
       passage,
       wordStudy,
@@ -504,6 +506,7 @@ export default function DailyHopeRoutine({
   }
 
   function chooseDay(daySlug: string) {
+    track("daily_hope_day", { day: daySlug });
     setActiveDaySlug(daySlug);
     window.history.replaceState(null, "", `#${daySlug}`);
   }
@@ -531,6 +534,7 @@ export default function DailyHopeRoutine({
   }
 
   function togglePrayer(prayerId: string) {
+    if (!expandedPrayerIds[prayerId]) track("prayer_open", { prayer_id: prayerId });
     setExpandedPrayerIds((current) => ({
       ...current,
       [prayerId]: !current[prayerId],

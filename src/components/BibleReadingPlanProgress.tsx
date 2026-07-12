@@ -21,6 +21,7 @@ import {
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
 import YouTubeModal from "./YouTubeModal";
+import { track } from "../lib/analytics";
 
 type BibleReadingPlanProgressProps = {
   weeks: BibleReadingPlanWeek[];
@@ -557,6 +558,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   const nextReading = readings.find((reading) => !progress[reading.id]) ?? readings[0];
 
   function toggleReading(id: string) {
+    if (!progress[id]) track("reading_check", { reading_id: id });
     setProgress((current) => {
       const next = { ...current, [id]: !current[id] };
       if (!next[id]) delete next[id];

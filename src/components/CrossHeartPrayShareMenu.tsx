@@ -7,6 +7,7 @@ import {
   type InstagramCardContent,
 } from "../lib/instagramCard";
 
+import { track } from "../lib/analytics";
 export type ShareItemLabel = "board" | "card" | "dailyHope" | string;
 
 export type CrossHeartPrayShareMenuProps = {
@@ -456,6 +457,7 @@ function menuPositionClass(align: CrossHeartPrayShareMenuProps["align"]) {
 }
 
 async function copyPlain(value: string) {
+  track("share", { method: "copy" });
   try {
     await navigator.clipboard.writeText(value);
     return true;
@@ -478,6 +480,7 @@ async function copyPlain(value: string) {
 }
 
 async function copyRich(html: string, plain: string) {
+  track("share", { method: "copy_rich" });
   try {
     if (navigator.clipboard && "write" in navigator.clipboard && typeof ClipboardItem !== "undefined") {
       const item = new ClipboardItem({

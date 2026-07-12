@@ -10,6 +10,7 @@ import {
   type VerifiedWordStudy,
 } from "../lib/originalLanguageWordStudy";
 
+import { track } from "../lib/analytics";
 export type BibleBingoCardPassage = {
   label: string;
   book: string;
@@ -133,6 +134,7 @@ export default function BibleBingoVerseCard({
     }
 
     setIsCardSpinning(true);
+    track("bingo_spin", {});
 
     const startedAt = performance.now();
 
@@ -198,7 +200,7 @@ export default function BibleBingoVerseCard({
 
           <button
             type="button"
-            onClick={onOpenDeepDive}
+            onClick={() => { track("bingo_deep_dive", {}); onOpenDeepDive(); }}
             title={
               isLoadingWordStudies
                 ? "Checking for verified original-language word links."

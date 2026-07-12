@@ -8,6 +8,7 @@ import {
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
 import YouTubeModal from "./YouTubeModal";
+import { track } from "../lib/analytics";
 
 // Compact, optional deeper-study card shown when a Bible verse falls inside a
 // Dr. Gene Getz Life Essentials principle range. Bible-first tone: the Scripture
@@ -46,7 +47,7 @@ export default function GeneGetzResourceCard({
             {principle.youtubeId ? (
               <button
                 type="button"
-                onClick={() => setActive(principle)}
+                onClick={() => { track("media_play", { content_type: "getz_video", content_title: principle.principleTitle }); setActive(principle); }}
                 className="inline-flex items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-5 py-2 text-sm font-bold text-amber-50 shadow-sm transition hover:bg-amber-300/20"
               >
                 ▶ Watch Gene Getz video
