@@ -5,9 +5,16 @@
 Faith app — the heart of the Open Mirror LLC family. ✝️ Cross · ❤️ Heart ·
 🙏 Pray. Christian, and stays that way. Baseline tag: `mvp-1`.
 
-## Deploys — IMPORTANT
-Pushing to `main` does NOT deploy this site. After pushing, run
-`npx vercel --prod` from the repo root (project is CLI-linked via `.vercel`).
+## Deploys
+Pushing to `main` auto-deploys to production (GitHub-connected; verified
+live 2026-07-12). `npx vercel --prod` is only a fallback.
+
+## Daily Bible Bingo → Instagram
+One post per day; permanent bio link `/today`. Single source of truth:
+`src/lib/dailyBibleBingo.ts` → `buildDailyBibleBingoPost(date)` — the /today
+pages, the 1080×1350 image route, the caption, and the publisher all consume
+that object. Never add a second board randomizer. Ops guide:
+`docs/DAILY-INSTAGRAM.md`. Tests: `npm test`.
 
 ## Card system (DJ's rules — apply to any card work)
 - Card face = share-image anatomy ONLY: ✝️❤️🙏, one eyebrow line, reference,
