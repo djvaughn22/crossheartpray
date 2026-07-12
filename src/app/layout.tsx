@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import OpenMirrorTopBar from "../components/OpenMirrorTopBar";
 import VisualThemeProvider from "../components/VisualThemeProvider";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,16 @@ export default function RootLayout({
           <OpenMirrorTopBar />
           {children}
         </VisualThemeProvider>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-2PXSNXTPX0"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-2PXSNXTPX0');`}
+        </Script>
       </body>
     </html>
   );
