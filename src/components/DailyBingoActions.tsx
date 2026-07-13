@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { track } from "../lib/analytics";
 
 type DailyBingoActionsProps = {
   shareTitle: string;
@@ -20,7 +21,29 @@ export default function DailyBingoActions({
 }: DailyBingoActionsProps) {
   const [copied, setCopied] = useState(false);
 
+  // GA: page view + delegated clicks for verse/board links rendered by the
+  // server component around these actions.
+  useEffect(() => {
+    track("chp_today_viewed", { title: shareTitle });
+
+    function onClick(event: MouseEvent) {
+      const anchor = (event.target as HTMLElement).closest?.("a");
+      const href = anchor?.getAttribute("href") ?? "";
+      if (!href) return;
+      if (href.includes("bible.com")) {
+        track("chp_verse_opened", { href });
+      } else if (href.startsWith("/bible-bingo/") || href.startsWith("/explorebible")) {
+        track("chp_board_opened", { href });
+      }
+    }
+
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function share() {
+    track("chp_shared", { title: shareTitle });
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
@@ -52,6 +75,7 @@ export default function DailyBingoActions({
       <a
         href={imagePath}
         download={imageFileName}
+        onClick={() => track("chp_card_downloaded", { file: imageFileName })}
         className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 py-3 font-semibold text-slate-200 transition hover:bg-white/10"
       >
         Download today’s card
