@@ -416,6 +416,9 @@ export default function DailyHopeRoutine({
   const [todaySlug, setTodaySlug] = useState("");
   const [activeDaySlug, setActiveDaySlug] = useState("");
   const [expandedPrayerIds, setExpandedPrayerIds] = useState<Record<string, boolean>>({});
+  // Per-card expand/collapse overrides. Toggling a card in place never
+  // changes the pivot, so the deck order stays put.
+  const [dayOverrides, setDayOverrides] = useState<Record<string, boolean>>({});
   const [activeWordStudy, setActiveWordStudy] = useState<ActiveWordStudy | null>(null);
   const [wordStudiesByPassage, setWordStudiesByPassage] = useState<
     Record<string, VerifiedWordStudy[]>
@@ -507,8 +510,17 @@ export default function DailyHopeRoutine({
 
   function chooseDay(daySlug: string) {
     track("daily_hope_day", { day: daySlug });
+    setDayOverrides({});
     setActiveDaySlug(daySlug);
     window.history.replaceState(null, "", `#${daySlug}`);
+  }
+
+  function toggleDay(daySlug: string, currentlyExpanded: boolean) {
+    if (!currentlyExpanded) track("daily_hope_day", { day: daySlug });
+    setDayOverrides((current) => ({
+      ...current,
+      [daySlug]: !currentlyExpanded,
+    }));
   }
 
   function chooseToday() {
@@ -520,11 +532,13 @@ export default function DailyHopeRoutine({
   }
 
   function minimizeDays() {
+    setDayOverrides({});
     setActiveDaySlug("all-minimized");
     window.history.replaceState(null, "", pagePath);
   }
 
   function expandAllDays() {
+    setDayOverrides({});
     setActiveDaySlug("all-expanded");
 
     window.requestAnimationFrame(() => {
@@ -769,8 +783,9 @@ export default function DailyHopeRoutine({
         <section id="daily-hope-days" className="mt-12 scroll-mt-24 space-y-8">
           {visibleDays.map((day, dayIndex) => {
             const isToday = todaySlug === day.slug;
-            const isActiveDay =
+            const defaultDayExpanded =
               allDaysExpanded || activeDaySlug === day.slug || (!activeDaySlug && isToday);
+            const isActiveDay = dayOverrides[day.slug] ?? defaultDayExpanded;
             const dayUrl = `${pageUrl}#${day.slug}`;
 
             return (
@@ -797,7 +812,7 @@ export default function DailyHopeRoutine({
                   <div className="flex flex-col items-center gap-3 sm:items-end">
                     <button
                       type="button"
-                      onClick={() => (isActiveDay ? minimizeDays() : chooseDay(day.slug))}
+                      onClick={() => toggleDay(day.slug, isActiveDay)}
                       aria-label={isActiveDay ? `Minimize ${day.day}` : `Expand ${day.day}`}
                       className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-2xl font-black leading-none text-slate-200 transition hover:border-emerald-200/30 hover:bg-emerald-300/10 hover:text-emerald-50"
                     >
