@@ -34,6 +34,21 @@ export default function SiteFooter() {
         </p>
 
         <p className="mt-3">© 2026</p>
+
+        <p className="mx-auto mt-4 max-w-md text-[11px] leading-6 text-slate-500">
+          <span className="inline-block">
+            Open Mirror LLC is an independent company,
+          </span>{" "}
+          <span className="inline-block">
+            created and operated on personal time.
+          </span>{" "}
+          <a
+            href="https://openmirrorllc.com/about-open-mirror#disclaimer"
+            className="inline-block font-semibold text-slate-400 underline decoration-white/20 underline-offset-2 transition hover:text-emerald-100"
+          >
+            Full disclaimer
+          </a>
+        </p>
       </div>
     </footer>
   );
