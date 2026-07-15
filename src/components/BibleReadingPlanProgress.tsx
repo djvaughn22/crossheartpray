@@ -1,18 +1,5 @@
 "use client";
 
-import { CHP_OFFICIAL_BIBLE_READING_PLAN_PDF, CHP_OFFICIAL_BIBLE_READING_PLAN_PDF_DOWNLOAD_NAME } from "@/lib/crossHeartPrayOfficialAssets";
-
-function openBibleReadingPlanExportAsset() {
-  const link = document.createElement("a");
-  link.href = CHP_OFFICIAL_BIBLE_READING_PLAN_PDF;
-  link.download = CHP_OFFICIAL_BIBLE_READING_PLAN_PDF_DOWNLOAD_NAME;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
-const BIBLE_READING_PLAN_EXPORT_ASSET = CHP_OFFICIAL_BIBLE_READING_PLAN_PDF;
-
 import { useEffect, useMemo, useState } from "react";
 import type { BibleReadingPlanWeek } from "../lib/bibleReadingPlan";
 import {
@@ -22,6 +9,13 @@ import {
 } from "../lib/geneGetzLifeEssentials";
 import YouTubeModal from "./YouTubeModal";
 import { track } from "../lib/analytics";
+import {
+  checklistStats,
+  loadChecklistProgress,
+  saveChecklistProgress,
+  toggleChecklistItem,
+  type ChecklistProgress,
+} from "../lib/checklistProgress";
 
 type BibleReadingPlanProgressProps = {
   weeks: BibleReadingPlanWeek[];
@@ -30,6 +24,7 @@ type BibleReadingPlanProgressProps = {
 type AnyRecord = Record<string, unknown>;
 
 const STORAGE_KEY = "crossheartpray:bible-reading-plan:v1";
+const PROGRESS_EVENT = "crossheartpray:bible-reading-plan-progress";
 
 const LANES = [
   {
@@ -82,76 +77,6 @@ const LANES = [
     summary: "Matthew, Mark, Luke, John.",
   },
 ];
-
-const BOOK_CODES: Record<string, string> = {
-  Genesis: "GEN",
-  Exodus: "EXO",
-  Leviticus: "LEV",
-  Numbers: "NUM",
-  Deuteronomy: "DEU",
-  Joshua: "JOS",
-  Judges: "JDG",
-  Ruth: "RUT",
-  "1 Samuel": "1SA",
-  "2 Samuel": "2SA",
-  "1 Kings": "1KI",
-  "2 Kings": "2KI",
-  "1 Chronicles": "1CH",
-  "2 Chronicles": "2CH",
-  Ezra: "EZR",
-  Nehemiah: "NEH",
-  Esther: "EST",
-  Job: "JOB",
-  Psalms: "PSA",
-  Psalm: "PSA",
-  Proverbs: "PRO",
-  Ecclesiastes: "ECC",
-  "Song of Solomon": "SNG",
-  Isaiah: "ISA",
-  Jeremiah: "JER",
-  Lamentations: "LAM",
-  Ezekiel: "EZK",
-  Daniel: "DAN",
-  Hosea: "HOS",
-  Joel: "JOL",
-  Amos: "AMO",
-  Obadiah: "OBA",
-  Jonah: "JON",
-  Micah: "MIC",
-  Nahum: "NAM",
-  Habakkuk: "HAB",
-  Zephaniah: "ZEP",
-  Haggai: "HAG",
-  Zechariah: "ZEC",
-  Malachi: "MAL",
-  Matthew: "MAT",
-  Mark: "MRK",
-  Luke: "LUK",
-  John: "JHN",
-  Acts: "ACT",
-  Romans: "ROM",
-  "1 Corinthians": "1CO",
-  "2 Corinthians": "2CO",
-  Galatians: "GAL",
-  Ephesians: "EPH",
-  Philippians: "PHP",
-  Colossians: "COL",
-  "1 Thessalonians": "1TH",
-  "2 Thessalonians": "2TH",
-  "1 Timothy": "1TI",
-  "2 Timothy": "2TI",
-  Titus: "TIT",
-  Philemon: "PHM",
-  Hebrews: "HEB",
-  James: "JAS",
-  "1 Peter": "1PE",
-  "2 Peter": "2PE",
-  "1 John": "1JN",
-  "2 John": "2JN",
-  "3 John": "3JN",
-  Jude: "JUD",
-  Revelation: "REV",
-};
 
 function asRecord(value: unknown): AnyRecord {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -275,35 +200,6 @@ function idForReading(reading: unknown, weekNo: number, laneIndex: number) {
     cleanText(record.storageKey) ||
     `week-${weekNo}-${LANES[laneIndex].key}`
   );
-}
-
-function firstChapterFromLabel(label: string) {
-  const match = label.match(/\b(\d+)(?:[-–]\d+)?\b/);
-  return match ? match[1] : "1";
-}
-
-function bookCodeFromLabel(label: string, reading: unknown) {
-  const record = asRecord(reading);
-  const direct =
-    cleanText(record.bookCode) ||
-    cleanText(record.bibleCode) ||
-    cleanText(record.code);
-
-  if (direct) return direct.toUpperCase();
-
-  const book =
-    cleanText(record.book) ||
-    cleanText(record.bookName) ||
-    Object.keys(BOOK_CODES)
-      .sort((a, b) => b.length - a.length)
-      .find((name) => label.startsWith(`${name} `) || label === name) ||
-    "";
-
-  return BOOK_CODES[book] || "";
-}
-
-function readingPlanChapterUrl(passage: { code: string; chapter: string }) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
 }
 
 function bibleUrl(reading: unknown): string {
@@ -438,56 +334,14 @@ function flattenPlan(weeks: BibleReadingPlanWeek[]) {
   });
 }
 
-function loadProgress() {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-
-    const parsed = JSON.parse(raw);
-    const result: Record<string, boolean> = {};
-
-    if (Array.isArray(parsed)) {
-      parsed.forEach((id) => {
-        if (typeof id === "string") result[id] = true;
-      });
-      return result;
-    }
-
-    if (parsed && typeof parsed === "object") {
-      Object.entries(parsed as Record<string, unknown>).forEach(([key, value]) => {
-        if (value === true || value === "true") result[key] = true;
-        if (value && typeof value === "object") {
-          const record = value as Record<string, unknown>;
-          if (record.read === true || record.done === true || record.completed === true) {
-            result[key] = true;
-          }
-        }
-      });
-    }
-
-    return result;
-  } catch {
-    return {};
-  }
-}
-
-function saveProgress(progress: Record<string, boolean>) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  window.dispatchEvent(new Event("crossheartpray:bible-reading-plan-progress"));
-}
-
 export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProgressProps) {
   const readings = useMemo(() => flattenPlan(weeks), [weeks]);
-  const [progress, setProgress] = useState<Record<string, boolean>>({});
-  const [copied, setCopied] = useState(false);
+  const [progress, setProgress] = useState<ChecklistProgress>({});
   const [highlightedReadingId, setHighlightedReadingId] = useState("");
   const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
 
   useEffect(() => {
-    setProgress(loadProgress());
+    setProgress(loadChecklistProgress(STORAGE_KEY));
   }, []);
 
   useEffect(() => {
@@ -542,9 +396,8 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     };
   }, []);
 
-  const doneCount = readings.filter((reading) => progress[reading.id]).length;
-  const totalCount = readings.length;
-  const daysLeft = Math.max(totalCount - doneCount, 0);
+  const readingIds = useMemo(() => readings.map((reading) => reading.id), [readings]);
+  const { done: doneCount, remaining: daysLeft, percent } = checklistStats(readingIds, progress);
   const weeksLeft = weeks.filter((week, weekIndex) => {
     const weekNo = weekNumber(week, weekIndex + 1);
 
@@ -554,290 +407,15 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
       return !progress[id];
     });
   }).length;
-  const percent = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
   const nextReading = readings.find((reading) => !progress[reading.id]) ?? readings[0];
 
   function toggleReading(id: string) {
     if (!progress[id]) track("reading_check", { reading_id: id });
     setProgress((current) => {
-      const next = { ...current, [id]: !current[id] };
-      if (!next[id]) delete next[id];
-      saveProgress(next);
+      const next = toggleChecklistItem(current, id);
+      saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
       return next;
     });
-  }
-
-
-  async function copyPlanLink() {
-    if (typeof window === "undefined") return;
-
-    const link = window.location.href;
-
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      const textArea = document.createElement("textarea");
-      textArea.value = link;
-      textArea.setAttribute("readonly", "true");
-      textArea.style.position = "fixed";
-      textArea.style.left = "-9999px";
-      document.body.appendChild(textArea);
-      textArea.select();
-
-      try {
-        document.execCommand("copy");
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1500);
-      } finally {
-        textArea.remove();
-      }
-    }
-  }
-
-async function shareOriginalReadingPlanPdf() {
-  const pdfUrl = new URL(CHP_OFFICIAL_BIBLE_READING_PLAN_PDF, window.location.origin).toString();
-  const shareText = `52 Week Bible Reading Plan\nCrossHeartPray\n\n${pdfUrl}`;
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: "52 Week Bible Reading Plan",
-        text: "Original 52 Week Bible Reading Plan from CrossHeartPray.",
-        url: pdfUrl,
-      });
-      setCopied(true);
-      return;
-    }
-
-    await navigator.clipboard.writeText(shareText);
-    setCopied(true);
-  } catch {
-    setCopied(false);
-  }
-}
-
-  function exportPlan(includeChecks: boolean) {
-    const escapeHtmlForPrint = (value: string) =>
-      value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
-    const laneHeader = LANES.map(
-      (lane) =>
-        `<th><span>${escapeHtmlForPrint(lane.short)}</span><br />${escapeHtmlForPrint(lane.lane)}</th>`,
-    ).join("");
-
-    const rows = weeks
-      .map((week, weekIndex) => {
-        const weekNo = weekNumber(week, weekIndex + 1);
-        const cells = LANES.map((lane, laneIndex) => {
-          const reading = readingForLane(week, laneIndex);
-          const label = labelForReading(reading);
-          const id = idForReading(reading, weekNo, laneIndex);
-          const mark = includeChecks && progress[id] ? "☑" : "☐";
-
-          return `<td>${mark} ${escapeHtmlForPrint(label)}</td>`;
-        }).join("");
-
-        return `<tr><th class="week">${weekNo}</th>${cells}</tr>`;
-      })
-      .join("");
-
-    const printedOn = new Date().toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-
-    const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>CrossHeartPray Bible Reading Plan</title>
-  <style>
-    @page { size: letter portrait; margin: 0.03in; }
-    * { box-sizing: border-box; }
-    html, body {
-      width: 8.44in;
-      height: 10.94in;
-      margin: 0;
-      padding: 0;
-      background: #fff;
-      color: #000;
-      font-family: Arial, Helvetica, sans-serif;
-      overflow: hidden;
-    }
-    body {
-      padding: 0;
-    }
-    .print-note {
-      display: none;
-    }
-    .sheet {
-      width: 8.44in;
-      height: 10.94in;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .header {
-      flex: 0 0 0.20in;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 5px;
-      margin: 0;
-      border-bottom: 1px solid #000;
-      padding: 0 0 1px;
-    }
-    .brand {
-      font-size: 10.5px;
-      font-weight: 900;
-      letter-spacing: 0.045em;
-      white-space: nowrap;
-    }
-    .title {
-      text-align: right;
-      font-size: 7.75px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.055em;
-      white-space: nowrap;
-    }
-    .sub {
-      margin-top: 0;
-      font-size: 5.2px;
-      font-weight: 700;
-      letter-spacing: 0.015em;
-    }
-    table {
-      flex: 1 1 auto;
-      width: 100%;
-      height: 10.72in;
-      border-collapse: collapse;
-      table-layout: fixed;
-      font-size: 6.15px;
-      line-height: 1.02;
-      page-break-inside: avoid;
-    }
-    thead {
-      height: 0.20in;
-    }
-    thead tr {
-      height: 0.20in;
-    }
-    tbody {
-      height: 10.52in;
-    }
-    tbody tr {
-      height: calc(10.52in / 52);
-      min-height: calc(10.52in / 52);
-      max-height: calc(10.52in / 52);
-    }
-    th, td {
-      border: 0.45px solid #000;
-      padding: 0.45px 0.7px;
-      vertical-align: middle;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-    thead th {
-      font-size: 4.85px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.012em;
-      text-align: left;
-      background: #f2f2f2;
-    }
-    thead th span {
-      font-size: 4.15px;
-      letter-spacing: 0.015em;
-    }
-    th.week {
-      width: 16px;
-      max-width: 16px;
-      text-align: center;
-      font-weight: 900;
-      background: #f8f8f8;
-    }
-    td {
-      width: calc((100% - 16px) / 7);
-    }
-    @media screen {
-      html, body {
-        width: auto;
-        height: auto;
-        overflow: visible;
-      }
-      body {
-        padding: 8px;
-      }
-      .sheet {
-        width: 8.44in;
-        height: 10.94in;
-      }
-      .print-note {
-        display: block;
-        margin: 0 0 4px;
-        font-size: 9px;
-        font-weight: 700;
-      }
-    }
-    @media print {
-      html, body {
-        width: 8.44in;
-        height: 10.94in;
-        overflow: hidden;
-      }
-      .header {
-        break-after: avoid;
-      }
-      table {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-    }
-  </style>
-</head>
-<body>
-  <p class="print-note">Use your browser print dialog and choose “Save as PDF.”</p>
-  <div class="sheet">
-  <div class="header">
-    <div class="brand">✝️ ❤️ 🙏 CrossHeartPray</div>
-    <div class="title">
-      Bible Reading Plan
-      <div class="sub">52 weeks · 7 lanes · ${includeChecks ? "progress" : "clean"} · ${printedOn}</div>
-    </div>
-  </div>
-  <table aria-label="CrossHeartPray Bible Reading Plan">
-    <thead><tr><th class="week">Wk</th>${laneHeader}</tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  </div>
-  <script>
-    window.addEventListener("load", () => {
-      openBibleReadingPlanExportAsset();
-    });
-  </script>
-</body>
-</html>`;
-
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-      return;
-    }
-
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
   }
 
   return (
