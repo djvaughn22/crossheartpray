@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/daily-hope", label: "Daily Hope" },
-  { href: "/explorebible", label: "Bible Bingo 7" },
   { href: "/bible-reading-plan", label: "Reading Plan" },
   { href: "/life-essentials", label: "Life Essentials" },
+  { href: "/explorebible", label: "Bible Bingo 7" },
   { href: "/about", label: "About" },
 ];
 
