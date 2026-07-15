@@ -341,6 +341,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe hydration: saved progress lives in localStorage, readable only after mount
     setProgress(loadChecklistProgress(STORAGE_KEY));
   }, []);
 

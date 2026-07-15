@@ -71,6 +71,7 @@ export default function CentralTimeBadge({
   const [parts, setParts] = useState<CentralParts | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clock is client-only; first value must be read after mount to match SSR
     setParts(getCentralParts());
 
     const timer = window.setInterval(() => {

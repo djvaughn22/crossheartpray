@@ -384,7 +384,7 @@ async function makeRenderedPng(context: ShareContext) {
 }
 
 async function copyImage(file: File) {
-  const ClipboardItemCtor = (window as any).ClipboardItem;
+  const ClipboardItemCtor = window.ClipboardItem;
   if (!navigator.clipboard?.write || !ClipboardItemCtor) return false;
 
   try {
@@ -396,7 +396,7 @@ async function copyImage(file: File) {
 }
 
 async function nativeShareImage(file: File, title: string, url: string) {
-  const nav = navigator as any;
+  const nav = navigator;
   if (!nav.share) return false;
 
   const fileOnly = { title, files: [file] };
@@ -438,6 +438,7 @@ export default function RenderedShareInterceptor() {
     let cancelled = false;
     let objectUrl: string | null = null;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the rendered file whenever the share context changes
     setFile(null);
     setPreviewUrl(null);
     setStatus("Rendering PNG…");
@@ -474,7 +475,7 @@ export default function RenderedShareInterceptor() {
 
       event.preventDefault();
       event.stopPropagation();
-      (event as any).stopImmediatePropagation?.();
+      event.stopImmediatePropagation();
 
       const options = optionsFor(action);
       const root = bestShareRoot(action, options);

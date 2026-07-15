@@ -260,6 +260,7 @@ export default function OriginalWordStudyModal({
   const [selectedWordStudy, setSelectedWordStudy] = useState(wordStudy);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync selection when the incoming word study changes
     setSelectedWordStudy(wordStudy);
   }, [wordStudy]);
 

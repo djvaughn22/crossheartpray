@@ -1,3 +1,4 @@
+import Link from "next/link";
 import FlowStepButtons from "./FlowStepButtons";
 
 type SiteHeaderProps = {
@@ -11,13 +12,13 @@ export default function SiteHeader({ className = "mb-16" }: SiteHeaderProps) {
   return (
     <header className={className}>
       <nav className="grid grid-cols-3 items-center">
-        <a
+        <Link
           href="/"
           aria-label="Open CrossHeartPray"
           className="justify-self-start font-bold text-slate-100"
         >
           ✝️ ❤️ 🙏
-        </a>
+        </Link>
 
         <a
           href="https://www.bible.com/verse-of-the-day"

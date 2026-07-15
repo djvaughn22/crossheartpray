@@ -178,30 +178,38 @@ function htmlForPassages(item: DailyHopePassageItem) {
 }
 
 
-function dailyHopePassageFullLine(passage: any) {
-  const label = typeof passage?.label === "string" ? passage.label : "";
+type UnknownRecord = Record<string, unknown>;
+
+function asUnknownRecord(value: unknown): UnknownRecord {
+  return value && typeof value === "object" ? (value as UnknownRecord) : {};
+}
+
+function dailyHopePassageFullLine(passage: unknown) {
+  const p = asUnknownRecord(passage);
+  const label = typeof p.label === "string" ? p.label : "";
   const text =
-    typeof passage?.text === "string"
-      ? passage.text
-      : typeof passage?.verseText === "string"
-        ? passage.verseText
+    typeof p.text === "string"
+      ? p.text
+      : typeof p.verseText === "string"
+        ? p.verseText
         : "";
 
   return [label, text].filter(Boolean).join(" — ");
 }
 
-function dailyHopeItemFullShareText(item: any, cardUrl: string) {
-  const title = typeof item?.title === "string" ? item.title : "Daily Hope Card";
-  const cue = typeof item?.cue === "string" ? item.cue : "";
+function dailyHopeItemFullShareText(item: unknown, cardUrl: string) {
+  const it = asUnknownRecord(item);
+  const title = typeof it.title === "string" ? it.title : "Daily Hope Card";
+  const cue = typeof it.cue === "string" ? it.cue : "";
   const body =
-    typeof item?.body === "string"
-      ? item.body
-      : typeof item?.text === "string"
-        ? item.text
+    typeof it.body === "string"
+      ? it.body
+      : typeof it.text === "string"
+        ? it.text
         : "";
 
-  const passageLines = Array.isArray(item?.passages)
-    ? item.passages.map((passage: any) => dailyHopePassageFullLine(passage)).filter(Boolean)
+  const passageLines = Array.isArray(it.passages)
+    ? it.passages.map((passage) => dailyHopePassageFullLine(passage)).filter(Boolean)
     : [];
 
   return [
@@ -223,7 +231,7 @@ function dailyHopePrayerFullShareText(prayer: DailyHopePrayerCard, prayerUrl: st
 
 function dailyHopeFullPageShareText(
   openingPrayers: DailyHopePrayerCard[],
-  days: any[],
+  days: unknown[],
   closingPrayer: DailyHopePrayerCard,
   pageUrl: string,
 ) {
@@ -235,26 +243,28 @@ function dailyHopeFullPageShareText(
 
   lines.push("", "Fixed Hope Verses");
 
-  days.forEach((day: any) => {
-    lines.push("", day.day || "Daily Hope Day");
+  days.forEach((day) => {
+    const d = asUnknownRecord(day);
+    lines.push("", typeof d.day === "string" && d.day ? d.day : "Daily Hope Day");
 
-    if (Array.isArray(day.items)) {
-      day.items.forEach((item: any) => {
-        const title = typeof item?.title === "string" ? item.title : "Daily Hope Card";
-        const cue = typeof item?.cue === "string" ? item.cue : "";
+    if (Array.isArray(d.items)) {
+      d.items.forEach((item) => {
+        const it = asUnknownRecord(item);
+        const title = typeof it.title === "string" ? it.title : "Daily Hope Card";
+        const cue = typeof it.cue === "string" ? it.cue : "";
         const body =
-          typeof item?.body === "string"
-            ? item.body
-            : typeof item?.text === "string"
-              ? item.text
+          typeof it.body === "string"
+            ? it.body
+            : typeof it.text === "string"
+              ? it.text
               : "";
 
         lines.push("", "Daily Hope Card", title);
         if (cue) lines.push(cue);
         if (body) lines.push("", body);
 
-        if (Array.isArray(item?.passages)) {
-          item.passages.forEach((passage: any) => {
+        if (Array.isArray(it.passages)) {
+          it.passages.forEach((passage) => {
             const passageLine = dailyHopePassageFullLine(passage);
             if (passageLine) lines.push(passageLine);
           });
@@ -562,6 +572,7 @@ export default function DailyHopeRoutine({
       ? hashSlug
       : currentDaySlug;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- today's slug is date-dependent; set after mount so hydration matches SSR
     setTodaySlug(currentDaySlug);
     setActiveDaySlug(initialDaySlug);
   }, [days]);

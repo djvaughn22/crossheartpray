@@ -180,6 +180,7 @@ export default function BibleVerseLookup({
 
   useEffect(() => {
     if (!passage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset transient lookup state when the verse changes
       setWordStudies([]);
       setIsLoadingWordStudies(false);
       return;
