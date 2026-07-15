@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://crossheartpray.com"),
   title: { default: "Cross Heart Pray", template: "%s | Cross Heart Pray" },
   description: "Bible verses, prayer, Daily Hope, Bible Bingo, and reading plans — your daily faith routine.",
 };
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
+    <html suppressHydrationWarning
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
