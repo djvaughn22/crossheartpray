@@ -181,53 +181,75 @@ body {
    The Welcome hero at "/" stays Dark. */
 
 html[data-chp-visual-theme="light"] {
-  --background: #edf1f5;
-  --foreground: #172033;
+  --background: #eef2f7;
+  --foreground: #0f172a;
   color-scheme: light;
 }
 
 html[data-chp-visual-theme="light"] body,
 html[data-chp-visual-theme="light"] main[class*="bg-slate-950"],
 html[data-chp-visual-theme="light"] main[class*="bg-black"] {
-  background: #edf1f5 !important;
+  background: #eef2f7 !important;
   background-image: none !important;
-  color: #172033 !important;
+  color: #0f172a !important;
 }
 
 html[data-chp-visual-theme="light"] article,
 html[data-chp-visual-theme="light"] section[class*="bg-"],
 html[data-chp-visual-theme="light"] div[class*="bg-"] {
-  background: #f8fafc !important;
+  background: #ffffff !important;
   background-image: none !important;
-  border-color: #cfd8e3 !important;
+  border-color: #dbe2ea !important;
   box-shadow: none !important;
-  color: #172033 !important;
+  color: #0f172a !important;
+}
+
+/* Insets inside white cards keep a soft band instead of white-on-white. */
+html[data-chp-visual-theme="light"] div[class*="bg-black/"],
+html[data-chp-visual-theme="light"] div[class*="bg-slate-8"],
+html[data-chp-visual-theme="light"] div[class*="bg-slate-9"],
+html[data-chp-visual-theme="light"] div[class*="bg-zinc-8"],
+html[data-chp-visual-theme="light"] div[class*="bg-zinc-9"] {
+  background: #f1f5f9 !important;
+}
+html[data-chp-visual-theme="light"] div[class*="bg-emerald-"] {
+  background: #ecfdf5 !important;
 }
 
 html[data-chp-visual-theme="light"] a[class*="bg-"],
 html[data-chp-visual-theme="light"] button[class*="bg-"],
 html[data-chp-visual-theme="light"] summary[class*="bg-"] {
-  background: #e2e8ef !important;
+  background: #ffffff !important;
   background-image: none !important;
-  border-color: #c5d0dc !important;
+  border-color: #dbe2ea !important;
   box-shadow: none !important;
-  color: #172033 !important;
+  color: #0f172a !important;
 }
 
 html[data-chp-visual-theme="light"] a[class*="bg-"]:hover,
 html[data-chp-visual-theme="light"] button[class*="bg-"]:hover,
 html[data-chp-visual-theme="light"] summary[class*="bg-"]:hover {
-  background: #d8e0e9 !important;
+  background: #eef4ff !important;
 }
 
 html[data-chp-visual-theme="light"] [class*="text-white"],
 html[data-chp-visual-theme="light"] [class*="text-slate-50"],
-html[data-chp-visual-theme="light"] [class*="text-slate-100"],
-html[data-chp-visual-theme="light"] [class*="text-emerald"],
-html[data-chp-visual-theme="light"] [class*="text-yellow"],
-html[data-chp-visual-theme="light"] [class*="text-red"],
+html[data-chp-visual-theme="light"] [class*="text-slate-100"] {
+  color: #0f172a !important;
+}
+
+/* Accent text keeps its hue, darkened to family light-mode shades. */
+html[data-chp-visual-theme="light"] [class*="text-emerald"] {
+  color: #047857 !important;
+}
+html[data-chp-visual-theme="light"] [class*="text-yellow"] {
+  color: #a16207 !important;
+}
+html[data-chp-visual-theme="light"] [class*="text-red"] {
+  color: #b91c1c !important;
+}
 html[data-chp-visual-theme="light"] [class*="text-sky"] {
-  color: #172033 !important;
+  color: #0369a1 !important;
 }
 
 html[data-chp-visual-theme="light"] [class*="text-slate-200"],
@@ -235,20 +257,20 @@ html[data-chp-visual-theme="light"] [class*="text-slate-300"],
 html[data-chp-visual-theme="light"] [class*="text-slate-400"],
 html[data-chp-visual-theme="light"] [class*="text-slate-500"],
 html[data-chp-visual-theme="light"] [class*="text-white/"] {
-  color: #4b5563 !important;
+  color: #475569 !important;
 }
 
 html[data-chp-visual-theme="light"] [class*="border-"] {
-  border-color: #cfd8e3 !important;
+  border-color: #dbe2ea !important;
 }
 
 html[data-chp-visual-theme="light"] input,
 html[data-chp-visual-theme="light"] textarea,
 html[data-chp-visual-theme="light"] select {
-  background: #f8fafc !important;
+  background: #ffffff !important;
   background-image: none !important;
-  border-color: #c5d0dc !important;
-  color: #172033 !important;
+  border-color: #dbe2ea !important;
+  color: #0f172a !important;
   box-shadow: none !important;
 }
 
@@ -260,13 +282,13 @@ html[data-chp-visual-theme="light"] .underline {
 html[data-chp-visual-theme="light"] :is([class*="text-[#e8edf5]"], [class*="text-zinc-1"], [class*="text-zinc-2"], [class*="text-zinc-3"], [class*="text-gray-1"], [class*="text-gray-2"], [class*="text-gray-3"], [class*="text-neutral-1"], [class*="text-neutral-2"], [class*="text-neutral-3"]),
 html[data-chp-visual-theme="light"] [style*="color: #e8edf5"],
 html[data-chp-visual-theme="light"] [style*="color:#e8edf5"] {
-  color: #172033 !important;
+  color: #0f172a !important;
 }
 
 html[data-chp-visual-theme="light"] :is([class*="text-[#94a3b8]"], [class*="text-zinc-4"], [class*="text-zinc-5"], [class*="text-gray-4"], [class*="text-gray-5"], [class*="text-neutral-4"], [class*="text-neutral-5"]),
 html[data-chp-visual-theme="light"] [style*="color: #94a3b8"],
 html[data-chp-visual-theme="light"] [style*="color:#94a3b8"] {
-  color: #4b5563 !important;
+  color: #475569 !important;
 }
 
 /* Bright accent text is unreadable on light backgrounds - darken per accent. */
@@ -363,9 +385,9 @@ html[data-chp-visual-theme="light"] [style*="color: rgb(45, 212, 191)"] {
    would otherwise keep dark backgrounds in Light mode. Flatten them to a
    light band with dark text, matching the family (om) light theme. */
 html[data-chp-visual-theme="light"] :is(table, thead, tbody, tr, th, td, caption, span, p, li, ul, ol, label, header, nav, footer, aside, figcaption, h1, h2, h3, h4, h5, h6):is([class*="bg-slate-9"], [class*="bg-slate-8"], [class*="bg-black"], [class*="bg-gray-8"], [class*="bg-gray-9"], [class*="bg-zinc-8"], [class*="bg-zinc-9"], [class*="bg-neutral-8"], [class*="bg-neutral-9"]) {
-  background-color: #e2e8ef !important;
+  background-color: #f1f5f9 !important;
   background-image: none !important;
-  color: #172033 !important;
+  color: #0f172a !important;
 }
 
 /* Shared Open Mirror footer ships inline dark-theme colors; retint for Light.
@@ -437,8 +459,8 @@ html[data-chp-visual-theme="light"] .theme-toggle-label {
 }
 
 html[data-chp-visual-theme="light"] .theme-toggle {
-  border-color: #c5d0dc !important;
-  background: #dce3eb !important;
+  border-color: #dbe2ea !important;
+  background: #e2e8f0 !important;
 }
 
 html[data-chp-visual-theme="light"] .theme-toggle-option {
@@ -446,7 +468,7 @@ html[data-chp-visual-theme="light"] .theme-toggle-option {
 }
 
 html[data-chp-visual-theme="light"] .theme-toggle-option[aria-pressed="true"] {
-  background: #172033 !important;
+  background: #0f172a !important;
   color: #f8fafc !important;
 }
 
@@ -467,7 +489,7 @@ html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-b"
   border-radius: 0.2rem !important;
   padding-left: 0.03em !important;
   padding-right: 0.03em !important;
-  color: #172033 !important;
+  color: #0f172a !important;
   text-decoration-line: underline !important;
   text-decoration-style: dotted !important;
   text-decoration-thickness: 1px !important;
