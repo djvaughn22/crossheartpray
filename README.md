@@ -1,36 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CrossHeartPray (crossheartpray.com)
 
-## Getting Started
+Scripture-first daily faith site: Bible verses, prayer, Daily Hope, Bible Bingo, the 52-week Bible Reading Plan, and Life Essentials. The Bible is the destination.
 
-First, run the development server:
+## Repo map
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Production:** https://crossheartpray.com — branch `main`, auto-deploys on push (Vercel).
+- **Framework:** Next.js 16.2.6 (App Router). Build: `npm run build`. Tests: `npm test` (vitest, `src/lib/__tests__/`).
+- **Routes:** `/`, `/about`, `/cross`, `/heart`, `/pray`, `/daily-hope`, `/bible-reading-plan`, `/bible-bingo/[boardId]`, `/explorebible`, `/life-essentials`, `/today`, `/today/[date]`, `/admin/social`.
+- **Family chrome:** `src/components/OpenMirrorNav.tsx` / `OpenMirrorFooter.tsx` / `OpenMirrorTheme.tsx` are synced copies — canonical source is the hub repo `packages/openmirror-ui/` + `scripts/sync-ui.sh`. Never edit the local copies. CHP keeps its own `SiteHeader` + `ChpProductNav` below the family bar.
+- **Theme:** head script in `src/app/layout.tsx` applies the saved theme (and `?theme=` overrides) before paint; family toggle uses the `om-theme` + `crossheartpray-visual-theme` keys.
+- **Persistence (localStorage):** `crossheartpray:bible-reading-plan:v1` (Reading Plan progress).
+- **Reusable checklist mechanics:** `src/lib/checklistProgress.ts` — generic load/save/toggle/stats extracted from the Reading Plan; covered by tests. Other products copy this file and use their own `product:feature:vN` key. See hub `docs/OPEN_MIRROR_PATTERNS.md`.
+- **Env vars (names only):** `SITE_BASE_URL`, `SOCIAL_ADMIN_KEY`, `SOCIAL_HASHTAGS`, `CRON_SECRET`.
+- **External services:** bible.com (WEBUS links), YouTube (Gene Getz Life Essentials), GA4.
+- **Protected:** all Scripture content, doctrine, memorial content, approved wording, page order, routes, the Reading Plan's public behavior and visuals. Code quality may improve around the product; the product itself is locked.
+- **Content sources of truth:** `src/lib/dailyBibleBingo.ts`, `src/lib/bibleReadingPlan.ts`, `src/lib/geneGetzLifeEssentials.ts`.
