@@ -232,6 +232,14 @@ html[data-chp-visual-theme="light"] summary[class*="bg-"]:hover {
   background: #eef4ff !important;
 }
 
+/* Active pill in ChpProductNav stays emerald in Light (the generic button
+   flattener above would wash it white). Same specificity, later source wins. */
+html[data-chp-visual-theme="light"] a.chp-pnav-active,
+html[data-chp-visual-theme="light"] a.chp-pnav-active:hover {
+  background: #047857 !important;
+  color: #ffffff !important;
+}
+
 html[data-chp-visual-theme="light"] [class*="text-white"],
 html[data-chp-visual-theme="light"] [class*="text-slate-50"],
 html[data-chp-visual-theme="light"] [class*="text-slate-100"] {
@@ -406,72 +414,6 @@ html[data-chp-visual-theme="light"] .bible-bingo-board-card-spin::after,
 html[data-chp-visual-theme="light"] .bible-bingo-shuffle-standard::after {
   background: none !important;
 }
-
-/* CHP_THEME_TOGGLE */
-.theme-toggle-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  text-align: left;
-}
-
-.theme-toggle-label {
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgb(148 163 184);
-}
-
-.theme-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
-  border: 1px solid rgb(51 65 85);
-  border-radius: 999px;
-  background: rgb(15 23 42);
-  padding: 0.25rem;
-}
-
-.theme-toggle-option {
-  min-height: 2.25rem;
-  border-radius: 999px;
-  border: 0;
-  background: transparent;
-  color: rgb(203 213 225);
-  font-size: 0.86rem;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.theme-toggle-option[aria-pressed="true"] {
-  background: rgb(226 232 240);
-  color: rgb(15 23 42);
-}
-
-.theme-toggle-option:focus-visible {
-  outline: 2px solid rgb(110 231 183);
-  outline-offset: 2px;
-}
-
-html[data-chp-visual-theme="light"] .theme-toggle-label {
-  color: #64748b !important;
-}
-
-html[data-chp-visual-theme="light"] .theme-toggle {
-  border-color: #dbe2ea !important;
-  background: #e2e8f0 !important;
-}
-
-html[data-chp-visual-theme="light"] .theme-toggle-option {
-  color: #334155 !important;
-}
-
-html[data-chp-visual-theme="light"] .theme-toggle-option[aria-pressed="true"] {
-  background: #0f172a !important;
-  color: #f8fafc !important;
-}
-
 
 /* CHP_DEEP_DIVE_WORD_DOTS
    In Light theme, verified Deep Dive words should feel like subtle dotted links,
@@ -1363,6 +1305,13 @@ html:not([data-chp-visual-theme="light"]) [class*="backdrop-blur"] {
   @page {
     size: landscape;
     margin: 0.22in;
+  }
+
+  /* Family bar + site links bar never print (synced OpenMirrorNav has no
+     print:hidden of its own). */
+  .om-bar,
+  .chp-product-nav {
+    display: none !important;
   }
 
   .chp-reading-print-brand {

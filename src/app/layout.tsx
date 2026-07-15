@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import OpenMirrorTopBar from "../components/OpenMirrorTopBar";
+import OpenMirrorNav from "../components/OpenMirrorNav";
+import ChpProductNav from "../components/ChpProductNav";
 import VisualThemeProvider from "../components/VisualThemeProvider";
 import Script from "next/script";
 
@@ -31,19 +32,20 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {/* Refresh starts at the top (family-standard): on reload only, clamp
-            scroll to the top until the load settles — the browser's restore
-            can't be cancelled mid-flight, so it gets clamped instead.
-            Back/forward and #anchor behavior stay native; any real user
-            input disarms the clamp. Same script as OpenMirrorTheme.tsx. */}
+        {/* Theme boots before first paint: read ?color / saved choice and set
+            both theme attributes synchronously, so a light-mode visitor never
+            sees a dark flash and the ☀️/🌙 switch feels instant on every page.
+            (The scroll-to-top reload clamp now ships inside OpenMirrorNav's
+            theme toggle, same as every other family site.) */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              '(function(){try{var n=performance.getEntriesByType("navigation")[0];if(!n||n.type!=="reload"||location.hash)return;var armed=true,poll;var disarm=function(){armed=false;clearInterval(poll);removeEventListener("scroll",clamp,true);};var clamp=function(){if(armed&&(window.scrollY||window.scrollX))window.scrollTo(0,0);};addEventListener("scroll",clamp,true);["wheel","touchstart","keydown","pointerdown"].forEach(function(t){addEventListener(t,disarm,{once:true,capture:true,passive:true});});window.scrollTo(0,0);poll=setInterval(clamp,100);addEventListener("load",function(){setTimeout(function(){clamp();disarm();},250);},{once:true});setTimeout(disarm,8000);}catch(e){}})();',
+              '(function(){try{var p=new URLSearchParams(location.search);var u=p.get("color")||p.get("theme");var t;if(u){t=/^(light|bright|fresh|medium|warm)$/.test(u)?"light":"dark";}else{t=(localStorage.getItem("crossheartpray-visual-theme")==="light"||localStorage.getItem("om-theme")==="light")?"light":"dark";}var d=document.documentElement;d.dataset.chpVisualTheme=t;d.dataset.omTheme=t;}catch(e){}})();',
           }}
         />
         <VisualThemeProvider>
-          <OpenMirrorTopBar />
+          <OpenMirrorNav site="CrossHeartPray.com" />
+          <ChpProductNav />
           {children}
         </VisualThemeProvider>
         <Script

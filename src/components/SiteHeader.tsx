@@ -1,54 +1,13 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
 import FlowStepButtons from "./FlowStepButtons";
-import VisualThemePicker from "./VisualThemePicker";
 
 type SiteHeaderProps = {
   className?: string;
 };
 
-const menuLinks = [
-  { href: "/", label: "Home" },
-  { href: "/daily-hope", label: "Daily Hope" },
-  { href: "/explorebible", label: "Bible Bingo 7" },
-  { href: "/bible-reading-plan", label: "52-Week Bible Reading Plan" },
-  { href: "/life-essentials", label: "Life Essentials" },
-  { href: "/about", label: "About" },
-  { href: "https://openmirrorllc.com", label: "← Open Mirror LLC" },
-];
-
+// Site links live in ChpProductNav (layout.tsx), and the ☀️/🌙 theme switch
+// lives in the shared Open Mirror bar — this header keeps only the CHP brand
+// row, the YouVersion Bible shortcut, and the Back/Next flow buttons.
 export default function SiteHeader({ className = "mb-16" }: SiteHeaderProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    function closeOnOutsideClick(event: MouseEvent | TouchEvent) {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-
-      if (!menuRef.current?.contains(target)) {
-        setIsMenuOpen(false);
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsMenuOpen(false);
-    }
-
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    document.addEventListener("touchstart", closeOnOutsideClick);
-    document.addEventListener("keydown", closeOnEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", closeOnOutsideClick);
-      document.removeEventListener("touchstart", closeOnOutsideClick);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [isMenuOpen]);
-
   return (
     <header className={className}>
       <nav className="grid grid-cols-3 items-center">
@@ -74,38 +33,7 @@ export default function SiteHeader({ className = "mb-16" }: SiteHeaderProps) {
           />
         </a>
 
-        <div ref={menuRef} className="relative justify-self-end text-right">
-          <button
-            type="button"
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isMenuOpen}
-            onClick={() => setIsMenuOpen((open) => !open)}
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-500/45 bg-slate-900 text-xl font-semibold leading-none text-slate-100 transition hover:bg-slate-800"
-          >
-            <span aria-hidden="true">☰</span>
-          </button>
-
-          {isMenuOpen ? (
-            <div className="absolute right-0 z-50 mt-4 flex w-64 flex-col rounded-2xl border border-slate-700 bg-slate-950 p-4 text-right text-sm font-semibold text-slate-100 shadow-2xl shadow-slate-950/40">
-              <div className="flex flex-col gap-3">
-                {menuLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="rounded-xl px-3 py-1.5 transition hover:bg-slate-900 hover:text-emerald-100"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-
-              <div className="mt-4 border-t border-slate-700 pt-4">
-                <VisualThemePicker />
-              </div>
-            </div>
-          ) : null}
-        </div>
+        <span aria-hidden="true" className="justify-self-end" />
       </nav>
 
       <FlowStepButtons />
