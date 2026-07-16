@@ -1,28 +1,8 @@
-import Link from "next/link";
-
 export default function SiteFooter() {
   return (
-    <footer className="mt-14 border-t border-white/10 py-10 text-center text-xs text-slate-500 sm:text-sm">
+    <footer className="mt-14 border-t border-white/10 py-8 text-center text-xs text-slate-500 sm:text-sm">
       <div className="mx-auto max-w-6xl px-6">
-        {/* The Bible destination, moved out of the header into a clear,
-            centered footer position — same YouVersion link. */}
-        <a
-          href="https://www.bible.com/verse-of-the-day"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open the Bible on YouVersion"
-          className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-black text-slate-100 transition hover:border-emerald-200/30 hover:bg-emerald-300/10 hover:text-emerald-50"
-        >
-          <img
-            src="/brand/youversion-bible-app.png"
-            alt=""
-            aria-hidden="true"
-            className="h-7 w-7 rounded-md"
-          />
-          <span>Open the Bible</span>
-        </a>
-
-        <p className="mt-6">
+        <p>
           <a
             href="https://www.bible.com/bible/206/MAT.22.35-40.WEBUS"
             target="_blank"
@@ -33,16 +13,23 @@ export default function SiteFooter() {
           </a>
         </p>
 
-        <p className="mt-4">
-          <Link
-            href="/about"
-            className="font-semibold text-slate-300 underline decoration-white/20 underline-offset-4 transition hover:text-emerald-100 hover:decoration-emerald-100/60"
+        <p className="mt-4 text-[11px] font-black uppercase tracking-[0.14em]">
+          <a
+            href="https://openmirrorllc.com"
+            className="text-slate-300 transition hover:text-emerald-100"
           >
-            About CrossHeartPray
-          </Link>
+            Open Mirror LLC
+          </a>
+          <span className="text-slate-600"> · </span>
+          <a
+            href="https://openmirrorllc.com/about-open-mirror"
+            className="text-slate-400 transition hover:text-emerald-100"
+          >
+            About
+          </a>
         </p>
 
-        <p className="mt-5 font-semibold tracking-[0.08em] text-slate-400">
+        <p className="mt-3 font-semibold tracking-[0.08em] text-slate-400">
           VTLT · ✝️ ❤️ 🙏
         </p>
 
@@ -60,17 +47,6 @@ export default function SiteFooter() {
             className="inline-block font-semibold text-slate-400 underline decoration-white/20 underline-offset-2 transition hover:text-emerald-100"
           >
             Full disclaimer
-          </a>
-        </p>
-
-        {/* Quiet connection back to the parent company — secondary, not a
-            second navigation. */}
-        <p className="mt-6 text-[11px] tracking-[0.08em] text-slate-600">
-          <a
-            href="https://openmirrorllc.com"
-            className="text-slate-500 transition hover:text-slate-300"
-          >
-            An Open Mirror LLC project
           </a>
         </p>
       </div>

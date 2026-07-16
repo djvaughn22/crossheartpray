@@ -3,13 +3,14 @@
 import { usePathname } from "next/navigation";
 
 const steps = [
-  // Same order as the banners on the home page.
+  // Same order as the banners on the home page. About is intentionally NOT in
+  // the flow — it opens as a normal standalone page, not a step in a journey,
+  // so it never shows a "Back: Bible Bingo 7" style button.
   { href: "/", label: "Home" },
   { href: "/daily-hope", label: "Daily Hope" },
   { href: "/bible-reading-plan", label: "Bible Reading" },
   { href: "/life-essentials", label: "Life Essentials" },
   { href: "/explorebible", label: "Bible Bingo 7" },
-  { href: "/about", label: "About" },
 ];
 
 function normalizePath(pathname: string | null) {
