@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import OpenMirrorNav from "../components/OpenMirrorNav";
 import ChpProductNav from "../components/ChpProductNav";
 import VisualThemeProvider from "../components/VisualThemeProvider";
 import Script from "next/script";
@@ -36,8 +35,8 @@ export default function RootLayout({
         {/* Theme boots before first paint: read ?color / saved choice and set
             both theme attributes synchronously, so a light-mode visitor never
             sees a dark flash and the ☀️/🌙 switch feels instant on every page.
-            (The scroll-to-top reload clamp now ships inside OpenMirrorNav's
-            theme toggle, same as every other family site.) */}
+            (The scroll-to-top reload clamp now ships inside the theme toggle
+            in the CrossHeartPray header, same as every other family site.) */}
         <script
           dangerouslySetInnerHTML={{
             __html:
@@ -45,7 +44,6 @@ export default function RootLayout({
           }}
         />
         <VisualThemeProvider>
-          <OpenMirrorNav site="CrossHeartPray.com" />
           <ChpProductNav />
           {children}
         </VisualThemeProvider>

@@ -35,7 +35,7 @@ export default function DailyBibleBingoPostView({
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-5xl px-6 py-8">
-        <SiteHeader className="mb-10 sm:mb-12" />
+        <SiteHeader />
 
         <header className="text-center">
           <div className="flex justify-center gap-3 text-3xl" aria-hidden="true">

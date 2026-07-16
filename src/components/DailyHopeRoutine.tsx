@@ -622,7 +622,7 @@ export default function DailyHopeRoutine({
 .chp-deal{animation:chpDealIn .5s cubic-bezier(.2,.8,.3,1) both}
 @media (prefers-reduced-motion: reduce){.chp-deal{animation:none}}`}</style>
       <section className="mx-auto max-w-6xl px-6 py-8">
-        <SiteHeader className="mb-10 sm:mb-12" />
+        <SiteHeader />
         <PageNucleusHero
           title="Daily Hope"
           subhead="A prayer and Scripture rhythm for the day."

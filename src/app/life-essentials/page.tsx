@@ -43,7 +43,7 @@ export default function GeneGetzPage() {
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-4xl px-6 py-8">
-        <SiteHeader className="mb-10 sm:mb-12" />
+        <SiteHeader />
 
         <PageNucleusHero
           title="Life Essentials"

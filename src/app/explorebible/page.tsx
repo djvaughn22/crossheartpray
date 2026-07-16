@@ -903,7 +903,7 @@ export default function BibleExplorerPage() {
   return (
     <main className="chp-daily-hope-print-root chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <SiteHeader className="mb-10 sm:mb-12" />
+        <SiteHeader />
 
         <PageNucleusHero
           title="Bible Bingo 7"

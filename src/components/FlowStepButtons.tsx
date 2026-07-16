@@ -30,7 +30,7 @@ export default function FlowStepButtons() {
   if (!previous && !next) return null;
 
   return (
-    <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-3 text-[0.68rem] font-black uppercase tracking-[0.12em] print:hidden sm:flex sm:items-center sm:justify-between sm:text-xs">
+    <div className="mb-10 mt-2 grid grid-cols-2 gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] print:hidden sm:flex sm:items-center sm:justify-between sm:text-xs">
       {previous ? (
         <a
           href={previous.href}

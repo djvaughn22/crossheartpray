@@ -23,7 +23,7 @@ export default function BibleReadingPlanTracker({ weeks }: BibleReadingPlanTrack
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100 print:bg-white print:text-black">
       <section className="mx-auto max-w-[82rem] px-4 py-8 print:max-w-none print:px-0 print:py-0 sm:px-6 sm:py-8">
-        <SiteHeader className="mb-10 sm:mb-12 print:hidden" />
+        <SiteHeader />
 
         <div className="chp-reading-print-brand hidden items-center gap-2 pb-2 text-xs font-black uppercase tracking-[0.16em] text-black print:flex">
           <span className="text-base">✝️ ❤️ 🙏</span>
