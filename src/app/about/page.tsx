@@ -36,20 +36,21 @@ export default function AboutPage() {
               About CrossHeartPray
             </p>
 
-            <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">
+            <h1 className="mt-5 text-balance text-4xl font-black tracking-tight text-white sm:text-5xl">
               ✝️ Cross ❤️ Heart 🙏 Pray
             </h1>
 
-            <p className="mx-auto mt-5 max-w-lg text-lg font-semibold leading-8 text-slate-200">
+            <p className="mx-auto mt-5 max-w-lg text-balance text-lg font-semibold leading-8 text-slate-200">
               CrossHeartPray is a simple, Bible-first way to read Scripture, pray, and grow every day.
             </p>
-            <p className="mx-auto mt-3 max-w-xl text-base font-semibold leading-8 text-slate-300">
+            <p className="mx-auto mt-3 max-w-xl text-pretty text-base font-semibold leading-8 text-slate-300">
               It started with a daily rhythm: read the Word, pray, reflect.
               <br className="hidden sm:block" /> A few focused tools help you stay consistent
               and keep going.
             </p>
-            <p className="mt-5 text-sm font-black uppercase tracking-[0.08em] text-emerald-100">
-              Daily Hope → Bible Reading Plan → Life Essentials → Bible Bingo 7 → Deep Dive → Track progress
+            <p className="mx-auto mt-5 max-w-xl text-balance text-sm font-black uppercase tracking-[0.08em] text-emerald-100">
+              Daily&nbsp;Hope → Bible&nbsp;Reading&nbsp;Plan → Life&nbsp;Essentials →
+              Bible&nbsp;Bingo&nbsp;7 → Deep&nbsp;Dive → Track&nbsp;progress
             </p>
           </section>
 
