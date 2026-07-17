@@ -6,7 +6,6 @@ import CrossHeartPrayHero from "../components/CrossHeartPrayHero";
 import LazyBibleVerseLookup from "../components/LazyBibleVerseLookup";
 
 export const metadata = {
-  title: "✝️ ❤️ 🙏 Welcome | Cross Heart Pray",
   description: "Start with Bible Bingo 7, the Bible Reading Plan, Daily Hope, and source-backed Deep Dive in one simple Bible routine.",
 };
 

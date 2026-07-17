@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://crossheartpray.com"),
-  title: { default: "Cross Heart Pray", template: "%s | Cross Heart Pray" },
+  title: { default: "CrossHeartPray", template: "%s | CrossHeartPray" },
   description: "Bible verses, prayer, Daily Hope, Bible Bingo, and reading plans — your daily faith routine.",
 };
 

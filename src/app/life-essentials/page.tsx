@@ -13,7 +13,7 @@ import {
 } from "../../lib/geneGetzLifeEssentials";
 
 export const metadata = {
-  title: "Life Essentials | Cross Heart Pray",
+  title: "Life Essentials",
   description:
     "Continue from Scripture into Life Essentials principles and official video teaching from Dr. Gene Getz.",
   robots: { index: false, follow: false },

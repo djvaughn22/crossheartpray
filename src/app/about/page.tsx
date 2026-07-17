@@ -3,9 +3,9 @@ import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 
 export const metadata = {
-  title: "About | Cross Heart Pray",
+  title: "About",
   description:
-    "A simple Bible routine built around the Bible Reading Plan, Daily Hope, Bible Bingo 7, source-backed Deep Dive, and progress tracking.",
+    "A simple Bible routine built around Daily Hope, the Bible Reading Plan, Life Essentials, Bible Bingo 7, source-backed Deep Dive, and progress tracking.",
 };
 
 const READING_LANES = [
@@ -30,7 +30,7 @@ export default function AboutPage() {
         <SiteHeader />
 
         <div className="mx-auto max-w-2xl">
-          {/* Hero — centered, like the hub's About page */}
+          {/* Hero — a short, faith-first explanation of CrossHeartPray */}
           <section className="mb-12 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-100">
               About CrossHeartPray
@@ -41,19 +41,39 @@ export default function AboutPage() {
             </h1>
 
             <p className="mx-auto mt-5 max-w-lg text-lg font-semibold leading-8 text-slate-200">
-              CrossHeartPray is the foundation of Open Mirror.
+              CrossHeartPray is a simple, Bible-first way to read Scripture, pray, and grow every day.
             </p>
             <p className="mx-auto mt-3 max-w-xl text-base font-semibold leading-8 text-slate-300">
-              It started with a daily rhythm: read Scripture, pray, reflect.
-              <br className="hidden sm:block" /> Simple Bible-first tools help you stay consistent
-              and grow every day.
+              It started with a daily rhythm: read the Word, pray, reflect.
+              <br className="hidden sm:block" /> A few focused tools help you stay consistent
+              and keep going.
             </p>
             <p className="mt-5 text-sm font-black uppercase tracking-[0.08em] text-emerald-100">
-              Bible Reading Plan → Daily Hope → Bible Bingo 7 → Life Essentials → Deep Dive → Track progress
+              Daily Hope → Bible Reading Plan → Life Essentials → Bible Bingo 7 → Deep Dive → Track progress
             </p>
           </section>
 
+          {/* The CrossHeartPray pages — in the same order as the site menu */}
+          <p className="mb-5 text-center text-sm font-black uppercase tracking-[0.2em] text-slate-400">
+            The CrossHeartPray pages
+          </p>
+
           <div className="flex flex-col gap-5">
+            <section className={cardClass}>
+              <h2 className="text-2xl font-black text-white">Daily Hope</h2>
+
+              <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
+                <li>Begin with the Sinner Prayer.</li>
+                <li>Continue with the Salvation Prayer.</li>
+                <li>Read the fixed hope verses for the day.</li>
+                <li>Close with prayer.</li>
+              </ul>
+
+              <Link href="/daily-hope" className={buttonClass}>
+                Start Daily Hope
+              </Link>
+            </section>
+
             <section className={cardClass}>
               <h2 className="text-2xl font-black text-white">Bible Reading Plan</h2>
 
@@ -74,60 +94,6 @@ export default function AboutPage() {
 
               <Link href="/bible-reading-plan" className={buttonClass}>
                 Open Bible Reading Plan
-              </Link>
-            </section>
-
-            <section className={cardClass}>
-              <h2 className="text-2xl font-black text-white">Daily Hope</h2>
-
-              <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
-                <li>Begin with the Sinner Prayer.</li>
-                <li>Continue with the Salvation Prayer.</li>
-                <li>Read the fixed hope verses for the day.</li>
-                <li>Close with prayer.</li>
-              </ul>
-
-              <Link href="/daily-hope" className={buttonClass}>
-                Start Daily Hope
-              </Link>
-            </section>
-
-            <section className={cardClass}>
-              <h2 className="text-2xl font-black text-white">Bible Bingo 7</h2>
-
-              <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
-                <li>One board.</li>
-                <li>Seven Bible verses.</li>
-                <li>Each card opens the Bible chapter.</li>
-                <li>Cards connect back to the matching Reading Plan lane.</li>
-              </ul>
-
-              <div className="mt-5 rounded-[1.5rem] border border-emerald-200/15 bg-emerald-300/[0.06] p-5">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
-                  Why 7 cards?
-                </p>
-
-                <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-                  One board. Seven Reading Plan lanes. Each card has a purpose.
-                </p>
-
-                <ul className="mt-4 space-y-2 text-sm font-semibold leading-6 text-slate-300">
-                  <li>Sunday — Epistles: Romans through Jude</li>
-                  <li>Monday — Law: Genesis through Deuteronomy</li>
-                  <li>Tuesday — History: Joshua through Esther</li>
-                  <li>Wednesday — Psalms</li>
-                  <li>Thursday — Poetry: Job through Song of Solomon</li>
-                  <li>Friday — Prophecy: Isaiah through Malachi</li>
-                  <li>Saturday — Gospels: Matthew, Mark, Luke, John</li>
-                </ul>
-
-                <p className="mt-4 text-base font-black text-emerald-50">
-                  The weekly Bible path, on one board.
-                </p>
-              </div>
-
-              <Link href="/explorebible" className={buttonClass}>
-                Open Bible Bingo
               </Link>
             </section>
 
@@ -175,6 +141,52 @@ export default function AboutPage() {
               </Link>
             </section>
 
+            <section className={cardClass}>
+              <h2 className="text-2xl font-black text-white">Bible Bingo 7</h2>
+
+              <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
+                <li>One board.</li>
+                <li>Seven Bible verses.</li>
+                <li>Each card opens the Bible chapter.</li>
+                <li>Cards connect back to the matching Reading Plan lane.</li>
+              </ul>
+
+              <div className="mt-5 rounded-[1.5rem] border border-emerald-200/15 bg-emerald-300/[0.06] p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
+                  Why 7 cards?
+                </p>
+
+                <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+                  One board. Seven Reading Plan lanes. Each card has a purpose.
+                </p>
+
+                <ul className="mt-4 space-y-2 text-sm font-semibold leading-6 text-slate-300">
+                  <li>Sunday — Epistles: Romans through Jude</li>
+                  <li>Monday — Law: Genesis through Deuteronomy</li>
+                  <li>Tuesday — History: Joshua through Esther</li>
+                  <li>Wednesday — Psalms</li>
+                  <li>Thursday — Poetry: Job through Song of Solomon</li>
+                  <li>Friday — Prophecy: Isaiah through Malachi</li>
+                  <li>Saturday — Gospels: Matthew, Mark, Luke, John</li>
+                </ul>
+
+                <p className="mt-4 text-base font-black text-emerald-50">
+                  The weekly Bible path, on one board.
+                </p>
+              </div>
+
+              <Link href="/explorebible" className={buttonClass}>
+                Open Bible Bingo
+              </Link>
+            </section>
+          </div>
+
+          {/* Existing meaningful details */}
+          <p className="mb-5 mt-10 text-center text-sm font-black uppercase tracking-[0.2em] text-slate-400">
+            More about CrossHeartPray
+          </p>
+
+          <div className="flex flex-col gap-5">
             <section className={cardClass}>
               <h2 className="text-2xl font-black text-white">Deep Dive</h2>
 

@@ -7,7 +7,7 @@ import {
 } from "../../lib/dailyHopeRoutine";
 
 export const metadata = {
-  title: "Daily Hope | Cross Heart Pray",
+  title: "Daily Hope",
   description: "Use a fixed Daily Hope prayer and Scripture routine connected to Bible Bingo, the Bible Reading Plan, and source-backed Deep Dive.",
   robots: {
     index: false,

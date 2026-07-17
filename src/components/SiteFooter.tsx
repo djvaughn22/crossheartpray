@@ -13,41 +13,16 @@ export default function SiteFooter() {
           </a>
         </p>
 
-        <p className="mt-4 text-[11px] font-black uppercase tracking-[0.14em]">
-          <a
-            href="https://openmirrorllc.com"
-            className="text-slate-300 transition hover:text-emerald-100"
-          >
-            Open Mirror LLC
-          </a>
-          <span className="text-slate-600"> · </span>
-          <a
-            href="https://openmirrorllc.com/about-open-mirror"
-            className="text-slate-400 transition hover:text-emerald-100"
-          >
-            About
-          </a>
-        </p>
-
-        <p className="mt-3 font-semibold tracking-[0.08em] text-slate-400">
+        <p className="mt-4 font-semibold tracking-[0.08em] text-slate-400">
           VTLT · ✝️ ❤️ 🙏
         </p>
 
-        <p className="mt-3">© 2026</p>
+        <p className="mt-3">© 2026 CrossHeartPray</p>
 
         <p className="mx-auto mt-4 max-w-md text-[11px] leading-6 text-slate-500">
-          <span className="inline-block">
-            Open Mirror LLC is an independent company,
-          </span>{" "}
-          <span className="inline-block">
-            created and operated on personal time.
-          </span>{" "}
-          <a
-            href="https://openmirrorllc.com/about-open-mirror#disclaimer"
-            className="inline-block font-semibold text-slate-400 underline decoration-white/20 underline-offset-2 transition hover:text-emerald-100"
-          >
-            Full disclaimer
-          </a>
+          <span className="inline-block">CrossHeartPray is an independent,</span>{" "}
+          <span className="inline-block">personal project,</span>{" "}
+          <span className="inline-block">created and operated on personal time.</span>
         </p>
       </div>
     </footer>
