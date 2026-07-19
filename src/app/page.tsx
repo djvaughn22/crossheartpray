@@ -13,7 +13,8 @@ const dailyWays = [
   {
     href: "/daily-hope",
     icon: "🌅",
-    eyebrow: "Daily",
+    // Not "Daily" — the chip sat right above the title and read "Daily Daily Hope".
+    eyebrow: "Routine",
     title: "Daily Hope",
     body:
       "A fixed daily prayer and Scripture routine with the same hope verses organized by day of the week.",
