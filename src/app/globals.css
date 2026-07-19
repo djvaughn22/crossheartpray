@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7fa;
+  --foreground: #2b384e;
 }
 
 @theme inline {
@@ -14,8 +14,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #101a2c;
+    --foreground: #c9d3e3;
   }
 }
 
@@ -181,27 +181,27 @@ body {
    The Welcome hero at "/" stays Dark. */
 
 html[data-chp-visual-theme="light"] {
-  --background: #eef2f7;
-  --foreground: #0f172a;
+  --background: #e8edf3;
+  --foreground: #2b384e;
   color-scheme: light;
 }
 
 html[data-chp-visual-theme="light"] body,
 html[data-chp-visual-theme="light"] main[class*="bg-slate-950"],
 html[data-chp-visual-theme="light"] main[class*="bg-black"] {
-  background: #eef2f7 !important;
+  background: #e8edf3 !important;
   background-image: none !important;
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 
 html[data-chp-visual-theme="light"] article,
 html[data-chp-visual-theme="light"] section[class*="bg-"],
 html[data-chp-visual-theme="light"] div[class*="bg-"] {
-  background: #ffffff !important;
+  background: #f5f7fa !important;
   background-image: none !important;
-  border-color: #dbe2ea !important;
+  border-color: #d5dde6 !important;
   box-shadow: none !important;
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 
 /* Insets inside white cards keep a soft band instead of white-on-white. */
@@ -210,7 +210,7 @@ html[data-chp-visual-theme="light"] div[class*="bg-slate-8"],
 html[data-chp-visual-theme="light"] div[class*="bg-slate-9"],
 html[data-chp-visual-theme="light"] div[class*="bg-zinc-8"],
 html[data-chp-visual-theme="light"] div[class*="bg-zinc-9"] {
-  background: #f1f5f9 !important;
+  background: #edf0f5 !important;
 }
 html[data-chp-visual-theme="light"] div[class*="bg-emerald-"] {
   background: #ecfdf5 !important;
@@ -219,11 +219,11 @@ html[data-chp-visual-theme="light"] div[class*="bg-emerald-"] {
 html[data-chp-visual-theme="light"] a[class*="bg-"],
 html[data-chp-visual-theme="light"] button[class*="bg-"],
 html[data-chp-visual-theme="light"] summary[class*="bg-"] {
-  background: #ffffff !important;
+  background: #f5f7fa !important;
   background-image: none !important;
-  border-color: #dbe2ea !important;
+  border-color: #d5dde6 !important;
   box-shadow: none !important;
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 
 html[data-chp-visual-theme="light"] a[class*="bg-"]:hover,
@@ -243,7 +243,7 @@ html[data-chp-visual-theme="light"] a.chp-pnav-active:hover {
 html[data-chp-visual-theme="light"] [class*="text-white"],
 html[data-chp-visual-theme="light"] [class*="text-slate-50"],
 html[data-chp-visual-theme="light"] [class*="text-slate-100"] {
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 
 /* Accent text keeps its hue, darkened to family light-mode shades. */
@@ -265,20 +265,20 @@ html[data-chp-visual-theme="light"] [class*="text-slate-300"],
 html[data-chp-visual-theme="light"] [class*="text-slate-400"],
 html[data-chp-visual-theme="light"] [class*="text-slate-500"],
 html[data-chp-visual-theme="light"] [class*="text-white/"] {
-  color: #475569 !important;
+  color: #5a6980 !important;
 }
 
 html[data-chp-visual-theme="light"] [class*="border-"] {
-  border-color: #dbe2ea !important;
+  border-color: #d5dde6 !important;
 }
 
 html[data-chp-visual-theme="light"] input,
 html[data-chp-visual-theme="light"] textarea,
 html[data-chp-visual-theme="light"] select {
-  background: #ffffff !important;
+  background: #f5f7fa !important;
   background-image: none !important;
-  border-color: #dbe2ea !important;
-  color: #0f172a !important;
+  border-color: #d5dde6 !important;
+  color: #2b384e !important;
   box-shadow: none !important;
 }
 
@@ -290,13 +290,13 @@ html[data-chp-visual-theme="light"] .underline {
 html[data-chp-visual-theme="light"] :is([class*="text-[#e8edf5]"], [class*="text-zinc-1"], [class*="text-zinc-2"], [class*="text-zinc-3"], [class*="text-gray-1"], [class*="text-gray-2"], [class*="text-gray-3"], [class*="text-neutral-1"], [class*="text-neutral-2"], [class*="text-neutral-3"]),
 html[data-chp-visual-theme="light"] [style*="color: #e8edf5"],
 html[data-chp-visual-theme="light"] [style*="color:#e8edf5"] {
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 
 html[data-chp-visual-theme="light"] :is([class*="text-[#94a3b8]"], [class*="text-zinc-4"], [class*="text-zinc-5"], [class*="text-gray-4"], [class*="text-gray-5"], [class*="text-neutral-4"], [class*="text-neutral-5"]),
 html[data-chp-visual-theme="light"] [style*="color: #94a3b8"],
 html[data-chp-visual-theme="light"] [style*="color:#94a3b8"] {
-  color: #475569 !important;
+  color: #5a6980 !important;
 }
 
 /* Bright accent text is unreadable on light backgrounds - darken per accent. */
@@ -343,10 +343,10 @@ html[data-chp-visual-theme="light"] :is([class*="text-[#2dd4bf]" i], [style*="co
 
 /* Client re-renders serialize inline colors as rgb() - match that form too. */
 html[data-chp-visual-theme="light"] [style*="color: rgb(232, 237, 245)"] {
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 html[data-chp-visual-theme="light"] [style*="color: rgb(148, 163, 184)"] {
-  color: #475569 !important;
+  color: #5a6980 !important;
 }
 html[data-chp-visual-theme="light"] [style*="color: rgb(56, 189, 248)"] {
   color: #0369a1 !important;
@@ -395,7 +395,7 @@ html[data-chp-visual-theme="light"] [style*="color: rgb(45, 212, 191)"] {
 html[data-chp-visual-theme="light"] :is(table, thead, tbody, tr, th, td, caption, span, p, li, ul, ol, label, header, nav, footer, aside, figcaption, h1, h2, h3, h4, h5, h6):is([class*="bg-slate-9"], [class*="bg-slate-8"], [class*="bg-black"], [class*="bg-gray-8"], [class*="bg-gray-9"], [class*="bg-zinc-8"], [class*="bg-zinc-9"], [class*="bg-neutral-8"], [class*="bg-neutral-9"]) {
   background-color: #f1f5f9 !important;
   background-image: none !important;
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 
 /* Shared Open Mirror footer ships inline dark-theme colors; retint for Light.
@@ -405,7 +405,7 @@ html[data-chp-visual-theme="light"] .om-footer {
 }
 html[data-chp-visual-theme="light"] .om-footer p,
 html[data-chp-visual-theme="light"] .om-footer a {
-  color: #475569 !important;
+  color: #5a6980 !important;
 }
 
 html[data-chp-visual-theme="light"] .bible-bingo-bottom-card-spin::after,
@@ -431,7 +431,7 @@ html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-b"
   border-radius: 0.2rem !important;
   padding-left: 0.03em !important;
   padding-right: 0.03em !important;
-  color: #0f172a !important;
+  color: #2b384e !important;
   text-decoration-line: underline !important;
   text-decoration-style: dotted !important;
   text-decoration-thickness: 1px !important;
@@ -444,7 +444,7 @@ html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="decoratio
 html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-dotted"]:hover,
 html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-b"][class*="bg-"]:hover {
   background: rgba(148, 163, 184, 0.18) !important;
-  color: #0f172a !important;
+  color: #2b384e !important;
   text-decoration-color: rgba(15, 23, 42, 0.75) !important;
 }
 
@@ -593,7 +593,7 @@ html[data-chp-visual-theme="light"] :is(button, span, mark, a)[class*="border-b"
    panels (no glassmorphism). Layout, copy, flow, and features are untouched —
    only the fills/borders change. */
 .chp-lively-dark-page {
-  background: #0b1220 !important;
+  background: #101a2c !important;
 }
 
 .chp-lively-dark-page::selection {
@@ -621,23 +621,23 @@ html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-whit
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/10"],
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/12"],
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/15"] {
-  background-color: #141d2e !important;
+  background-color: #182335 !important;
 }
 
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/20"],
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/25"],
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-white/30"] {
-  background-color: #1c2740 !important;
+  background-color: #223048 !important;
 }
 
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-black/1"],
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-black/2"],
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="bg-black/3"] {
-  background-color: #0c1220 !important;
+  background-color: #111a2b !important;
 }
 
 html:not([data-chp-visual-theme="light"]) .chp-lively-dark-page [class*="border-white/"] {
-  border-color: #26324c !important;
+  border-color: #2c3a56 !important;
 }
 
 /* No warm accents, no transparent layers. Flatten every colored/translucent tint
@@ -697,7 +697,7 @@ html:not([data-chp-visual-theme="light"]) [class*="backdrop-blur"] {
 
 @media (max-width: 640px) {
   .chp-lively-dark-page {
-    background: #0b1220 !important;
+    background: #101a2c !important;
   }
 }
 /* CHP_LIVELY_DARK_THEME_END */
@@ -1901,12 +1901,12 @@ html:not([data-chp-visual-theme="light"]) [class*="backdrop-blur"] {
 
 /* OPEN MIRROR FAMILY STYLE OVERRIDE START */
 :root {
-  --om-bg: #0b1220;
-  --om-surface: #141d2e;
-  --om-surface-2: #1c2740;
-  --om-inset: #0c1220;
-  --om-border: #26324c;
-  --om-text: #e8edf5;
+  --om-bg: #101a2c;
+  --om-surface: #182335;
+  --om-surface-2: #223048;
+  --om-inset: #111a2b;
+  --om-border: #2c3a56;
+  --om-text: #c9d3e3;
   --om-sub: #94a3b8;
   --om-accent: #4ADE80;
   --om-ink: #0b1220;
@@ -2117,16 +2117,76 @@ a[href]:hover {
 
 /* Family Open Mirror bar follows the CHP light theme */
 html[data-chp-visual-theme="light"] .om-bar {
-  background: #ffffff !important;
+  background: #f5f7fa !important;
   border-bottom-color: #dbe2ea !important;
 }
 html[data-chp-visual-theme="light"] .om-bar a {
-  color: #0f172a !important;
+  color: #2b384e !important;
 }
 html[data-chp-visual-theme="light"] .om-bar .om-bar-label {
-  color: #475569 !important;
+  color: #5a6980 !important;
 }
 html[data-chp-visual-theme="light"] .om-bar button {
   border-color: #cbd5e1 !important;
-  color: #475569 !important;
+  color: #5a6980 !important;
 }
+
+
+/* ── OM_SOFT_CONTRAST (Jul 18 2026) ─ softened light palette, eyes-first.
+   No pure-white cards, no near-black ink. The doubled attribute beats the
+   family theme's injected <style> tag (same trick as the
+   html[data-om-theme="light"]:root pattern used elsewhere in the family). */
+html[data-om-theme="light"][data-om-theme] {
+  background: #e8edf3 !important;
+  --om-bg: #e8edf3;
+  --om-surface: #f5f7fa;
+  --om-surface-2: #e9eff8;
+  --om-inset: #edf0f5;
+  --om-border: #d5dde6;
+  --om-text: #2b384e;
+  --om-sub: #5a6980;
+  --bg: #e8edf3;
+  --surface: #edf0f5;
+  --panel: #f5f7fa;
+  --panel2: #e9eff8;
+  --text: #2b384e;
+  --muted: #5a6980;
+  --background: #e8edf3;
+  --foreground: #2b384e;
+}
+html[data-om-theme="light"][data-om-theme] body {
+  background: #e8edf3 !important;
+  color: #2b384e !important;
+}
+/* The injected light theme hardcodes these — re-point at the soft values. */
+html[data-om-theme="light"][data-om-theme] :is([class*="bg-[#0b1220]"], [class*="bg-slate-950"], [class*="bg-slate-900"]) {
+  background-color: #e8edf3 !important;
+}
+html[data-om-theme="light"][data-om-theme] [class*="bg-[#141d2e]"] {
+  background-color: #f5f7fa !important;
+}
+html[data-om-theme="light"][data-om-theme] [class*="bg-[#1c2740]"] {
+  background-color: #e9eff8 !important;
+}
+html[data-om-theme="light"][data-om-theme] :is([class*="bg-[#0c1220]"], [class*="bg-[#07090f]"], [class*="bg-[#0e1626]"], [class*="bg-black"], [class*="bg-slate-800"], [class*="bg-zinc-8"], [class*="bg-zinc-9"], [class*="bg-gray-8"], [class*="bg-gray-9"], [class*="bg-neutral-8"], [class*="bg-neutral-9"]) {
+  background-color: #edf0f5 !important;
+}
+html[data-om-theme="light"][data-om-theme] [class*="bg-white"] {
+  background-color: #f5f7fa !important;
+}
+html[data-om-theme="light"][data-om-theme] :is(h1, h2, h3, h4),
+html[data-om-theme="light"][data-om-theme] main,
+html[data-om-theme="light"][data-om-theme] :is([class*="text-[#e8edf5]"], [class*="text-white"], [class*="text-slate-1"], [class*="text-slate-2"], [class*="text-slate-3"], [class*="text-zinc-1"], [class*="text-zinc-2"], [class*="text-zinc-3"], [class*="text-gray-1"], [class*="text-gray-2"], [class*="text-gray-3"], [class*="text-neutral-1"], [class*="text-neutral-2"], [class*="text-neutral-3"]) {
+  color: #2b384e !important;
+}
+html[data-om-theme="light"][data-om-theme] :is([class*="text-[#94a3b8]"], [class*="text-slate-4"], [class*="text-slate-5"], [class*="text-slate-6"], [class*="text-slate-7"]) {
+  color: #5a6980 !important;
+}
+html[data-om-theme="light"][data-om-theme] .om-bar {
+  background: #f5f7fa !important;
+  border-bottom-color: #d5dde6 !important;
+}
+html[data-om-theme="light"][data-om-theme] .om-bar a {
+  color: #2b384e !important;
+}
+/* END OM_SOFT_CONTRAST */
