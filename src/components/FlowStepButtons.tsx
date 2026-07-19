@@ -41,7 +41,7 @@ export default function FlowStepButtons() {
           <span aria-hidden="true" className="text-sm transition group-hover:-translate-x-0.5">
             ←
           </span>
-          <span className="truncate">Back: {previous.label}</span>
+          <span className="truncate">{previous.label}</span>
         </a>
       ) : (
         <span aria-hidden="true" />
@@ -53,7 +53,7 @@ export default function FlowStepButtons() {
           aria-label={`Next: ${next.label}`}
           className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/[0.10] px-4 py-2 text-slate-50 shadow-lg shadow-black/20 transition hover:bg-white/[0.16] focus:outline-none focus:ring-2 focus:ring-white/40"
         >
-          <span className="truncate">Next: {next.label}</span>
+          <span className="truncate">{next.label}</span>
           <span aria-hidden="true" className="text-sm transition group-hover:translate-x-0.5">
             →
           </span>
