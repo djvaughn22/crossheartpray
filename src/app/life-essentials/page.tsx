@@ -58,8 +58,9 @@ export default function GeneGetzPage() {
             All {total.toLocaleString()} Life Essentials principles
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-7 text-slate-300">
-            Tap a book, then any principle — full text, the passage, and the
-            official video.
+            Tap a book, then any principle. Read opens the Scripture — the
+            passage, the chapter, or its day in the 52-week Reading Plan. Watch
+            plays the official video.
           </p>
 
           <GeneGetzFullIndex

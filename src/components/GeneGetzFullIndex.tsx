@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   formatPrincipleRange,
   getAdjacentPlayablePrinciple,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
+import {
+  bibleReadingPlanDayForReference,
+  bibleReadingPlanDayHref,
+} from "../lib/bibleReadingPlan";
+import CardReadMenu from "./CardReadMenu";
 import YouTubeModal from "./YouTubeModal";
 
 type Group = { book: string; items: LifeEssentialsPrinciple[] };
+
+type ReadTarget = {
+  verseHref: string;
+  chapterHref: string;
+  verseLabel: string;
+  readingPlanHref?: string;
+  readingPlanNote?: string;
+};
 
 function principleKey(p: LifeEssentialsPrinciple) {
   return `${p.code}-${p.principleNumber}-${p.startChapter}-${p.startVerse}`;
@@ -23,6 +36,34 @@ function passageUrl(p: LifeEssentialsPrinciple) {
   return `${base}.${p.startVerse}.WEBUS`;
 }
 
+function chapterUrl(p: LifeEssentialsPrinciple) {
+  return `https://www.bible.com/bible/206/${p.code}.${p.startChapter}.WEBUS`;
+}
+
+// Read destinations for each principle: passage + chapter on Bible.com, plus the
+// 52-week plan day that contains the start of the principle's passage (only when
+// a real plan match resolves from the canonical plan data).
+function buildReadTargets(groups: Group[]): Map<string, ReadTarget> {
+  const targets = new Map<string, ReadTarget>();
+  for (const group of groups) {
+    for (const p of group.items) {
+      const planDay = bibleReadingPlanDayForReference(p.code, p.startChapter);
+      const singleVerse =
+        p.startChapter === p.endChapter && p.startVerse === p.endVerse;
+      targets.set(principleKey(p), {
+        verseHref: passageUrl(p),
+        chapterHref: chapterUrl(p),
+        verseLabel: singleVerse ? "Open Verse" : "Open Passage",
+        readingPlanHref: planDay ? bibleReadingPlanDayHref(planDay) : undefined,
+        readingPlanNote: planDay
+          ? `Lands in Week ${planDay.week} · ${planDay.dayLabel} (${planDay.reading}).`
+          : undefined,
+      });
+    }
+  }
+  return targets;
+}
+
 // Full 1,500-principle index, grouped by book (collapsible). Click a principle to
 // open/close it and read the full principle text with a link to the passage; the
 // Watch button plays the official Dr. Gene Getz video in-app.
@@ -35,6 +76,7 @@ export default function GeneGetzFullIndex({
 }) {
   const [active, setActive] = useState<LifeEssentialsPrinciple | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const readTargets = useMemo(() => buildReadTargets(groups), [groups]);
 
   function toggle(key: string) {
     setExpanded((prev) => {
@@ -67,6 +109,7 @@ export default function GeneGetzFullIndex({
               const key = principleKey(p);
               const isOpen = expanded.has(key);
               const bodyId = `principle-${key}`;
+              const read = readTargets.get(key);
 
               return (
                 <li
@@ -97,24 +140,37 @@ export default function GeneGetzFullIndex({
                       </p>
                     </button>
 
-                    {p.youtubeId ? (
-                      <button
-                        type="button"
-                        onClick={() => setActive(p)}
-                        className="inline-flex shrink-0 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
-                      >
-                        ▶ Watch
-                      </button>
-                    ) : (
-                      <a
-                        href={p.officialVideoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex shrink-0 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
-                      >
-                        ▶ Watch
-                      </a>
-                    )}
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      {read ? (
+                        <CardReadMenu
+                          verseHref={read.verseHref}
+                          chapterHref={read.chapterHref}
+                          verseLabel={read.verseLabel}
+                          readingPlanHref={read.readingPlanHref}
+                          readingPlanNote={read.readingPlanNote}
+                          triggerAriaLabel={`Read ${p.book} ${formatPrincipleRange(p)}`}
+                        />
+                      ) : null}
+
+                      {p.youtubeId ? (
+                        <button
+                          type="button"
+                          onClick={() => setActive(p)}
+                          className="inline-flex shrink-0 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
+                        >
+                          ▶ Watch
+                        </button>
+                      ) : (
+                        <a
+                          href={p.officialVideoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex shrink-0 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 py-1.5 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
+                        >
+                          ▶ Watch
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   {isOpen ? (
@@ -133,15 +189,6 @@ export default function GeneGetzFullIndex({
                       ) : null}
 
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <a
-                          href={passageUrl(p)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10"
-                        >
-                          Read {p.book} {formatPrincipleRange(p)} →
-                        </a>
-
                         <a
                           href={p.officialVideoUrl}
                           target="_blank"

@@ -8,6 +8,12 @@ type CardReadMenuProps = {
   chapterHref: string;
   readingPlanHref?: string;
   className?: string;
+  /** Accessible name for the Read trigger, e.g. "Read Genesis 1:26-28". */
+  triggerAriaLabel?: string;
+  /** Menu label for the verse link (default "Open Verse"). */
+  verseLabel?: string;
+  /** Sub-label for the reading-plan link (default "Track it in the 52-week plan."). */
+  readingPlanNote?: string;
 };
 
 // One "Read" button replacing the separate Verse / Chapter / Reading Plan pills.
@@ -17,6 +23,9 @@ export default function CardReadMenu({
   chapterHref,
   readingPlanHref,
   className = "",
+  triggerAriaLabel,
+  verseLabel = "Open Verse",
+  readingPlanNote = "Track it in the 52-week plan.",
 }: CardReadMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; center: number } | null>(null);
@@ -78,6 +87,7 @@ export default function CardReadMenu({
         onClick={toggleOpen}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={triggerAriaLabel}
         className={`inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30 ${className}`}
       >
         Read
@@ -111,7 +121,7 @@ export default function CardReadMenu({
                   onClick={() => setOpen(false)}
                   className={itemClass}
                 >
-                  Open Verse
+                  {verseLabel}
                   <span className={subClass}>In the Holy Bible app or Bible.com.</span>
                 </a>
                 <a
@@ -135,7 +145,7 @@ export default function CardReadMenu({
                     className={itemClass}
                   >
                     Open Reading Plan
-                    <span className={subClass}>Track it in the 52-week plan.</span>
+                    <span className={subClass}>{readingPlanNote}</span>
                   </a>
                 ) : null}
               </div>

@@ -30,10 +30,10 @@ const BIBLE_READING_PLAN_BOOK_CODES: Record<string, string> = {
   Ruth: "RUT",
   "1 Samuel": "1SA", "1 Sam": "1SA", "1Sam": "1SA",
   "2 Samuel": "2SA", "2 Sam": "2SA", "2Sam": "2SA",
-  "1 Kings": "1KI", "1 Kgs": "1KI", "1 Ki": "1KI",
-  "2 Kings": "2KI", "2 Kgs": "2KI", "2 Ki": "2KI",
-  "1 Chronicles": "1CH", "1 Chr": "1CH",
-  "2 Chronicles": "2CH", "2 Chr": "2CH",
+  "1 Kings": "1KI", "1 Kgs": "1KI", "1 Ki": "1KI", "1Ki": "1KI",
+  "2 Kings": "2KI", "2 Kgs": "2KI", "2 Ki": "2KI", "2Ki": "2KI",
+  "1 Chronicles": "1CH", "1 Chr": "1CH", "1Chr": "1CH",
+  "2 Chronicles": "2CH", "2 Chr": "2CH", "2Chr": "2CH",
   Ezra: "EZR", Nehemiah: "NEH", Neh: "NEH", Esther: "EST", Esth: "EST",
   Job: "JOB",
   Psalm: "PSA", Psalms: "PSA", Ps: "PSA", Psa: "PSA",
@@ -69,8 +69,8 @@ const BIBLE_READING_PLAN_BOOK_CODES: Record<string, string> = {
   Ephesians: "EPH", Eph: "EPH",
   Philippians: "PHP", Phil: "PHP", Php: "PHP",
   Colossians: "COL", Col: "COL",
-  "1 Thessalonians": "1TH", "1 Thess": "1TH", "1 Thes": "1TH", "1Thess": "1TH",
-  "2 Thessalonians": "2TH", "2 Thess": "2TH", "2 Thes": "2TH", "2Thess": "2TH",
+  "1 Thessalonians": "1TH", "1 Thess": "1TH", "1 Thes": "1TH", "1Thess": "1TH", "1Thes": "1TH",
+  "2 Thessalonians": "2TH", "2 Thess": "2TH", "2 Thes": "2TH", "2Thess": "2TH", "2Thes": "2TH",
   "1 Timothy": "1TI", "1 Tim": "1TI", "1Tim": "1TI",
   "2 Timothy": "2TI", "2 Tim": "2TI", "2Tim": "2TI",
   Titus: "TIT",
@@ -79,9 +79,9 @@ const BIBLE_READING_PLAN_BOOK_CODES: Record<string, string> = {
   James: "JAS", Jas: "JAS",
   "1 Peter": "1PE", "1 Pet": "1PE", "1Pet": "1PE",
   "2 Peter": "2PE", "2 Pet": "2PE", "2Pet": "2PE",
-  "1 John": "1JN",
-  "2 John": "2JN",
-  "3 John": "3JN",
+  "1 John": "1JN", "1John": "1JN",
+  "2 John": "2JN", "2John": "2JN",
+  "3 John": "3JN", "3John": "3JN",
   Jude: "JUD",
   Revelation: "REV", Rev: "REV",
 };
@@ -105,13 +105,40 @@ function bibleReadingPlanRange(reading: string) {
   const remaining = normalizedReading.slice(bookName.length).trim();
   const numbers = remaining.match(/\d+/g) ?? [];
   const startChapter = Number(numbers[0] ?? "1");
-  const endChapter = Number(numbers[numbers.length - 1] ?? numbers[0] ?? "1");
+  // A reading with no chapter numbers ("Ruth", "Jude") covers the whole book.
+  const endChapter = numbers.length
+    ? Number(numbers[numbers.length - 1])
+    : Number.MAX_SAFE_INTEGER;
 
   return {
     code: BIBLE_READING_PLAN_BOOK_CODES[bookName],
     startChapter,
     endChapter,
   };
+}
+
+type ParsedPlanDay = {
+  day: BibleReadingPlanDay;
+  code: string;
+  startChapter: number;
+  endChapter: number;
+};
+
+let parsedPlanDaysCache: ParsedPlanDay[] | null = null;
+
+function parsedPlanDays(): ParsedPlanDay[] {
+  if (!parsedPlanDaysCache) {
+    parsedPlanDaysCache = [];
+    for (const week of BIBLE_READING_PLAN_WEEKS) {
+      for (const day of week.days) {
+        const range = bibleReadingPlanRange(day.reading);
+        if (range) {
+          parsedPlanDaysCache.push({ day, ...range });
+        }
+      }
+    }
+  }
+  return parsedPlanDaysCache;
 }
 
 export function bibleReadingPlanDayForReference(code: string, chapter: string | number) {
@@ -122,22 +149,21 @@ export function bibleReadingPlanDayForReference(code: string, chapter: string | 
     return null;
   }
 
-  for (const week of BIBLE_READING_PLAN_WEEKS) {
-    for (const day of week.days) {
-      const range = bibleReadingPlanRange(day.reading);
-
-      if (
-        range &&
-        range.code === passageCode &&
-        passageChapter >= range.startChapter &&
-        passageChapter <= range.endChapter
-      ) {
-        return day;
-      }
+  for (const entry of parsedPlanDays()) {
+    if (
+      entry.code === passageCode &&
+      passageChapter >= entry.startChapter &&
+      passageChapter <= entry.endChapter
+    ) {
+      return entry.day;
     }
   }
 
   return null;
+}
+
+export function bibleReadingPlanDayHref(day: BibleReadingPlanDay) {
+  return `/bible-reading-plan?week=${day.week}&day=${day.daySlug}#week-${day.week}-${day.daySlug}`;
 }
 
 export function bibleReadingPlanHrefForReference(code: string, chapter: string | number) {
@@ -147,7 +173,7 @@ export function bibleReadingPlanHrefForReference(code: string, chapter: string |
     return "/bible-reading-plan";
   }
 
-  return `/bible-reading-plan?week=${day.week}&day=${day.daySlug}#week-${day.week}-${day.daySlug}`;
+  return bibleReadingPlanDayHref(day);
 }
 
 export function bibleReadingPlanLabelForReference(code: string, chapter: string | number) {
