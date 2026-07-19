@@ -15,7 +15,8 @@ export default function CrossHeartPrayHero({
     <section
       className={`mx-auto max-w-5xl text-center ${compact ? "py-3" : "py-8 sm:py-10"} ${className}`}
     >
-      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-black uppercase tracking-[0.34em] text-white sm:text-base">
+      {/* The wordmark is the page's one h1 — Tailwind preflight keeps it visually identical to the old div. */}
+      <h1 className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-black uppercase tracking-[0.34em] text-white sm:text-base">
         <span className="inline-flex items-center gap-3">
           <span className="text-4xl tracking-normal">✝️</span>
           <span>Cross</span>
@@ -28,7 +29,7 @@ export default function CrossHeartPrayHero({
           <span className="text-4xl tracking-normal">🙏</span>
           <span>Pray</span>
         </span>
-      </div>
+      </h1>
 
       <p className="mt-4 text-center text-lg font-black uppercase tracking-[0.28em] text-emerald-100 sm:text-xl">BIBLE EVERY DAY</p>
 
