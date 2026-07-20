@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { track } from "../lib/analytics";
+import { isShareCancel, SHARE_MESSAGES } from "../lib/sharePanel";
 
 type DailyBingoActionsProps = {
   shareTitle: string;
@@ -48,8 +49,11 @@ export default function DailyBingoActions({
       try {
         await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
         return;
-      } catch {
-        // Cancelled or unsupported — fall through to copy.
+      } catch (error) {
+        // Backing out of the native share sheet is a choice, not a failure —
+        // don't surprise the user with a clipboard copy they didn't ask for.
+        if (isShareCancel(error)) return;
+        // Genuinely unsupported/failed — fall through to copy.
       }
     }
 
@@ -64,12 +68,15 @@ export default function DailyBingoActions({
 
   return (
     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
+      <span aria-live="polite" role="status" className="sr-only">
+        {copied ? SHARE_MESSAGES.linkCopied : ""}
+      </span>
       <button
         type="button"
         onClick={share}
         className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-7 py-3 font-semibold text-slate-100 transition hover:bg-white/15"
       >
-        {copied ? "Link copied" : "Share this page"}
+        {copied ? SHARE_MESSAGES.linkCopied : "Share this page"}
       </button>
 
       <a

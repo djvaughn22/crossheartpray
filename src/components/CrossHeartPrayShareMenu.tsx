@@ -6,6 +6,15 @@ import {
   downloadInstagramCard,
   type InstagramCardContent,
 } from "../lib/instagramCard";
+import {
+  computeSharePopoverPlacement,
+  isShareCancel,
+  SHARE_MESSAGES,
+  sharePanelMode,
+  shareSheetMaxHeight,
+  type SharePanelMode,
+  type SharePopoverPlacement,
+} from "../lib/sharePanel";
 
 import { track } from "../lib/analytics";
 export type ShareItemLabel = "board" | "card" | "dailyHope" | string;
@@ -54,16 +63,6 @@ function titleNameFor(itemLabel: ShareItemLabel) {
   if (itemLabel === "dailyHope") return "Daily Hope";
   if (itemLabel === "board") return "Board";
   return "Card";
-}
-
-function safeFileName(value: string) {
-  return (
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 72) || "crossheartpray-share"
-  );
 }
 
 function unique(values: string[]) {
@@ -299,55 +298,6 @@ function cardShellHtml(parsed: ParsedShare, title: string, itemLabel: ShareItemL
 </section>`;
 }
 
-function documentHtml(parsed: ParsedShare, title: string, itemLabel: ShareItemLabel) {
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <style>
-    @page { size: letter portrait; margin: 0.38in; }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: #f8fafc; }
-    @media print {
-      body { background: #ffffff; }
-      section { padding: 0 !important; }
-      section > div { box-shadow: none !important; }
-      article { box-shadow: none !important; }
-    }
-  </style>
-</head>
-<body>
-${cardShellHtml(parsed, title, itemLabel, true)}
-</body>
-</html>`;
-}
-
-function plainText(parsed: ParsedShare, title: string) {
-  const parts: string[] = [title, ""];
-
-  if (parsed.metaLines.length) {
-    parts.push(...parsed.metaLines, "");
-  }
-
-  parsed.cards.forEach((card, index) => {
-    parts.push(parsed.cards.length > 1 ? `Card ${index + 1}` : "Card");
-    parts.push(...card.lines);
-    if (card.links.length) {
-      parts.push("Links:");
-      parts.push(...card.links);
-    }
-    parts.push("");
-  });
-
-  if (parsed.links.length) {
-    parts.push("All links:");
-    parts.push(...parsed.links);
-  }
-
-  return parts.join("\n").trim();
-}
-
 
 function shareTargetElement(boardHref: string, canonicalUrl: string) {
   if (typeof document === "undefined") return null;
@@ -387,7 +337,9 @@ function cleanedDomShareText(element: Element | null) {
         "header",
         "footer",
         "[role='menu']",
+        "[role='dialog']",
         "[aria-haspopup='menu']",
+        "[aria-haspopup='dialog']",
         ".print\\:hidden",
       ].join(","),
     )
@@ -395,6 +347,10 @@ function cleanedDomShareText(element: Element | null) {
 
   const noisyLines = new Set([
     "Share",
+    "Share using device",
+    "Copy link",
+    "Copy formatted email",
+    "Email a link",
     "Copy rich email HTML",
     "Copy URL",
     "HTML copies complete formatted content and opens text/email. URL copies link only.",
@@ -449,13 +405,6 @@ function runtimeShareText(shareText: string, boardHref: string, canonicalUrl: st
   return [baseText, "", ...links].filter(Boolean).join("\n");
 }
 
-
-function menuPositionClass(align: CrossHeartPrayShareMenuProps["align"]) {
-  if (align === "left") return "left-0";
-  if (align === "center") return "left-1/2 -translate-x-1/2";
-  return "right-0";
-}
-
 async function copyPlain(value: string) {
   track("share", { method: "copy" });
   try {
@@ -473,6 +422,8 @@ async function copyPlain(value: string) {
     try {
       document.execCommand("copy");
       return true;
+    } catch {
+      return false;
     } finally {
       textarea.remove();
     }
@@ -497,35 +448,14 @@ async function copyRich(html: string, plain: string) {
   return copyPlain(plain);
 }
 
-function downloadHtml(fileName: string, html: string) {
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
+// Only one share panel may be open at a time, app-wide. Opening a second one
+// closes the first (Daily Hope renders several share buttons on one page).
+let closeActiveShareMenu: (() => void) | null = null;
 
-function printHtml(html: string) {
-  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=1100");
+const actionItemClass =
+  "block w-full min-h-[48px] rounded-xl px-4 py-3 text-left text-base font-black text-white break-words transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300 disabled:cursor-wait disabled:opacity-60";
 
-  if (!printWindow) {
-    downloadHtml("crossheartpray-full-cards.html", html);
-    return;
-  }
-
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.focus();
-
-  window.setTimeout(() => {
-    printWindow.print();
-  }, 350);
-}
+const actionHintClass = "mt-0.5 block text-xs font-semibold leading-5 text-slate-300 break-words";
 
 export default function CrossHeartPrayShareMenu({
   boardHref,
@@ -540,42 +470,140 @@ export default function CrossHeartPrayShareMenu({
   className = "",
   instagramContent,
 }: CrossHeartPrayShareMenuProps) {
+  void align; // Placement is now fully viewport-clamped; the prop is kept for compatibility.
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState("");
-  const [coords, setCoords] = useState<{
-    top: number;
-    left?: number;
-    right?: number;
-    center?: number;
-    maxHeight: number;
-  } | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState<null | "device" | "square" | "portrait">(null);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+  const [mode, setMode] = useState<SharePanelMode>("popover");
+  const [placement, setPlacement] = useState<SharePopoverPlacement | null>(null);
+  const [sheetMaxH, setSheetMaxH] = useState(480);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const statusTimer = useRef<number | null>(null);
 
-  function toggleOpen() {
-    if (open) {
-      setOpen(false);
-      return;
-    }
+  // Measure the viewport and trigger, pick sheet vs popover, clamp everything
+  // inside the visible area. Re-run on resize/rotation while open.
+  function applyLayout() {
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const nextMode = sharePanelMode(viewport);
+    setMode(nextMode);
+    setSheetMaxH(shareSheetMaxHeight(viewport));
+
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      // Keep the whole menu inside the viewport: if there isn't enough room
-      // below the trigger (e.g. cards at the bottom of Daily Hope), shift it
-      // up; always cap its height to the space actually available.
-      const vh = window.innerHeight;
-      const menuCap = Math.min(Math.round(vh * 0.75), 640);
-      let top = rect.bottom + 8;
-      if (top + Math.min(menuCap, 360) > vh - 12) {
-        top = Math.max(12, vh - menuCap - 12);
-      }
-      const maxHeight = Math.max(220, Math.min(menuCap, vh - top - 12));
-      if (align === "left") setCoords({ top, left: rect.left, maxHeight });
-      else if (align === "center") setCoords({ top, center: rect.left + rect.width / 2, maxHeight });
-      else setCoords({ top, right: window.innerWidth - rect.right, maxHeight });
+      setPlacement(
+        computeSharePopoverPlacement(
+          { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+          viewport,
+        ),
+      );
     }
+  }
+
+  function openMenu() {
+    closeActiveShareMenu?.();
+    setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+    applyLayout();
+    setStatus("");
     setOpen(true);
   }
+
+  function closeMenu(restoreFocus = true) {
+    setOpen(false);
+    setStatus("");
+    if (restoreFocus) triggerRef.current?.focus();
+  }
+
+  function toggleOpen() {
+    if (open) closeMenu();
+    else openMenu();
+  }
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeSelf = () => closeMenu(false);
+    closeActiveShareMenu = closeSelf;
+
+    // Move focus into the dialog. Effects run post-commit, so the panel exists;
+    // rAF would be unreliable here (it never fires in backgrounded tabs).
+    if (panelRef.current && !panelRef.current.contains(document.activeElement)) {
+      panelRef.current.focus();
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeMenu();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      // Keep keyboard focus cycling inside the dialog.
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusables = Array.from(
+        panel.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"),
+      );
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === first || active === panel || !panel.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !panel.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function onScroll(event: Event) {
+      // The bottom sheet is viewport-anchored; only the popover drifts on page scroll.
+      if (mode === "sheet") return;
+      if (
+        panelRef.current &&
+        event.target instanceof Node &&
+        panelRef.current.contains(event.target)
+      ) {
+        return;
+      }
+      closeMenu(false);
+    }
+
+    function onResize() {
+      // Rotation / zoom while open: re-pick sheet vs popover and re-clamp.
+      applyLayout();
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+
+    // The sheet dims and covers the page bottom; lock background scroll behind it.
+    const previousOverflow = document.body.style.overflow;
+    if (mode === "sheet") document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+      document.body.style.overflow = previousOverflow;
+      if (closeActiveShareMenu === closeSelf) closeActiveShareMenu = null;
+    };
+  }, [open, mode]);
+
+  useEffect(() => {
+    return () => {
+      if (statusTimer.current) window.clearTimeout(statusTimer.current);
+    };
+  }, []);
 
   const canonicalUrl = useMemo(() => {
     if (boardUrl) return boardUrl;
@@ -589,53 +617,171 @@ export default function CrossHeartPrayShareMenu({
     return boardHref || "";
   }, [boardHref, boardUrl]);
 
-  const parsed = useMemo(() => parseShare(shareText, canonicalUrl), [shareText, canonicalUrl]);
-  const fullHtml = useMemo(() => documentHtml(parsed, emailSubject, itemLabel), [parsed, emailSubject, itemLabel]);
-  const copyHtml = useMemo(() => cardShellHtml(parsed, emailSubject, itemLabel, true), [parsed, emailSubject, itemLabel]);
-  const fullText = useMemo(() => plainText(parsed, emailSubject), [parsed, emailSubject]);
-  const fileName = `${safeFileName(emailSubject)}.html`;
-
-  // The menu is portaled to <body>, so it escapes card transforms/stacking and
-  // is always the top layer. The backdrop handles outside-click; here we just
-  // close on Escape and when the page scrolls/resizes (fixed coords would drift).
-  useEffect(() => {
-    if (!open) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    function onScrollOrResize(event?: Event) {
-      // Scrolling INSIDE the menu must not close it — only page scroll does.
-      if (
-        event &&
-        panelRef.current &&
-        event.target instanceof Node &&
-        panelRef.current.contains(event.target)
-      ) {
-        return;
-      }
-      setOpen(false);
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("scroll", onScrollOrResize, true);
-    window.addEventListener("resize", onScrollOrResize);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("scroll", onScrollOrResize, true);
-      window.removeEventListener("resize", onScrollOrResize);
-    };
-  }, [open]);
-
   function flash(message: string) {
-    setCopied(message);
-    window.setTimeout(() => setCopied(""), 1800);
+    setStatus(message);
+    if (statusTimer.current) window.clearTimeout(statusTimer.current);
+    statusTimer.current = window.setTimeout(() => setStatus(""), 2600);
   }
 
-  const visibleButtonLabel = buttonLabel || `Share ${titleNameFor(itemLabel)}`;
+  async function shareViaDevice() {
+    if (busy) return;
+    setBusy("device");
+    track("share", { method: "native" });
+    try {
+      await navigator.share({
+        title: emailSubject,
+        text: shareText.trim() || undefined,
+        url: canonicalUrl,
+      });
+      setBusy(null);
+      closeMenu();
+    } catch (error) {
+      setBusy(null);
+      flash(isShareCancel(error) ? SHARE_MESSAGES.shareCanceled : SHARE_MESSAGES.shareFailed);
+    }
+  }
+
+  async function copyLink() {
+    const ok = await copyPlain(canonicalUrl);
+    flash(ok ? SHARE_MESSAGES.linkCopied : SHARE_MESSAGES.copyBlocked);
+  }
+
+  async function copyEmailHtml() {
+    const liveShareText = runtimeShareText(shareText, boardHref, canonicalUrl);
+    const liveParsed = parseShare(liveShareText, canonicalUrl);
+    const liveHtml = htmlEmail ?? cardShellHtml(liveParsed, emailSubject, itemLabel, true);
+    const ok = await copyRich(liveHtml, shareText.trim() || canonicalUrl);
+    flash(ok ? SHARE_MESSAGES.emailCopied : SHARE_MESSAGES.copyBlocked);
+  }
+
+  async function downloadCardImage(size: "square" | "portrait") {
+    if (busy || !instagramContent) return;
+    setBusy(size);
+    flash(SHARE_MESSAGES.preparingCard);
+    const ok = await downloadInstagramCard(instagramContent, size);
+    setBusy(null);
+    flash(ok ? SHARE_MESSAGES.cardDownloaded : SHARE_MESSAGES.cardFailed);
+  }
+
+  const kindName = titleNameFor(itemLabel);
+  const visibleButtonLabel = buttonLabel || `Share ${kindName}`;
+  const dialogLabel = `Share ${kindName}`;
+
+  const panel = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={dialogLabel}
+      ref={panelRef}
+      tabIndex={-1}
+      style={
+        mode === "sheet"
+          ? {
+              // The dvh term self-clamps on rotation even if a resize event is missed.
+              maxHeight: `min(${sheetMaxH}px, 88dvh)`,
+              paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+            }
+          : placement
+            ? {
+                position: "fixed",
+                top: placement.top,
+                left: placement.left,
+                width: placement.width,
+                maxHeight: placement.maxHeight,
+              }
+            : undefined
+      }
+      className={
+        mode === "sheet"
+          ? "fixed inset-x-0 bottom-0 z-[9999] mx-auto w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-3xl border border-white/15 bg-slate-950 p-2 pt-1 text-left shadow-2xl shadow-black/60 outline-none"
+          : "z-[9999] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60 outline-none"
+      }
+    >
+      {mode === "sheet" ? (
+        <div aria-hidden className="mx-auto mb-1 mt-2 h-1 w-10 rounded-full bg-white/25" />
+      ) : null}
+
+      <div className="flex items-start justify-between gap-2 border-b border-white/10 px-3 py-2">
+        <div className="min-w-0">
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-emerald-100">
+            {dialogLabel}
+          </p>
+          <p aria-live="polite" role="status" className="mt-1 min-h-5 text-xs font-black text-emerald-100">
+            {status}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => closeMenu()}
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300"
+        >
+          <span aria-hidden>✕</span>
+          <span className="sr-only">Close</span>
+        </button>
+      </div>
+
+      {canNativeShare ? (
+        <button
+          type="button"
+          onClick={shareViaDevice}
+          disabled={busy === "device"}
+          className={`${actionItemClass} mt-1 bg-emerald-400/15 hover:bg-emerald-400/25`}
+        >
+          Share using device
+          <span className={actionHintClass}>Opens your device&rsquo;s own share options.</span>
+        </button>
+      ) : null}
+
+      <button type="button" onClick={copyLink} className={actionItemClass}>
+        Copy link
+        <span className={actionHintClass}>Copies the link to this {kindName.toLowerCase()}.</span>
+      </button>
+
+      {instagramContent ? (
+        <>
+          <button
+            type="button"
+            onClick={() => downloadCardImage("square")}
+            disabled={busy != null}
+            className={actionItemClass}
+          >
+            {busy === "square" ? SHARE_MESSAGES.preparingCard : "Download card image"}
+            <span className={actionHintClass}>Square 1080 × 1080 PNG for feed posts.</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => downloadCardImage("portrait")}
+            disabled={busy != null}
+            className={actionItemClass}
+          >
+            {busy === "portrait" ? SHARE_MESSAGES.preparingCard : "Download portrait image"}
+            <span className={actionHintClass}>Tall 1080 × 1350 PNG for stories and reels.</span>
+          </button>
+        </>
+      ) : null}
+
+      <button type="button" onClick={copyEmailHtml} className={actionItemClass}>
+        Copy formatted email
+        <span className={actionHintClass}>Paste into Gmail or any email to send the full {kindName.toLowerCase()}.</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(canonicalUrl)}`;
+          closeMenu();
+        }}
+        className={actionItemClass}
+      >
+        Email a link
+        <span className={actionHintClass}>Opens your email app with a plain link.</span>
+      </button>
+    </div>
+  );
 
   return (
-    <div ref={rootRef} className={`relative inline-flex ${className}`}>
+    <div className={`relative inline-flex ${className}`}>
       <button
         ref={triggerRef}
         type="button"
@@ -645,137 +791,28 @@ export default function CrossHeartPrayShareMenu({
             ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-white shadow-lg shadow-black/20 transition hover:bg-white/15"
             : "inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-black/20 transition hover:bg-white/15"
         }
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         aria-expanded={open}
         title={visibleButtonLabel}
       >
         {iconOnly ? "↗" : visibleButtonLabel}
       </button>
 
-      {open && coords && typeof document !== "undefined"
+      {open && typeof document !== "undefined"
         ? createPortal(
             <>
-              {/* Full-screen click-catcher: tap anywhere off the menu to close. */}
+              {/* Full-screen click-catcher: tap anywhere off the panel to close. */}
               <button
                 type="button"
                 aria-label="Close share menu"
-                onClick={() => setOpen(false)}
-                className="fixed inset-0 z-[9998] cursor-default"
+                onClick={() => closeMenu()}
+                className={
+                  mode === "sheet"
+                    ? "fixed inset-0 z-[9998] cursor-default bg-black/60"
+                    : "fixed inset-0 z-[9998] cursor-default"
+                }
               />
-              <div
-                role="menu"
-                ref={panelRef}
-                style={{
-                  position: "fixed",
-                  top: coords.top,
-                  left: coords.left ?? coords.center,
-                  right: coords.right,
-                  maxHeight: coords.maxHeight,
-                  transform: coords.center != null ? "translateX(-50%)" : undefined,
-                }}
-                className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
-              >
-          <div className="border-b border-white/10 px-3 py-2">
-            <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
-              Share
-            </p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-slate-300">
-              Copy HTML, then paste into Gmail. Or open your email app with a plain text link.
-            </p>
-            {copied ? (
-              <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-100">{copied}</p>
-            ) : null}
-          </div>
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={async () => {
-              const liveShareText = runtimeShareText(shareText, boardHref, canonicalUrl);
-              const liveParsed = parseShare(liveShareText, canonicalUrl);
-              const liveHtml = htmlEmail ?? cardShellHtml(liveParsed, emailSubject, itemLabel, true);
-              await copyRich(liveHtml, shareText.trim() || canonicalUrl);
-              flash("Rich email HTML copied. Open Gmail/email and paste into the body.");
-            }}
-            className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
-          >
-            Copy rich email HTML
-            <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-              Paste into Gmail or any email to send formatted.
-            </span>
-          </button>
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(canonicalUrl)}`;
-              setOpen(false);
-            }}
-            className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
-          >
-            Open email with plain text link
-            <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-              Opens your email app with a plain text link.
-            </span>
-          </button>
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={async () => {
-              const ok = await copyPlain(canonicalUrl);
-              flash(ok ? "URL copied" : "Copy blocked");
-              setOpen(false);
-            }}
-            className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
-          >
-            Copy URL
-            <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-              Link only.
-            </span>
-          </button>
-
-          {instagramContent ? (
-            <div className="mt-1 border-t border-white/10 pt-1">
-              <p className="px-3 pb-1 pt-2 text-[0.62rem] font-black uppercase tracking-[0.16em] text-emerald-100">
-                Social share image
-              </p>
-
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  downloadInstagramCard(instagramContent, "square");
-                  flash("Saved square image (1080 × 1080).");
-                  setOpen(false);
-                }}
-                className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
-              >
-                Square image
-                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-                  1080 × 1080 PNG — feed posts on any social app.
-                </span>
-              </button>
-
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  downloadInstagramCard(instagramContent, "portrait");
-                  flash("Saved portrait image (1080 × 1350).");
-                  setOpen(false);
-                }}
-                className="block w-full rounded-xl px-3 py-4 text-left text-base font-black text-white hover:bg-white/10"
-              >
-                Portrait image
-                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-300">
-                  1080 × 1350 PNG — stories and reels safe.
-                </span>
-              </button>
-            </div>
-          ) : null}
-              </div>
+              {panel}
             </>,
             document.body,
           )

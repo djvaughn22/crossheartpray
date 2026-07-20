@@ -183,26 +183,39 @@ export function renderInstagramCard(
   );
 }
 
+// Resolves true once the PNG download has been handed to the browser, false if
+// the card could not be rendered — callers use this to show a preparing state
+// and to block duplicate taps.
 export function downloadInstagramCard(
   content: InstagramCardContent,
   size: InstagramCardSize,
-) {
-  if (typeof document === "undefined") return;
+): Promise<boolean> {
+  if (typeof document === "undefined") return Promise.resolve(false);
 
-  const canvas = document.createElement("canvas");
-  renderInstagramCard(canvas, content, size);
+  return new Promise((resolve) => {
+    try {
+      const canvas = document.createElement("canvas");
+      renderInstagramCard(canvas, content, size);
 
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${safeFileName(content.fileBase)}-${
-      size === "portrait" ? "1080x1350" : "1080x1080"
-    }.png`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  }, "image/png");
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve(false);
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${safeFileName(content.fileBase)}-${
+          size === "portrait" ? "1080x1350" : "1080x1080"
+        }.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        resolve(true);
+      }, "image/png");
+    } catch {
+      resolve(false);
+    }
+  });
 }
