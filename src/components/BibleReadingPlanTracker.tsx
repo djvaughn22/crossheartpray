@@ -1,6 +1,6 @@
 import { type BibleReadingPlanWeek } from "../lib/bibleReadingPlan";
 import BibleReadingPlanProgress from "./BibleReadingPlanProgress";
-import PrintButton from "./PrintButton";
+import ReadingPlanPdfActions from "./ReadingPlanPdfActions";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
 import PageNucleusHero from "./PageNucleusHero";
@@ -35,7 +35,7 @@ export default function BibleReadingPlanTracker({ weeks }: BibleReadingPlanTrack
             title="Bible Reading Plan"
             subhead="Start with one day. Keep the rhythm."
           >
-            <PrintButton />
+            <ReadingPlanPdfActions />
           </PageNucleusHero>
         </div>
 
