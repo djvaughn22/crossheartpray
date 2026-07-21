@@ -1,3 +1,5 @@
+import { resolveBookCode } from "./scripture";
+
 // Gene Getz / Bible Principles / Life Essentials resource layer.
 //
 // CrossHeartPray is Bible-first. These are EXTERNAL study helps, not a
@@ -42,114 +44,12 @@ export type LifeEssentialsPrinciple = {
 
 export const GENE_GETZ_SOURCE_LABEL = "Dr. Gene Getz · Life Essentials";
 
-const BOOK_TO_CODE: Record<string, string> = {
-  "1 chronicles": "1CH",
-  "1 corinthians": "1CO",
-  "1 john": "1JN",
-  "1 kings": "1KI",
-  "1 peter": "1PE",
-  "1 samuel": "1SA",
-  "1 thessalonians": "1TH",
-  "1 timothy": "1TI",
-  "2 chronicles": "2CH",
-  "2 corinthians": "2CO",
-  "2 john": "2JN",
-  "2 kings": "2KI",
-  "2 peter": "2PE",
-  "2 samuel": "2SA",
-  "2 thessalonians": "2TH",
-  "2 timothy": "2TI",
-  "3 john": "3JN",
-  "ac": "ACT",
-  "acts": "ACT",
-  "amos": "AMO",
-  "colossians": "COL",
-  "daniel": "DAN",
-  "deut": "DEU",
-  "deuteronomy": "DEU",
-  "dt": "DEU",
-  "ecclesiastes": "ECC",
-  "ephesians": "EPH",
-  "esther": "EST",
-  "ex": "EXO",
-  "exo": "EXO",
-  "exodus": "EXO",
-  "ezekiel": "EZK",
-  "ezra": "EZR",
-  "galatians": "GAL",
-  "gen": "GEN",
-  "genesis": "GEN",
-  "habakkuk": "HAB",
-  "haggai": "HAG",
-  "heb": "HEB",
-  "hebrews": "HEB",
-  "hosea": "HOS",
-  "isaiah": "ISA",
-  "james": "JAS",
-  "jas": "JAS",
-  "jd": "JUD",
-  "jdg": "JDG",
-  "jeremiah": "JER",
-  "jhn": "JHN",
-  "jn": "JHN",
-  "job": "JOB",
-  "joel": "JOL",
-  "joh": "JHN",
-  "john": "JHN",
-  "jonah": "JON",
-  "josh": "JOS",
-  "joshua": "JOS",
-  "jude": "JUD",
-  "judges": "JDG",
-  "lamentations": "LAM",
-  "lev": "LEV",
-  "leviticus": "LEV",
-  "lk": "LUK",
-  "luk": "LUK",
-  "luke": "LUK",
-  "malachi": "MAL",
-  "mark": "MRK",
-  "matthew": "MAT",
-  "micah": "MIC",
-  "mk": "MRK",
-  "mrk": "MRK",
-  "mt": "MAT",
-  "nahum": "NAM",
-  "nehemiah": "NEH",
-  "num": "NUM",
-  "numbers": "NUM",
-  "obadiah": "OBA",
-  "phil": "PHP",
-  "philemon": "PHM",
-  "philippians": "PHP",
-  "php": "PHP",
-  "proverbs": "PRO",
-  "psalm": "PSA",
-  "psalms": "PSA",
-  "re": "REV",
-  "rev": "REV",
-  "revelation": "REV",
-  "revelations": "REV",
-  "rm": "ROM",
-  "rom": "ROM",
-  "romans": "ROM",
-  "ru": "RUT",
-  "ruth": "RUT",
-  "rv": "REV",
-  "song of solomon": "SNG",
-  "song of songs": "SNG",
-  "titus": "TIT",
-  "zechariah": "ZEC",
-  "zephaniah": "ZEP",
-};
-const CODE_SET = new Set<string>(Object.values(BOOK_TO_CODE));
-
+// Book name/abbreviation/code resolution lives in the shared Scripture
+// system (src/lib/scripture) — exact matches only, same accepted spellings as
+// the table this replaced (locked by scriptureProvider.test.ts).
 export function normalizeBookToCode(input: string): string {
   if (!input) return "";
-  const up = input.trim().toUpperCase();
-  if (CODE_SET.has(up)) return up;
-  const key = input.trim().toLowerCase().replace(/\./g, "").replace(/\s+/g, " ");
-  return BOOK_TO_CODE[key] ?? "";
+  return resolveBookCode(input);
 }
 
 export const LIFE_ESSENTIALS_PRINCIPLES: LifeEssentialsPrinciple[] = [

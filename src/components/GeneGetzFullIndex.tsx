@@ -12,6 +12,7 @@ import {
 } from "../lib/bibleReadingPlan";
 import CardReadMenu from "./CardReadMenu";
 import YouTubeModal from "./YouTubeModal";
+import { bibleComUrlForPassage } from "../lib/scripture";
 
 type Group = { book: string; items: LifeEssentialsPrinciple[] };
 
@@ -29,15 +30,18 @@ function principleKey(p: LifeEssentialsPrinciple) {
 
 // Bible.com (YouVersion, WEBUS) link for the principle's passage range.
 function passageUrl(p: LifeEssentialsPrinciple) {
-  const base = `https://www.bible.com/bible/206/${p.code}.${p.startChapter}`;
-  if (p.startChapter === p.endChapter && p.endVerse > p.startVerse) {
-    return `${base}.${p.startVerse}-${p.endVerse}.WEBUS`;
-  }
-  return `${base}.${p.startVerse}.WEBUS`;
+  const endVerse =
+    p.startChapter === p.endChapter && p.endVerse > p.startVerse ? p.endVerse : undefined;
+  return bibleComUrlForPassage({
+    code: p.code,
+    chapter: p.startChapter,
+    verse: p.startVerse,
+    endVerse,
+  });
 }
 
 function chapterUrl(p: LifeEssentialsPrinciple) {
-  return `https://www.bible.com/bible/206/${p.code}.${p.startChapter}.WEBUS`;
+  return bibleComUrlForPassage({ code: p.code, chapter: p.startChapter });
 }
 
 // Read destinations for each principle: passage + chapter on Bible.com, plus the

@@ -13,6 +13,8 @@ import GeneGetzResourceCard from "./GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
 import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
 import { track } from "../lib/analytics";
+import { bibleComUrlForPassage, formatScriptureReference } from "../lib/scripture";
+import ScriptureReferenceInput from "./scripture/ScriptureReferenceInput";
 
 type SpinMode = "gospel-epistles" | "gospel" | "epistles" | "proverbs" | "all";
 
@@ -36,7 +38,7 @@ type ActiveLookupWordStudy = {
 const DEFAULT_REFERENCE = "Romans 15:7";
 
 function verseUrl(passage: BibleBingoCardPassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function defaultSpinLabel(spinMode: SpinMode) {
@@ -319,14 +321,34 @@ export default function BibleVerseLookup({
             onSubmit={lookupVerse}
             className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row"
           >
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              type="text"
-              inputMode="text"
+            <ScriptureReferenceInput
+              className="flex-1"
               placeholder="Romans 15:7"
-              aria-label="Bible verse to search"
-              className="min-h-14 flex-1 rounded-2xl border border-white/15 bg-black/25 px-5 text-lg font-semibold text-white placeholder:text-white/35 outline-none ring-0 focus:border-white/40"
+              ariaLabel="Bible verse to search"
+              onQueryChange={setQuery}
+              onSelect={(suggestion) => {
+                // Book/chapter picks open at verse 1 so a verse card always
+                // has a verse to show.
+                const reference = {
+                  ...suggestion.reference,
+                  chapter: suggestion.reference.chapter ?? 1,
+                  verse: suggestion.reference.verse ?? 1,
+                };
+                const label = formatScriptureReference(reference);
+                setQuery(label);
+                setIsSearching(true);
+                setError("");
+                setNote("");
+                loadPassageByReference(label)
+                  .then(() => track("verse_lookup", { search_term: label }))
+                  .catch((caught) => {
+                    setPassage(null);
+                    setError(
+                      caught instanceof Error ? caught.message : "No local verse match found.",
+                    );
+                  })
+                  .finally(() => setIsSearching(false));
+              }}
             />
 
             <button

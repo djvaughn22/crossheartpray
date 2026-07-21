@@ -16,6 +16,7 @@ import {
   toggleChecklistItem,
   type ChecklistProgress,
 } from "../lib/checklistProgress";
+import { bibleComUrlForPassage } from "../lib/scripture";
 
 type BibleReadingPlanProgressProps = {
   weeks: BibleReadingPlanWeek[];
@@ -294,7 +295,7 @@ function bibleUrl(reading: unknown): string {
     );
 
     if (match) {
-      return `https://www.bible.com/bible/206/${code}.${match[2]}.WEBUS`;
+      return bibleComUrlForPassage({ code, chapter: match[2] });
     }
   }
 

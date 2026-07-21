@@ -11,6 +11,7 @@ import {
 } from "../lib/originalLanguageWordStudy";
 
 import { track } from "../lib/analytics";
+import { bibleComUrlForPassage } from "../lib/scripture";
 export type BibleBingoCardPassage = {
   label: string;
   book: string;
@@ -40,11 +41,11 @@ type BibleBingoVerseCardProps = {
 };
 
 function verseUrl(passage: BibleBingoCardPassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function chapterUrl(passage: BibleBingoCardPassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
+  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
 
 function escapeHtml(value: string) {

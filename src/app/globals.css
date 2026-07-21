@@ -341,6 +341,26 @@ html[data-chp-visual-theme="light"] :is([class*="text-[#2dd4bf]" i], [style*="co
   color: #0f766e !important;
 }
 
+/* Shared Scripture system (components/scripture): the autocomplete listbox is
+   a <ul> and the reader's verse highlight is a <p>, which the generic light
+   flatteners above don't reach - flatten them the same way. */
+html[data-chp-visual-theme="light"] ul[data-scripture-listbox] {
+  background: #ffffff !important;
+  border-color: #dbe2ea !important;
+  box-shadow: none !important;
+}
+html[data-chp-visual-theme="light"] ul[data-scripture-listbox] li {
+  background: transparent !important;
+}
+html[data-chp-visual-theme="light"] ul[data-scripture-listbox] li[aria-selected="true"],
+html[data-chp-visual-theme="light"] ul[data-scripture-listbox] li:hover {
+  background: #eef4ff !important;
+}
+html[data-chp-visual-theme="light"] p[data-verse][class*="bg-white/"] {
+  background: #e2e8f0 !important;
+  --tw-ring-color: #cbd5e1 !important;
+}
+
 /* Client re-renders serialize inline colors as rgb() - match that form too. */
 html[data-chp-visual-theme="light"] [style*="color: rgb(232, 237, 245)"] {
   color: #0f172a !important;

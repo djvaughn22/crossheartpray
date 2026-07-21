@@ -31,6 +31,7 @@ import type {
 } from "../lib/dailyHopeRoutine";
 
 import { track } from "../lib/analytics";
+import { bibleComUrlForPassage } from "../lib/scripture";
 type DailyHopeRoutineProps = {
   openingPrayers: DailyHopePrayerCard[];
   closingPrayer: DailyHopePrayerCard;
@@ -144,11 +145,11 @@ function dayLiteralPreview(day: DailyHopeDay) {
 }
 
 function verseUrl(passage: DailyHopePassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function chapterUrl(passage: DailyHopePassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
+  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
 
 function escapeHtml(value: string) {

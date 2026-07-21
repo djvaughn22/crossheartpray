@@ -1,5 +1,7 @@
 "use client";
 import * as CHPLocalBibleData from "../../lib/localBibleVerses";
+import { SCRIPTURE_BOOK_NAME_TO_CODE, bibleComUrlForPassage } from "../../lib/scripture";
+import ScriptureReader from "../../components/scripture/ScriptureReader";
 import SiteFooter from "../../components/SiteFooter";
 
 
@@ -41,22 +43,6 @@ import {
   wordStudyLookupKey,
 } from "../../lib/originalLanguageWordStudy";
 
-const CHP_BOOK_CODE_BY_NAME: Record<string, string> = {
-  Genesis: "GEN", Exodus: "EXO", Leviticus: "LEV", Numbers: "NUM", Deuteronomy: "DEU",
-  Joshua: "JOS", Judges: "JDG", Ruth: "RUT", "1 Samuel": "1SA", "2 Samuel": "2SA",
-  "1 Kings": "1KI", "2 Kings": "2KI", "1 Chronicles": "1CH", "2 Chronicles": "2CH",
-  Ezra: "EZR", Nehemiah: "NEH", Esther: "EST", Job: "JOB", Psalms: "PSA", Psalm: "PSA",
-  Proverbs: "PRO", Ecclesiastes: "ECC", "Song of Solomon": "SNG", "Song of Songs": "SNG",
-  Isaiah: "ISA", Jeremiah: "JER", Lamentations: "LAM", Ezekiel: "EZK", Daniel: "DAN",
-  Hosea: "HOS", Joel: "JOL", Amos: "AMO", Obadiah: "OBA", Jonah: "JON", Micah: "MIC",
-  Nahum: "NAM", Habakkuk: "HAB", Zephaniah: "ZEP", Haggai: "HAG", Zechariah: "ZEC",
-  Malachi: "MAL", Matthew: "MAT", Mark: "MRK", Luke: "LUK", John: "JHN", Acts: "ACT",
-  Romans: "ROM", "1 Corinthians": "1CO", "2 Corinthians": "2CO", Galatians: "GAL",
-  Ephesians: "EPH", Philippians: "PHP", Colossians: "COL", "1 Thessalonians": "1TH",
-  "2 Thessalonians": "2TH", "1 Timothy": "1TI", "2 Timothy": "2TI", Titus: "TIT",
-  Philemon: "PHM", Hebrews: "HEB", James: "JAS", "1 Peter": "1PE", "2 Peter": "2PE",
-  "1 John": "1JN", "2 John": "2JN", "3 John": "3JN", Jude: "JUD", Revelation: "REV",
-};
 
 /* BIBLE BINGO LANE VERSE POSITION LABEL */
 type ChpLocalBibleVerseRecord = Record<string, unknown>;
@@ -132,9 +118,10 @@ function chpBookCodeFromText(value: unknown) {
   const dotted = raw.match(/^([1-3]?[A-Za-z]{2,3})\./);
   if (dotted) return dotted[1].toUpperCase();
 
-  const names = Object.keys(CHP_BOOK_CODE_BY_NAME).sort((a, b) => b.length - a.length);
-  const found = names.find((name) => raw === name || raw.startsWith(`${name} `));
-  return found ? CHP_BOOK_CODE_BY_NAME[found] : "";
+  const found = SCRIPTURE_BOOK_NAME_TO_CODE.find(
+    ([name]) => raw === name || raw.startsWith(`${name} `),
+  );
+  return found ? found[1] : "";
 }
 
 function chpBook(record: Record<string, unknown>) {
@@ -250,7 +237,7 @@ type BibleBookLink = {
 };
 
 function bibleBookHref(code: string) {
-  return `https://www.bible.com/bible/206/${code}.1.WEBUS`;
+  return bibleComUrlForPassage({ code, chapter: 1 });
 }
 
 const BIBLE_BINGO_BOOK_LINKS: Record<string, BibleBookLink[]> = {
@@ -543,11 +530,11 @@ function buildDailyPath() {
 }
 
 function verseUrl(passage: Passage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function chapterUrl(passage: Passage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
+  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
 
 function hasVerifiedWordLinks(wordStudies: VerifiedWordStudy[]) {
@@ -1231,6 +1218,17 @@ export default function BibleExplorerPage() {
         )}
 
         <LazyBibleVerseLookup className="mt-8" initialReference="Romans 15:7" />
+
+        <section className="mx-auto mt-16 max-w-5xl border-t border-white/10 px-4 pt-14 sm:px-0">
+          <h2 className="text-center text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Read the Bible
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm font-semibold leading-6 text-zinc-300 sm:text-base">
+            Read any chapter right here. Search a book, chapter, or verse, or use
+            Prev and Next to keep reading.
+          </p>
+          <ScriptureReader className="mt-6" initialReference={{ book: "JHN", chapter: 1 }} />
+        </section>
 
         <section className="mt-16 border-t border-white/10 px-4 pt-14 pb-8 text-center">
           <h2 className="text-xl font-bold text-white">How it works</h2>

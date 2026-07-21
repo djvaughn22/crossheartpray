@@ -5,6 +5,7 @@ import { passagesForBibleBingoBoardId } from "../../../lib/bibleRandom";
 import { BIBLE_BINGO_SECTIONS } from "../../../lib/dailyBibleBingo";
 import SiteHeader from "../../../components/SiteHeader";
 import SiteFooter from "../../../components/SiteFooter";
+import { bibleComUrlForPassage } from "../../../lib/scripture";
 
 type PageProps = {
   params: Promise<{
@@ -35,11 +36,11 @@ const cardTones = [
 ];
 
 function verseUrl(passage: PassageForUrl) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function chapterUrl(passage: Omit<PassageForUrl, "verse">) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function escapeHtmlForEmail(value: string) {

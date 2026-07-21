@@ -10,6 +10,7 @@ import {
 } from "../lib/originalLanguageWordStudy";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
+import { bibleComUrlForPassage } from "../lib/scripture";
 
 type ShareSection = {
   title: string;
@@ -30,11 +31,11 @@ type BibleBingoShareBoardProps = {
 };
 
 function verseUrl(passage: BibleBingoPassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 function chapterUrl(passage: BibleBingoPassage) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
+  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
 
 function shareCardGridClass(index: number) {

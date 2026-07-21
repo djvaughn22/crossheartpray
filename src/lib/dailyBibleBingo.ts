@@ -16,6 +16,7 @@ import {
   seededReferenceForSection,
   type BibleBingoPassage,
 } from "./bibleRandom";
+import { bibleComUrlForPassage } from "./scripture";
 
 export const DAILY_BIBLE_BINGO_TIMEZONE = "America/Chicago";
 
@@ -193,11 +194,11 @@ export function referenceOnlyLabel(label: string) {
 }
 
 export function bibleVerseUrl(passage: Pick<BibleBingoPassage, "code" | "chapter" | "verse">) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.${passage.verse}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 export function bibleChapterUrl(passage: Pick<BibleBingoPassage, "code" | "chapter">) {
-  return `https://www.bible.com/bible/206/${passage.code}.${passage.chapter}.WEBUS`;
+  return bibleComUrlForPassage(passage);
 }
 
 export type DailyBibleBingoLane = {
