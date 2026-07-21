@@ -1,6 +1,8 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
+import AboutDestinationCard from "../../components/AboutDestinationCard";
+import { BE_PREPARED_CARD } from "../../lib/destinations";
 
 export const metadata = {
   title: "About",
@@ -299,6 +301,10 @@ export default function AboutPage() {
               </p>
               <p className="mt-1 text-xl">✝️ ❤️ 🙏</p>
             </section>
+
+            {/* The one quiet destination area — last, after everything that is
+                CrossHeartPray. Never in the header, never near Scripture. */}
+            <AboutDestinationCard card={BE_PREPARED_CARD} />
           </div>
         </div>
       </div>
