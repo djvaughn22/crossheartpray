@@ -92,9 +92,9 @@ describe("loadChecklistProgress / saveChecklistProgress", () => {
 
   it("keeps product namespaces separate", () => {
     saveChecklistProgress("crossheartpray:bible-reading-plan:v1", { a: true });
-    saveChecklistProgress("pleasebeready:checklist:v1", { b: true });
+    saveChecklistProgress("othersite:checklist:v1", { b: true });
     expect(loadChecklistProgress("crossheartpray:bible-reading-plan:v1")).toEqual({ a: true });
-    expect(loadChecklistProgress("pleasebeready:checklist:v1")).toEqual({ b: true });
+    expect(loadChecklistProgress("othersite:checklist:v1")).toEqual({ b: true });
   });
 
   it("survives a throwing localStorage (private mode)", () => {
