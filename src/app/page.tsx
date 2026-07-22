@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getCurrentAccessMode } from "../lib/guide/featureAccess";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import BibleBingoKingCard from "../components/BibleBingoKingCard";
@@ -72,10 +71,6 @@ const crossHeartPrayCards = [
 ];
 
 export default function WelcomePage() {
-  // The guide's one quiet entry point. Read server-side; when the feature is
-  // off this line disappears and the homepage is exactly as before.
-  const guideAvailable = getCurrentAccessMode("crossheartpray_guide") !== "off";
-
   return (
     <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-6xl px-6 py-8">
@@ -134,18 +129,6 @@ export default function WelcomePage() {
             );
           })}
         </section>
-
-        {guideAvailable ? (
-          <p className="mt-8 text-center text-sm font-semibold text-slate-400">
-            Not sure where to begin?{" "}
-            <Link
-              href="/guide"
-              className="text-slate-200 underline decoration-slate-500 underline-offset-4 transition hover:text-white"
-            >
-              Find a place to start →
-            </Link>
-          </p>
-        ) : null}
 
         <LazyBibleVerseLookup className="mt-12" initialReference="Romans 15:7" />
 
