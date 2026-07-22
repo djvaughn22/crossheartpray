@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import KindleReaderModal from "./scripture/KindleReaderModal";
 import {
   bibleComUrlForTranslation,
   resolveScriptureSelection,
@@ -40,6 +41,7 @@ export default function CardReadMenu({
 }: CardReadMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; center: number } | null>(null);
+  const [readerOpen, setReaderOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -142,24 +144,35 @@ export default function CardReadMenu({
                   Context matters
                 </p>
 
-                {resolved.readingPlan ? (
-                  <>
-                    <span className={groupLabelClass} aria-hidden="true">
-                      Stay on CrossHeartPray
-                    </span>
+                <span className={groupLabelClass} aria-hidden="true">
+                  Stay on CrossHeartPray
+                </span>
 
-                    <a
-                      href={resolved.readingPlan.readHereHref}
-                      role="menuitem"
-                      onClick={() => setOpen(false)}
-                      className={itemClass}
-                    >
-                      Read here
-                      <span className={subClass}>
-                        {resolved.label} in the Reading Plan — {resolved.readingPlan.label}.
-                      </span>
-                    </a>
-                  </>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    setReaderOpen(true);
+                  }}
+                  className={itemClass}
+                >
+                  Read here
+                  <span className={subClass}>On this page in a clean reader.</span>
+                </button>
+
+                {resolved.readingPlan ? (
+                  <a
+                    href={resolved.readingPlan.readHereHref}
+                    role="menuitem"
+                    onClick={() => setOpen(false)}
+                    className={itemClass}
+                  >
+                    Read on Bible Reading Plan
+                    <span className={subClass}>
+                      {resolved.readingPlan.label}.
+                    </span>
+                  </a>
                 ) : null}
 
                 <span className={groupLabelClass} aria-hidden="true">
@@ -183,6 +196,12 @@ export default function CardReadMenu({
             document.body,
           )
         : null}
+
+      <KindleReaderModal
+        isOpen={readerOpen}
+        onClose={() => setReaderOpen(false)}
+        initialReference={resolved.reference}
+      />
     </>
   );
 }
