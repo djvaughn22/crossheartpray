@@ -622,8 +622,6 @@ export default function BibleExplorerPage() {
         <p style="text-align: center; color: #475569; font-size: 16px; line-height: 1.6; max-width: 560px; margin-left: auto; margin-right: auto;">
           Same 7 cards. Explore and share.
         </p>
-        <p style="text-align: center; margin: 24px 0;">
-</p>
         ${path.map(({ section, passage }, index) => `
           <div style="border: 1px solid #dbe3ee; border-radius: 18px; padding: 22px; margin: 16px 0; background: #ffffff;">
             <p style="font-size: 30px; text-align: center; margin: 0 0 8px;">${section.emoji}</p>
@@ -631,7 +629,8 @@ export default function BibleExplorerPage() {
             <p style="font-family: Georgia, 'Times New Roman', serif; text-align: center; color: #0f172a; font-weight: bold; font-size: 24px; line-height: 1.25; margin: 10px 0 14px;">${passage.label}</p>
             <p style="font-family: Georgia, 'Times New Roman', serif; color: #334155; line-height: 1.7; font-size: 17px;">${passage.text}</p>
             <p style="text-align: center;">
-&nbsp; | &nbsp;
+              <a href="${verseUrl(passage)}" style="color: #065f46; font-weight: bold; text-decoration: none;">Verse</a>
+              &nbsp; | &nbsp;
               <a href="${chapterUrl(passage)}" style="color: #065f46; font-weight: bold; text-decoration: none;">Chapter</a>
               &nbsp; | &nbsp;
               <a href="${boardUrl}?card=${index + 1}" style="color: #065f46; font-weight: bold; text-decoration: none;">Card</a>

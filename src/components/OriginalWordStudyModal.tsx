@@ -374,7 +374,7 @@ export default function OriginalWordStudyModal({
                     Strong&apos;s definition
                   </p>
                   <p className="mt-2 whitespace-pre-wrap break-words text-sm font-bold leading-relaxed text-white">
-                    {strongsLongDefinition || selectedWordStudy.lexiconMeaning || strongsShortDefinition || "No Strong&apos;s definition found for this word yet."}
+                    {strongsLongDefinition || selectedWordStudy.lexiconMeaning || strongsShortDefinition || "No Strong's definition found for this word yet."}
                   </p>
                 </div>
 
@@ -446,7 +446,7 @@ export default function OriginalWordStudyModal({
                       Meaning
                     </dt>
                     <dd className="mt-2 whitespace-pre-wrap break-words text-base font-bold leading-relaxed text-white">
-                      {strongsShortDefinition || selectedWordStudy.sourceGloss || selectedWordStudy.lexiconMeaning || "Verified Strong&apos;s record"}
+                      {strongsShortDefinition || selectedWordStudy.sourceGloss || selectedWordStudy.lexiconMeaning || "Verified Strong's record"}
                     </dd>
                   </div>
                 </dl>

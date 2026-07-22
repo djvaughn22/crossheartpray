@@ -54,8 +54,11 @@ export default function DailyBibleBingoPostView({
 
           <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-300">
             Every day, Cross Heart Pray deals the same seven Scripture cards for
-            everyone — one from each lane of the week. This page is today’s
-            board from the Instagram post. Tap any passage to read it.
+            everyone — one from each lane of the week. This page is{" "}
+            {isArchive
+              ? "the board from that day’s Instagram post"
+              : "today’s board from the Instagram post"}
+            . Tap any passage to read it.
           </p>
 
           {isArchive ? (
@@ -115,7 +118,7 @@ export default function DailyBibleBingoPostView({
         {/* All 7 lanes. */}
         <section className="mt-8">
           <p className="text-center text-xs font-black uppercase tracking-[0.22em] text-slate-400">
-            Today’s full board
+            {isArchive ? "The full board" : "Today’s full board"}
           </p>
 
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
