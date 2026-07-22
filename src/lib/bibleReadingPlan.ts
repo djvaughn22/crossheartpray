@@ -141,6 +141,24 @@ function parsedPlanDays(): ParsedPlanDay[] {
   return parsedPlanDaysCache;
 }
 
+/**
+ * Canonical starting reference for a plan reading label ("Malachi" → MAL 1,
+ * "Deut 16-19" → DEU 16, "2Pet" → 2PE 1). The same parser that powers
+ * week-matching, so every plan cell can offer Read here — whole-book
+ * readings included. Null only for labels the plan parser cannot read.
+ */
+export function bibleReadingPlanReadingReference(
+  reading: string,
+): { code: string; chapter: number } | null {
+  const range = bibleReadingPlanRange(reading);
+  if (!range) return null;
+  const chapter =
+    Number.isInteger(range.startChapter) && range.startChapter >= 1
+      ? range.startChapter
+      : 1;
+  return { code: range.code, chapter };
+}
+
 export function bibleReadingPlanDayForReference(code: string, chapter: string | number) {
   const passageCode = code.trim().toUpperCase();
   const passageChapter = Number(chapter);

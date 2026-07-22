@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { BibleReadingPlanWeek } from "../lib/bibleReadingPlan";
+import {
+  bibleReadingPlanReadingReference,
+  type BibleReadingPlanWeek,
+} from "../lib/bibleReadingPlan";
 import {
   getAdjacentPlayablePrinciple,
   getGeneGetzPrinciplesForChapter,
@@ -317,10 +320,28 @@ function referenceFromWebHref(href: string): ScriptureReference | null {
   return Number.isInteger(chapter) && chapter >= 1 ? { book: m[1], chapter } : null;
 }
 
+// Canonical reference for a reading — the plan lib's own label parser first
+// (it understands whole-book readings like "Malachi" and "2Pet", so every
+// cell gets Read here), then the URL round-trip as a fallback.
+function referenceForReading(reading: unknown): ScriptureReference | null {
+  const parsed = bibleReadingPlanReadingReference(labelForReading(reading));
+  if (parsed) return { book: parsed.code, chapter: parsed.chapter };
+  return referenceFromWebHref(bibleUrl(reading));
+}
+
+// Every cell link goes to the reading's real first chapter on Bible.com —
+// whole-book readings included (never a search-results page).
+function hrefForReading(reading: unknown): string {
+  const reference = referenceForReading(reading);
+  return reference
+    ? bibleComUrlForPassage({ code: reference.book, chapter: reference.chapter ?? 1 })
+    : bibleUrl(reading);
+}
+
 // The Life Essentials principles that overlap a reading's first chapter —
 // powers the 1-click Gene Getz video icon per cell.
 function geneGetzForReading(reading: unknown): LifeEssentialsPrinciple[] {
-  const reference = referenceFromWebHref(bibleUrl(reading));
+  const reference = referenceForReading(reading);
   if (!reference) return [];
   return getGeneGetzPrinciplesForChapter(reference.book, reference.chapter ?? 1);
 }
@@ -342,7 +363,8 @@ function flattenPlan(weeks: BibleReadingPlanWeek[]) {
         short: lane.short,
         lane: laneForReading(reading, laneIndex),
         label,
-        href: bibleUrl(reading),
+        href: hrefForReading(reading),
+        readerReference: referenceForReading(reading),
       };
     });
   });
@@ -493,7 +515,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
               {(() => {
-                const readHereRef = referenceFromWebHref(nextReading.href);
+                const readHereRef = nextReading.readerReference;
                 return readHereRef ? (
                   <button
                     type="button"
@@ -577,8 +599,8 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     const reading = readingForLane(week, laneIndex);
                     const label = labelForReading(reading);
                     const id = idForReading(reading, weekNo, laneIndex);
-                    const href = bibleUrl(reading);
-                    const readHereRef = referenceFromWebHref(href);
+                    const href = hrefForReading(reading);
+                    const readHereRef = referenceForReading(reading);
                     const isRead = Boolean(progress[id]);
                     const getz = geneGetzForReading(reading).find((p) => p.youtubeId);
 
