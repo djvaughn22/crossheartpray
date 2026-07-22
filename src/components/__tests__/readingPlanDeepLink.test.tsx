@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import BibleReadingPlanProgress from "../BibleReadingPlanProgress";
 import {
@@ -10,17 +11,54 @@ import {
 } from "../../lib/bibleReadingPlan";
 import { getScriptureBook } from "../../lib/scripture";
 
-// jsdom has no scrollIntoView.
+// jsdom has no scrollIntoView / scrollTo.
 const scrollIntoViewMock = vi.fn();
 Element.prototype.scrollIntoView = scrollIntoViewMock;
+Element.prototype.scrollTo = vi.fn() as unknown as typeof Element.prototype.scrollTo;
+
+// Local chapter API mock so the cell reader can load Scripture text.
+function chapterPayload(book: string, chapter: number) {
+  const name = getScriptureBook(book)?.name ?? book;
+  const chapters = getScriptureBook(book)?.chapters ?? 1;
+  return {
+    book,
+    bookName: name,
+    chapter,
+    chapterCount: chapters,
+    verses: Array.from({ length: 24 }, (_, index) => ({
+      verse: index + 1,
+      text: `${name} ${chapter}:${index + 1} text.`,
+    })),
+    previous: chapter > 1 ? { book, chapter: chapter - 1 } : null,
+    next: chapter < chapters ? { book, chapter: chapter + 1 } : null,
+    attribution: "World English Bible (WEB), public domain.",
+  };
+}
 
 beforeEach(() => {
   scrollIntoViewMock.mockClear();
   window.localStorage.clear();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/scripture/chapter")) {
+        const params = new URL(url, "https://crossheartpray.com").searchParams;
+        return new Response(
+          JSON.stringify(
+            chapterPayload(params.get("book") ?? "", Number(params.get("chapter") ?? "1")),
+          ),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({}), { status: 200 });
+    }),
+  );
 });
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   window.history.replaceState(null, "", "/");
 });
 
@@ -105,6 +143,101 @@ describe("Reading Plan deep links — direct load lands on the exact week and la
     await waitFor(() => {
       expect(cell?.className).toContain("chp-reading-target-cell");
     });
+  });
+
+  it("a focus deep link expands the cell reader on the whole assigned book with the verse highlighted", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/bible-reading-plan?week=48&day=friday&focus=MAL.4.6#week-48-friday",
+    );
+
+    const { container } = render(
+      <BibleReadingPlanProgress weeks={BIBLE_READING_PLAN_WEEKS} />,
+    );
+
+    // The one cell reader mounts, named for the plan reading.
+    await screen.findByText("Week 48 · Friday");
+    expect(container.querySelectorAll(".chp-plan-cell-reader").length).toBe(1);
+
+    // It opens on the focus chapter with the arriving verse highlighted…
+    await screen.findByText("Malachi 4:6 text.");
+    await waitFor(() => {
+      const highlighted = container.querySelector(".chp-verse-target");
+      expect(highlighted?.textContent).toContain("Malachi 4:6 text.");
+    });
+
+    // …shows position within the whole-book assignment (all 4 chapters)…
+    expect(screen.getByText(/Chapter 4 of 4 in this reading/)).toBeTruthy();
+
+    // …and clamps Next at the end of the assignment while Previous continues
+    // back through the complete book, not just chapter 1.
+    expect(
+      screen.getByRole("button", { name: "End of this reading" }).hasAttribute("disabled"),
+    ).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Previous chapter, Malachi 3" }),
+    ).toBeTruthy();
+  });
+
+  it("marking complete from the expanded reader updates the grid checkbox and persists", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(
+      null,
+      "",
+      "/bible-reading-plan?week=48&day=friday#week-48-friday",
+    );
+
+    const { container } = render(
+      <BibleReadingPlanProgress weeks={BIBLE_READING_PLAN_WEEKS} />,
+    );
+    await screen.findByText("Week 48 · Friday");
+
+    const readerPanel = container.querySelector(".chp-plan-cell-reader") as HTMLElement;
+    await user.click(
+      within(readerPanel).getByRole("checkbox", { name: "Mark Malachi complete" }),
+    );
+
+    // The existing grid checkbox — same storage, same state.
+    const gridCheck = container.querySelector(
+      "#week-48-friday button[aria-pressed]",
+    );
+    expect(gridCheck?.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      JSON.parse(window.localStorage.getItem("crossheartpray:bible-reading-plan:v1") ?? "{}")[
+        "week-48-friday"
+      ],
+    ).toBe(true);
+  });
+
+  it("closing the reader collapses it and opening another replaces it", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(
+      null,
+      "",
+      "/bible-reading-plan?week=48&day=friday#week-48-friday",
+    );
+
+    const { container } = render(
+      <BibleReadingPlanProgress weeks={BIBLE_READING_PLAN_WEEKS} />,
+    );
+    await screen.findByText("Week 48 · Friday");
+
+    // Open a different cell's reader from its 📖 button.
+    const otherCell = container.querySelector("#week-47-friday") as HTMLElement;
+    await user.click(
+      within(otherCell).getByRole("button", { name: /here on CrossHeartPray/ }),
+    );
+
+    await screen.findByText("Week 47 · Friday");
+    expect(screen.queryByText("Week 48 · Friday")).toBeNull();
+    expect(container.querySelectorAll(".chp-plan-cell-reader").length).toBe(1);
+
+    // Close collapses the last reader.
+    await user.click(
+      screen.getByRole("button", { name: /Close .* reader/ }),
+    );
+    expect(container.querySelectorAll(".chp-plan-cell-reader").length).toBe(0);
   });
 
   it("saved progress survives a deep-link visit", async () => {

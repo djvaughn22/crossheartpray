@@ -1,16 +1,12 @@
-// The shared "Read here" experience: reference conversion, the reader-bus
-// contract, honest fallback labeling in the reader, and Gene Getz integrity —
-// Getz actions appear only for genuinely mapped passages, with only official
-// destinations, and are never fabricated.
-import { describe, expect, it, vi } from "vitest";
+// The shared "Read here" experience: reference conversion, the plan-cell
+// destination contract, honest fallback labeling in the reader, and Gene
+// Getz integrity — Getz actions appear only for genuinely mapped passages,
+// with only official destinations, and are never fabricated.
+import { describe, expect, it } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import {
-  SCRIPTURE_READER_OPEN_EVENT,
-  openScriptureReader,
-  referenceForPassage,
-} from "../scripture";
+import { referenceForPassage } from "../scripture";
 import {
   getGeneGetzPrinciplesForChapter,
   getGeneGetzPrinciplesForVerse,
@@ -45,29 +41,6 @@ describe("referenceForPassage", () => {
   });
 });
 
-describe("reader bus", () => {
-  it("dispatches the open event with the reference", () => {
-    const listener = vi.fn();
-    const fakeWindow = {
-      dispatchEvent: listener,
-    };
-    vi.stubGlobal("window", fakeWindow);
-    try {
-      openScriptureReader({ book: "JHN", chapter: 3, verse: 16 });
-      expect(listener).toHaveBeenCalledTimes(1);
-      const event = listener.mock.calls[0][0] as CustomEvent;
-      expect(event.type).toBe(SCRIPTURE_READER_OPEN_EVENT);
-      expect(event.detail).toEqual({ reference: { book: "JHN", chapter: 3, verse: 16 } });
-    } finally {
-      vi.unstubAllGlobals();
-    }
-  });
-
-  it("is a safe no-op during SSR (no window)", () => {
-    expect(() => openScriptureReader({ book: "JHN", chapter: 3 })).not.toThrow();
-  });
-});
-
 describe("reader truthfulness (source contract)", () => {
   const reader = read(path.join("scripture", "ScriptureReader.tsx"));
 
@@ -84,24 +57,33 @@ describe("reader truthfulness (source contract)", () => {
   });
 });
 
-describe("shared reader overlay (source contract)", () => {
-  const overlay = read(path.join("scripture", "ScriptureReaderOverlay.tsx"));
+describe("Reading Plan cell reader (source contract)", () => {
+  const cellReader = read("ReadingPlanCellReader.tsx");
+  const planProgress = read("BibleReadingPlanProgress.tsx");
 
-  it("is a real dialog with focus, Escape, and back-button handling", () => {
-    expect(overlay).toContain('role="dialog"');
-    expect(overlay).toContain('aria-modal="true"');
-    expect(overlay).toContain('event.key === "Escape"');
-    expect(overlay).toContain("popstate");
-    expect(overlay).toContain("panelRef.current?.focus()");
+  it("reads the complete assigned passage with bounded chapter navigation", () => {
+    expect(cellReader).toContain("chapterBounds={assignment}");
+    expect(cellReader).toContain("Chapter {chapterPosition} of {assignedChapterCount} in this reading");
   });
 
-  it("shows Gene Getz actions only for genuinely matched chapters", () => {
-    expect(overlay).toContain("getGeneGetzPrinciplesForChapter");
-    expect(overlay).toContain("getzMatches.length > 0 ?");
-    // Only official destinations: the in-app official video or the official
-    // video URL from the verified index — never a constructed Getz URL.
-    expect(overlay).toContain("principle.officialVideoUrl");
-    expect(overlay).not.toMatch(/bibleprinciples\.org\/[^"']*\$\{/);
+  it("keeps the existing completion checkbox — no second progress system", () => {
+    expect(cellReader).toContain("onToggleRead");
+    expect(planProgress).toContain("onToggleRead={() => toggleReading(activeReadingId)}");
+    expect(cellReader).not.toContain("localStorage");
+  });
+
+  it("mounts exactly one reader, keyed to the active reading", () => {
+    expect(planProgress).toContain("const [activeReadingId, setActiveReadingId] = useState(");
+    expect(planProgress).toContain("key={activeReadingId}");
+  });
+
+  it("restores from a refresh-safe deep link and writes one back", () => {
+    expect(planProgress).toContain('new URLSearchParams(window.location.search).get("focus")');
+    expect(planProgress).toContain("window.history.replaceState(");
+  });
+
+  it("shows Gene Getz principles through the shared companion, official only", () => {
+    expect(cellReader).toContain("ReaderLifeEssentials");
   });
 });
 
@@ -110,26 +92,27 @@ describe("CardReadMenu Context matters group (source contract)", () => {
 
   it("derives every action from one canonical resolved reference", () => {
     expect(menu).toContain("resolveScriptureSelection(reference)");
-    expect(menu).toContain("openScriptureReader(resolved.reference)");
-    expect(menu).toContain("openScriptureReader(resolved.chapterReference)");
     // No separately passed hrefs — that was how a card once showed Malachi
     // while its buttons still said Zechariah.
     expect(menu).not.toContain("verseHref");
     expect(menu).not.toContain("chapterHref");
   });
 
+  it("Read here goes to the exact Reading Plan cell — the one internal destination", () => {
+    expect(menu).toContain("resolved.readingPlan.readHereHref");
+    expect(menu).not.toContain("openScriptureReader");
+    expect(menu).not.toContain("Read chapter here");
+    // Exactly two actions: Read here and Bible.com ↗ — Read here IS the
+    // Reading Plan destination, so no duplicate internal button exists.
+    expect(menu.match(/role="menuitem"/g)?.length).toBe(2);
+  });
+
   it("separates staying on CrossHeartPray from leaving for Bible.com", () => {
     expect(menu).toContain("Context matters");
     expect(menu).toContain("Stay on CrossHeartPray");
-    expect(menu).toContain("Read chapter here");
     expect(menu).toContain("Other destinations");
     expect(menu).toContain('rel="noopener noreferrer"');
     expect(menu).toContain("on Bible.com in a new tab");
-  });
-
-  it("shows the Reading Plan action only for real dataset matches", () => {
-    expect(menu).toContain("resolved.readingPlan ? (");
-    expect(menu).toContain("resolved.readingPlan.href");
   });
 });
 

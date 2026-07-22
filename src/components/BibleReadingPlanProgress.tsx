@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
+  bibleReadingPlanAssignmentForReading,
   bibleReadingPlanReadingReference,
   type BibleReadingPlanWeek,
 } from "../lib/bibleReadingPlan";
+import ReadingPlanCellReader, {
+  type ReadingPlanCellAssignment,
+} from "./ReadingPlanCellReader";
 import {
   getAdjacentPlayablePrinciple,
   getGeneGetzPrinciplesForChapter,
@@ -21,7 +25,9 @@ import {
 } from "../lib/checklistProgress";
 import {
   bibleComUrlForPassage,
-  openScriptureReader,
+  getScriptureBook,
+  parseScriptureReference,
+  toUsfmString,
   type ScriptureReference,
 } from "../lib/scripture";
 
@@ -370,11 +376,44 @@ function flattenPlan(weeks: BibleReadingPlanWeek[]) {
   });
 }
 
+// "week-48-friday" → { week: 48, daySlug: "friday" }; null when malformed.
+function parseReadingId(readingId: string) {
+  const match = readingId.match(/^week-(\d+)-([a-z]+)$/);
+  if (!match) return null;
+  return { week: Number(match[1]), daySlug: match[2] };
+}
+
 export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProgressProps) {
   const readings = useMemo(() => flattenPlan(weeks), [weeks]);
   const [progress, setProgress] = useState<ChecklistProgress>({});
   const [highlightedReadingId, setHighlightedReadingId] = useState("");
   const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
+  // The one open cell reader — a single mounted reader, never one per cell.
+  const [activeReadingId, setActiveReadingId] = useState("");
+  const [activeFocus, setActiveFocus] = useState<ScriptureReference | null>(null);
+
+  // Open a cell's inline reader and keep the URL a refresh-safe deep link.
+  const openCellReader = useCallback(
+    (readingId: string, focus: ScriptureReference | null) => {
+      const parsed = parseReadingId(readingId);
+      if (!parsed) return;
+      setActiveReadingId(readingId);
+      setActiveFocus(focus);
+      const focusParam = focus ? `&focus=${encodeURIComponent(toUsfmString(focus))}` : "";
+      window.history.replaceState(
+        null,
+        "",
+        `/bible-reading-plan?week=${parsed.week}&day=${parsed.daySlug}${focusParam}#${readingId}`,
+      );
+    },
+    [],
+  );
+
+  const closeCellReader = useCallback(() => {
+    setActiveReadingId("");
+    setActiveFocus(null);
+    window.history.replaceState(null, "", "/bible-reading-plan");
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe hydration: saved progress lives in localStorage, readable only after mount
@@ -405,6 +444,15 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
       if (clearHighlightTimer) {
         window.clearTimeout(clearHighlightTimer);
       }
+
+      // A reading deep link expands the cell's reader, focused on the verse
+      // that brought the person here (?focus=MAL.4.6, USFM form).
+      const focusRaw = new URLSearchParams(window.location.search).get("focus");
+      const focusReference = focusRaw
+        ? parseScriptureReference(decodeURIComponent(focusRaw))
+        : null;
+      setActiveReadingId(targetId);
+      setActiveFocus(focusReference);
 
       setHighlightedReadingId(targetId);
 
@@ -437,6 +485,24 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
       window.removeEventListener("hashchange", highlightTargetCell);
     };
   }, []);
+
+  // The single active cell reader's reading and clamped assignment.
+  const activeReading = useMemo(
+    () => (activeReadingId ? readings.find((entry) => entry.id === activeReadingId) ?? null : null),
+    [activeReadingId, readings],
+  );
+  const activeAssignment = useMemo<ReadingPlanCellAssignment | null>(() => {
+    if (!activeReading) return null;
+    const range = bibleReadingPlanAssignmentForReading(activeReading.label);
+    if (!range) return null;
+    const book = getScriptureBook(range.code);
+    if (!book) return null;
+    return {
+      book: range.code,
+      startChapter: Math.min(range.startChapter, book.chapters),
+      endChapter: Math.min(range.endChapter, book.chapters),
+    };
+  }, [activeReading]);
 
   const readingIds = useMemo(() => readings.map((reading) => reading.id), [readings]);
   const { done: doneCount, remaining: daysLeft, percent } = checklistStats(readingIds, progress);
@@ -514,19 +580,24 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
-              {(() => {
-                const readHereRef = nextReading.readerReference;
-                return readHereRef ? (
-                  <button
-                    type="button"
-                    onClick={() => openScriptureReader(readHereRef)}
-                    className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/30 bg-white/[0.06] px-4 py-2 text-sm font-black leading-tight text-white transition hover:border-emerald-200/50 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:w-auto sm:text-base"
-                    title={`Read ${nextReading.label} here`}
-                  >
-                    Read {nextReading.label} here
-                  </button>
-                ) : null;
-              })()}
+              {nextReading.readerReference ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    openCellReader(nextReading.id, null);
+                    window.setTimeout(() => {
+                      document.getElementById(nextReading.id)?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    }, 80);
+                  }}
+                  className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/30 bg-white/[0.06] px-4 py-2 text-sm font-black leading-tight text-white transition hover:border-emerald-200/50 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:w-auto sm:text-base"
+                  title={`Read ${nextReading.label} here`}
+                >
+                  Read {nextReading.label} here
+                </button>
+              ) : null}
 
               <a
                 href={nextReading.href}
@@ -585,10 +656,12 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
           <tbody>
             {weeks.map((week, weekIndex) => {
               const weekNo = weekNumber(week, weekIndex + 1);
+              const readerInThisWeek =
+                activeReading && activeAssignment && activeReading.weekNo === weekNo;
 
               return (
+                <Fragment key={weekNo}>
                 <tr
-                  key={weekNo}
                   className="border-b border-white/[0.065] last:border-b-0"
                 >
                   <th className="border-r border-white/10 bg-slate-950/45 px-2 py-1 text-center text-xs font-black leading-none text-white">
@@ -640,9 +713,14 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                           {readHereRef ? (
                             <button
                               type="button"
-                              onClick={() => openScriptureReader(readHereRef)}
+                              onClick={() =>
+                                activeReadingId === id
+                                  ? closeCellReader()
+                                  : openCellReader(id, null)
+                              }
                               title={`Read ${label} here`}
                               aria-label={`Read ${label} here on CrossHeartPray`}
+                              aria-expanded={activeReadingId === id}
                               className="chp-getz-icon ml-auto shrink-0 cursor-pointer text-base leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
                             >
                               📖
@@ -672,6 +750,29 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     );
                   })}
                 </tr>
+
+                {readerInThisWeek ? (
+                  <tr className="chp-plan-reader-row border-b border-white/[0.065] print:hidden">
+                    <td colSpan={LANES.length + 1} className="p-0">
+                      {/* Sticky-left so the reader stays readable inside the
+                          horizontally scrolling plan table on every width. */}
+                      <div className="chp-plan-reader-sticky">
+                        <ReadingPlanCellReader
+                          key={activeReadingId}
+                          readingLabel={activeReading!.label}
+                          weekNo={activeReading!.weekNo}
+                          dayLabel={activeReading!.day}
+                          assignment={activeAssignment!}
+                          focus={activeFocus}
+                          isRead={Boolean(progress[activeReadingId])}
+                          onToggleRead={() => toggleReading(activeReadingId)}
+                          onClose={closeCellReader}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               );
             })}
           </tbody>

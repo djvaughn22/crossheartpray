@@ -41,10 +41,16 @@ type ScriptureReaderProps = {
   initialReference?: ScriptureReference;
   /** "inline" = bounded card in a page; "fill" = stretch to the container. */
   variant?: "inline" | "fill";
-  /** When set, the top bar renders a close control (the shared overlay). */
+  /** When set, the top bar renders a close control. */
   onRequestClose?: () => void;
   /** Quiet extra content after the chapter text (e.g. Life Essentials). */
   afterScripture?: ReactNode;
+  /**
+   * Restrict Previous/Next to an assigned passage (same book) — the Reading
+   * Plan cell reader. Intentional navigation elsewhere via the go-to search
+   * releases the bounds.
+   */
+  chapterBounds?: { book: string; startChapter: number; endChapter: number };
   className?: string;
   onReferenceChange?: (reference: ScriptureReference) => void;
 };
@@ -63,6 +69,7 @@ export default function ScriptureReader({
   variant = "inline",
   onRequestClose,
   afterScripture,
+  chapterBounds,
   className = "",
   onReferenceChange,
 }: ScriptureReaderProps) {
@@ -213,6 +220,29 @@ export default function ScriptureReader({
   const lastTargetVerse = targetEndVerse ?? targetVerse;
   const isTargetVerse = (verse: number) =>
     targetVerse !== null && verse >= targetVerse && verse <= (lastTargetVerse ?? targetVerse);
+
+  // Assigned-passage bounds: clamp Previous/Next while reading inside the
+  // assignment; a go-to search outside it releases the clamp intentionally.
+  const boundsActive = Boolean(
+    chapterBounds &&
+      current.book === chapterBounds.book &&
+      current.chapter !== undefined &&
+      current.chapter >= chapterBounds.startChapter &&
+      current.chapter <= chapterBounds.endChapter,
+  );
+  const withinBounds = (reference: ScriptureReference | null | undefined) =>
+    Boolean(
+      reference &&
+        (!boundsActive ||
+          (chapterBounds &&
+            reference.book === chapterBounds.book &&
+            (reference.chapter ?? 1) >= chapterBounds.startChapter &&
+            (reference.chapter ?? 1) <= chapterBounds.endChapter)),
+    );
+  const previousReference =
+    chapterData?.previous && withinBounds(chapterData.previous) ? chapterData.previous : null;
+  const nextReference =
+    chapterData?.next && withinBounds(chapterData.next) ? chapterData.next : null;
 
   const fill = variant === "fill";
 
@@ -370,13 +400,15 @@ export default function ScriptureReader({
       >
         <button
           type="button"
-          onClick={() => chapterData?.previous && goTo(chapterData.previous)}
-          disabled={!chapterData?.previous || isLoading}
+          onClick={() => previousReference && goTo(previousReference)}
+          disabled={!previousReference || isLoading}
           className={navButtonClass}
           aria-label={
-            chapterData?.previous
-              ? `Previous chapter, ${formatScriptureReference(chapterData.previous)}`
-              : "No previous chapter"
+            previousReference
+              ? `Previous chapter, ${formatScriptureReference(previousReference)}`
+              : boundsActive
+                ? "Start of this reading"
+                : "No previous chapter"
           }
         >
           ← Previous
@@ -391,13 +423,15 @@ export default function ScriptureReader({
 
         <button
           type="button"
-          onClick={() => chapterData?.next && goTo(chapterData.next)}
-          disabled={!chapterData?.next || isLoading}
+          onClick={() => nextReference && goTo(nextReference)}
+          disabled={!nextReference || isLoading}
           className={navButtonClass}
           aria-label={
-            chapterData?.next
-              ? `Next chapter, ${formatScriptureReference(chapterData.next)}`
-              : "No next chapter"
+            nextReference
+              ? `Next chapter, ${formatScriptureReference(nextReference)}`
+              : boundsActive
+                ? "End of this reading"
+                : "No next chapter"
           }
         >
           Next →

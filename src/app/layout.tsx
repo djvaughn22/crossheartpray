@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChpProductNav from "../components/ChpProductNav";
-import ScriptureReaderOverlay from "../components/scripture/ScriptureReaderOverlay";
 import VisualThemeProvider from "../components/VisualThemeProvider";
 import Script from "next/script";
 
@@ -47,9 +46,6 @@ export default function RootLayout({
         <VisualThemeProvider>
           <ChpProductNav />
           {children}
-          {/* The shared "Read here" Scripture reader — one overlay for every
-              feature, opened via openScriptureReader(). */}
-          <ScriptureReaderOverlay />
         </VisualThemeProvider>
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-2PXSNXTPX0"

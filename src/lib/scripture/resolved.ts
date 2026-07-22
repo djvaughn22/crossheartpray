@@ -13,9 +13,9 @@
 // component state, remote payload labels, or a second parser.
 
 import {
-  bibleReadingPlanDayForReference,
+  bibleReadingPlanAssignmentForReference,
   bibleReadingPlanDayHref,
-  type BibleReadingPlanDay,
+  type BibleReadingPlanAssignment,
 } from "../bibleReadingPlan";
 import { getScriptureBook } from "./books";
 import {
@@ -36,8 +36,20 @@ export type ResolvedReadingPlanTarget = {
   lane: string;
   /** The plan's own reading text ("Malachi", "Zechariah 8-14"). */
   reading: string;
-  /** Deterministic, shareable deep link: query params + anchor. */
+  /** Stable reading id — also the cell anchor ("week-48-friday"). */
+  readingId: string;
+  /** First chapter of the assigned passage. */
+  startChapter: number;
+  /** Last chapter of the assigned passage (clamped to the real book). */
+  endChapter: number;
+  /** Deterministic, shareable deep link to the cell: params + anchor. */
   href: string;
+  /**
+   * The universal Read here destination: the exact plan cell, carrying the
+   * selected verse to highlight —
+   * "/bible-reading-plan?week=48&day=friday&focus=MAL.4.6#week-48-friday".
+   */
+  readHereHref: string;
   /** "Week 48 · Friday — Malachi" */
   label: string;
 };
@@ -69,14 +81,25 @@ export type ResolvedScriptureReference = {
   readingPlan: ResolvedReadingPlanTarget | null;
 };
 
-function planTarget(day: BibleReadingPlanDay): ResolvedReadingPlanTarget {
+function planTarget(
+  assignment: BibleReadingPlanAssignment,
+  bookChapters: number,
+  usfm: string,
+): ResolvedReadingPlanTarget {
+  const { day } = assignment;
+  const readingId = `week-${day.week}-${day.daySlug}`;
+  const anchorHref = bibleReadingPlanDayHref(day);
   return {
     week: day.week,
     daySlug: day.daySlug,
     dayLabel: day.dayLabel,
     lane: day.category,
     reading: day.reading,
-    href: bibleReadingPlanDayHref(day),
+    readingId,
+    startChapter: assignment.startChapter,
+    endChapter: Math.min(assignment.endChapter, bookChapters),
+    href: anchorHref,
+    readHereHref: `/bible-reading-plan?week=${day.week}&day=${day.daySlug}&focus=${encodeURIComponent(usfm)}#${readingId}`,
     label: `Week ${day.week} · ${day.dayLabel} — ${day.reading}`,
   };
 }
@@ -119,7 +142,8 @@ export function resolveScriptureSelection(
   };
   const chapterReference: ScriptureReference = { book: book.usfm, chapter };
 
-  const planDay = bibleReadingPlanDayForReference(book.usfm, chapter);
+  const assignment = bibleReadingPlanAssignmentForReference(book.usfm, chapter);
+  const usfm = toUsfmString(reference);
 
   return {
     bookCode: book.usfm,
@@ -130,12 +154,12 @@ export function resolveScriptureSelection(
     endVerse,
     label: formatScriptureReference(reference),
     chapterLabel: formatScriptureReference(chapterReference),
-    usfm: toUsfmString(reference),
+    usfm,
     reference,
     chapterReference,
     bibleComUrl: bibleComUrl(reference),
     bibleComChapterUrl: bibleComUrl(chapterReference),
-    readingPlan: planDay ? planTarget(planDay) : null,
+    readingPlan: assignment ? planTarget(assignment, book.chapters, usfm) : null,
   };
 }
 

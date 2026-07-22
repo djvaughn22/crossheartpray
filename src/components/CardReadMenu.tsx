@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   bibleComUrlForTranslation,
-  openScriptureReader,
   resolveScriptureSelection,
   type ScriptureReference,
   type ScriptureTranslation,
@@ -21,14 +20,17 @@ type CardReadMenuProps = {
 };
 
 // The one "Context matters" action group for every verse surface. A "Read"
-// pill opens a portaled panel with two clearly separated groups:
+// pill opens a portaled panel with two clearly separated choices:
 //
-//   Stay on CrossHeartPray:  Read here · Read chapter here (in-app reader)
-//   Other destinations:      Bible.com ↗ (external) · Reading Plan (internal)
+//   Stay on CrossHeartPray:  Read here — the exact 52-week Reading Plan cell
+//                            containing this verse, expanded for reading with
+//                            the verse highlighted.
+//   Other destinations:      Bible.com ↗ (external, new tab)
 //
-// All routes, labels, and the Reading Plan destination come from ONE
-// ResolvedScriptureReference — never from separately passed hrefs, so the
-// heading and the actions can never disagree. Portaled to <body> like
+// The Reading Plan IS the internal reading destination, so there is no
+// separate plan button and no duplicate chapter action. Everything derives
+// from ONE ResolvedScriptureReference — never from separately passed hrefs,
+// so the heading and the actions can never disagree. Portaled to <body> like
 // CrossHeartPrayShareMenu so it escapes card transforms.
 export default function CardReadMenu({
   reference,
@@ -46,10 +48,7 @@ export default function CardReadMenu({
     [reference],
   );
 
-  const showReadHere = resolved ? resolved.verse !== undefined : false;
-  const itemCount = resolved
-    ? (showReadHere ? 1 : 0) + 2 + (resolved.readingPlan ? 1 : 0)
-    : 0;
+  const itemCount = resolved ? (resolved.readingPlan ? 1 : 0) + 1 : 0;
 
   function toggleOpen() {
     if (open) {
@@ -143,46 +142,25 @@ export default function CardReadMenu({
                   Context matters
                 </p>
 
-                <span className={groupLabelClass} aria-hidden="true">
-                  Stay on CrossHeartPray
-                </span>
-
-                {showReadHere ? (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      // Focus the persistent Read trigger first so the reader
-                      // overlay can restore focus there on close — this menu
-                      // item unmounts when the menu closes.
-                      triggerRef.current?.focus();
-                      setOpen(false);
-                      openScriptureReader(resolved.reference);
-                    }}
-                    className={itemClass}
-                  >
-                    Read here
-                    <span className={subClass}>
-                      {resolved.label} in the CrossHeartPray reader.
+                {resolved.readingPlan ? (
+                  <>
+                    <span className={groupLabelClass} aria-hidden="true">
+                      Stay on CrossHeartPray
                     </span>
-                  </button>
-                ) : null}
 
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    triggerRef.current?.focus();
-                    setOpen(false);
-                    openScriptureReader(resolved.chapterReference);
-                  }}
-                  className={itemClass}
-                >
-                  Read chapter here
-                  <span className={subClass}>
-                    All of {resolved.chapterLabel}, right here.
-                  </span>
-                </button>
+                    <a
+                      href={resolved.readingPlan.readHereHref}
+                      role="menuitem"
+                      onClick={() => setOpen(false)}
+                      className={itemClass}
+                    >
+                      Read here
+                      <span className={subClass}>
+                        {resolved.label} in the Reading Plan — {resolved.readingPlan.label}.
+                      </span>
+                    </a>
+                  </>
+                ) : null}
 
                 <span className={groupLabelClass} aria-hidden="true">
                   Other destinations
@@ -200,18 +178,6 @@ export default function CardReadMenu({
                   Bible.com <span aria-hidden="true">↗</span>
                   <span className={subClass}>Leaves CrossHeartPray.</span>
                 </a>
-
-                {resolved.readingPlan ? (
-                  <a
-                    href={resolved.readingPlan.href}
-                    role="menuitem"
-                    onClick={() => setOpen(false)}
-                    className={itemClass}
-                  >
-                    Reading Plan
-                    <span className={subClass}>{resolved.readingPlan.label}.</span>
-                  </a>
-                ) : null}
               </div>
             </>,
             document.body,

@@ -64,8 +64,3 @@ export {
   translationDisplayName,
 } from "./translationNames";
 
-export {
-  SCRIPTURE_READER_OPEN_EVENT,
-  openScriptureReader,
-  type ScriptureReaderOpenDetail,
-} from "./readerBus";

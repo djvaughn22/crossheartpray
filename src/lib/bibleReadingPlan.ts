@@ -159,7 +159,29 @@ export function bibleReadingPlanReadingReference(
   return { code: range.code, chapter };
 }
 
-export function bibleReadingPlanDayForReference(code: string, chapter: string | number) {
+export type BibleReadingPlanAssignment = {
+  day: BibleReadingPlanDay;
+  /** Canonical USFM book code of the assigned reading. */
+  code: string;
+  /** First assigned chapter (1 for whole-book readings). */
+  startChapter: number;
+  /**
+   * Last assigned chapter. Whole-book readings carry
+   * Number.MAX_SAFE_INTEGER — callers clamp to the book's real chapter
+   * count via the canonical book table.
+   */
+  endChapter: number;
+};
+
+/**
+ * The complete plan assignment containing a chapter — week/lane plus the
+ * assigned passage boundaries. One shared verse→plan resolver; no component
+ * keeps its own matching rules.
+ */
+export function bibleReadingPlanAssignmentForReference(
+  code: string,
+  chapter: string | number,
+): BibleReadingPlanAssignment | null {
   const passageCode = code.trim().toUpperCase();
   const passageChapter = Number(chapter);
 
@@ -173,11 +195,30 @@ export function bibleReadingPlanDayForReference(code: string, chapter: string | 
       passageChapter >= entry.startChapter &&
       passageChapter <= entry.endChapter
     ) {
-      return entry.day;
+      return {
+        day: entry.day,
+        code: entry.code,
+        startChapter: entry.startChapter,
+        endChapter: entry.endChapter,
+      };
     }
   }
 
   return null;
+}
+
+export function bibleReadingPlanDayForReference(code: string, chapter: string | number) {
+  return bibleReadingPlanAssignmentForReference(code, chapter)?.day ?? null;
+}
+
+/**
+ * The assigned passage boundaries for a plan reading label ("John 1-3" →
+ * JHN 1..3, "Malachi" → MAL 1..MAX). Same parser as week matching.
+ */
+export function bibleReadingPlanAssignmentForReading(
+  reading: string,
+): { code: string; startChapter: number; endChapter: number } | null {
+  return bibleReadingPlanRange(reading);
 }
 
 export function bibleReadingPlanDayHref(day: BibleReadingPlanDay) {

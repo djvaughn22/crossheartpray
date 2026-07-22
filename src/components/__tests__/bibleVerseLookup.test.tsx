@@ -5,10 +5,6 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import BibleVerseLookup from "../BibleVerseLookup";
-import {
-  SCRIPTURE_READER_OPEN_EVENT,
-  type ScriptureReaderOpenDetail,
-} from "../../lib/scripture";
 
 // jsdom has no scrollIntoView.
 Element.prototype.scrollIntoView = vi.fn();
@@ -145,28 +141,21 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
     await user.click(screen.getByRole("button", { name: "Read Malachi 4:6" }));
     const menu = screen.getByRole("menu", { name: "Read Malachi 4:6" });
 
-    // Internal: Read here opens the in-app reader at the exact verse.
-    const openedReferences: ScriptureReaderOpenDetail[] = [];
-    const onOpen = (event: Event) =>
-      openedReferences.push((event as CustomEvent<ScriptureReaderOpenDetail>).detail);
-    window.addEventListener(SCRIPTURE_READER_OPEN_EVENT, onOpen);
-
-    await user.click(within(menu).getByRole("menuitem", { name: /^Read here/ }));
-    expect(openedReferences[0]?.reference).toEqual({ book: "MAL", chapter: 4, verse: 6 });
-
-    // Internal: Read chapter here opens the complete canonical chapter.
-    await user.click(screen.getByRole("button", { name: "Read Malachi 4:6" }));
-    const reopened = screen.getByRole("menu", { name: "Read Malachi 4:6" });
-    await user.click(
-      within(reopened).getByRole("menuitem", { name: /^Read chapter here/ }),
+    // Internal: Read here goes to the exact Reading Plan cell, carrying the
+    // verse to highlight — the one universal internal reading destination.
+    const readHere = within(menu).getByRole("menuitem", {
+      name: /^Read here/,
+    }) as HTMLAnchorElement;
+    expect(readHere.getAttribute("href")).toBe(
+      "/bible-reading-plan?week=48&day=friday&focus=MAL.4.6#week-48-friday",
     );
-    expect(openedReferences[1]?.reference).toEqual({ book: "MAL", chapter: 4 });
-    window.removeEventListener(SCRIPTURE_READER_OPEN_EVENT, onOpen);
+
+    // No duplicate internal actions.
+    expect(within(menu).queryByRole("menuitem", { name: /chapter here/ })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: /^Reading Plan$/ })).toBeNull();
 
     // External: Bible.com ↗ — exact canonical verse, new-tab safety, honest label.
-    await user.click(screen.getByRole("button", { name: "Read Malachi 4:6" }));
-    const menuAgain = screen.getByRole("menu", { name: "Read Malachi 4:6" });
-    const external = within(menuAgain).getByRole("menuitem", {
+    const external = within(menu).getByRole("menuitem", {
       name: "Open Malachi 4:6 on Bible.com in a new tab",
     }) as HTMLAnchorElement;
     expect(external.getAttribute("href")).toBe(
@@ -175,14 +164,6 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
     expect(external.getAttribute("target")).toBe("_blank");
     expect(external.getAttribute("rel")).toContain("noopener");
     expect(external.getAttribute("rel")).toContain("noreferrer");
-
-    // Internal: Reading Plan — the exact week and lane from the real dataset.
-    const planLink = within(menuAgain).getByRole("menuitem", {
-      name: /^Reading Plan/,
-    }) as HTMLAnchorElement;
-    expect(planLink.getAttribute("href")).toBe(
-      "/bible-reading-plan?week=48&day=friday#week-48-friday",
-    );
   });
 
   it("an invalid search clears the previous verse card and its actions", async () => {

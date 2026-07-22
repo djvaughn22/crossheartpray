@@ -10,29 +10,37 @@ const srcDir = path.join(__dirname, "..", "..");
 const read = (relative: string) => fs.readFileSync(path.join(srcDir, relative), "utf8");
 
 const reader = read(path.join("components", "scripture", "ScriptureReader.tsx"));
-const overlay = read(path.join("components", "scripture", "ScriptureReaderOverlay.tsx"));
 const picker = read(path.join("components", "scripture", "TranslationPicker.tsx"));
 const globals = read(path.join("app", "globals.css"));
 
-describe("one shared reader across the seven primary surfaces", () => {
-  it("the root layout mounts the single shared overlay", () => {
+describe("one reading destination: the Reading Plan cell", () => {
+  it("the plan grid mounts the single cell reader; the old overlay is gone", () => {
     const layout = read(path.join("app", "layout.tsx"));
-    expect(layout).toContain("<ScriptureReaderOverlay />");
+    expect(layout).not.toContain("ScriptureReaderOverlay");
+    const planProgress = read(path.join("components", "BibleReadingPlanProgress.tsx"));
+    expect(planProgress).toContain("<ReadingPlanCellReader");
   });
 
-  it("every surface reaches Scripture through the shared reader, not a copy", () => {
-    // Homepage + Bible Bingo + Daily Hope + Life Essentials + the shared
-    // boards and daily pages go through CardReadMenu; the reading plan calls
-    // the bus directly; Explore Bible embeds the same ScriptureReader.
+  it("every surface reaches Scripture through CardReadMenu's plan-cell Read here", () => {
     for (const [file, marker] of [
-      ["components/CardReadMenu.tsx", "openScriptureReader("],
-      ["components/BibleReadingPlanProgress.tsx", "openScriptureReader("],
+      ["components/CardReadMenu.tsx", "readHereHref"],
+      ["components/BibleBingoVerseCard.tsx", "<CardReadMenu"],
+      ["components/DailyHopeRoutine.tsx", "<CardReadMenu"],
+      ["components/GeneGetzFullIndex.tsx", "<CardReadMenu"],
       ["components/BibleBingoShareBoard.tsx", "<CardReadMenu"],
       ["components/DailyBibleBingoPostView.tsx", "<CardReadMenu"],
-      ["app/explorebible/page.tsx", "ScriptureReader"],
+      ["app/explorebible/page.tsx", "<CardReadMenu"],
     ] as const) {
       expect(read(file)).toContain(marker);
     }
+  });
+
+  it("no page keeps a large standalone reader section", () => {
+    expect(read(path.join("app", "page.tsx"))).not.toContain("ScriptureReader");
+    expect(read(path.join("app", "explorebible", "page.tsx"))).not.toContain(
+      "components/scripture/ScriptureReader",
+    );
+    expect(read(path.join("app", "explorebible", "page.tsx"))).not.toContain("<ScriptureReader");
   });
 
   it("no second chapter-rendering implementation exists outside the reader", () => {
@@ -46,13 +54,20 @@ describe("one shared reader across the seven primary surfaces", () => {
     );
     expect(withChapterLoop).toEqual([path.join("scripture", "ScriptureReader.tsx")]);
   });
+
+  it("the reader clamps Previous/Next to an assigned passage when bounded", () => {
+    expect(reader).toContain("chapterBounds");
+    expect(reader).toContain("boundsActive");
+    expect(reader).toContain("Start of this reading");
+    expect(reader).toContain("End of this reading");
+  });
 });
 
 describe("reader chrome (source contract)", () => {
   it("keeps close/back, previous, and next as labeled controls", () => {
     expect(reader).toContain('aria-label="Close Scripture reader"');
-    expect(reader).toContain("Previous chapter, ${formatScriptureReference(chapterData.previous)}");
-    expect(reader).toContain("Next chapter, ${formatScriptureReference(chapterData.next)}");
+    expect(reader).toContain("Previous chapter, ${formatScriptureReference(previousReference)}");
+    expect(reader).toContain("Next chapter, ${formatScriptureReference(nextReference)}");
   });
 
   it("highlights a requested verse range, not just a single verse", () => {
@@ -98,28 +113,20 @@ describe("reader chrome (source contract)", () => {
   });
 });
 
-describe("overlay accessibility (source contract)", () => {
-  it("traps Tab focus inside the open dialog", () => {
-    expect(overlay).toContain('event.key === "Tab"');
-    expect(overlay).toContain("event.shiftKey");
-  });
-
-  it("prevents background scrolling and restores it on close", () => {
-    expect(overlay).toContain('document.body.style.overflow = "hidden"');
-    expect(overlay).toContain("document.body.style.overflow = previousOverflow");
-  });
-
-  it("respects safe-area insets on the phone sheet", () => {
-    expect(overlay).toContain("env(safe-area-inset-top)");
+describe("cell reader accessibility (source contract)", () => {
+  it("the reader keeps safe-area padding for phone layouts", () => {
     expect(reader).toContain("env(safe-area-inset-bottom)");
+  });
+
+  it("the cell reader announces its close control and completion state", () => {
+    const cellReader = read(path.join("components", "ReadingPlanCellReader.tsx"));
+    expect(cellReader).toContain('aria-label={`Close ${readingLabel} reader`}');
+    expect(cellReader).toContain('aria-label={`Mark ${readingLabel} complete`}');
   });
 });
 
 describe("motion and theming (source contract)", () => {
-  it("the open animation is disabled under prefers-reduced-motion", () => {
-    expect(globals).toMatch(
-      /@media \(prefers-reduced-motion: reduce\) \{\s*\.chp-reader-backdrop,\s*\.chp-reader-panel \{\s*animation: none;/,
-    );
+  it("the picker animation is disabled under prefers-reduced-motion", () => {
     expect(globals).toMatch(
       /@media \(prefers-reduced-motion: reduce\) \{\s*\.chp-picker-backdrop,\s*\.chp-picker-panel \{\s*animation: none;/,
     );
@@ -149,7 +156,7 @@ describe("motion and theming (source contract)", () => {
 
 describe("no client key exposure, no licensed-text persistence", () => {
   it("reader components never touch the server App Key", () => {
-    for (const file of [reader, overlay, picker]) {
+    for (const file of [reader, picker]) {
       expect(file).not.toContain("YVP_APP_KEY");
       expect(file).not.toContain("X-App-Key");
     }
@@ -158,7 +165,6 @@ describe("no client key exposure, no licensed-text persistence", () => {
   it("only the translation preference is persisted — never Scripture text", () => {
     // The reader itself writes nothing to storage…
     expect(reader).not.toContain("localStorage");
-    expect(overlay).not.toContain("localStorage");
     // …and the provider persists only the numeric translation id.
     const provider = read(path.join("lib", "scripture", "provider.ts"));
     const setCalls = provider.match(/localStorage\.setItem\(\w+/g) ?? [];

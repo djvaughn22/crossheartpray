@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  SCRIPTURE_BOOKS,
   bibleComUrlForTranslation,
   resolveScriptureSelection,
 } from "../scripture";
@@ -28,14 +29,20 @@ describe("resolveScriptureSelection — one canonical resolved reference", () =>
       "https://www.bible.com/bible/206/MAL.4.WEBUS",
     );
 
-    // The real Reading Plan destination, from the actual dataset.
+    // The real Reading Plan destination, from the actual dataset — the
+    // whole-book Malachi cell, with the complete assigned boundaries.
     expect(resolved?.readingPlan).toEqual({
       week: 48,
       daySlug: "friday",
       dayLabel: "Friday",
       lane: "Prophecy",
       reading: "Malachi",
+      readingId: "week-48-friday",
+      startChapter: 1,
+      endChapter: 4,
       href: "/bible-reading-plan?week=48&day=friday#week-48-friday",
+      readHereHref:
+        "/bible-reading-plan?week=48&day=friday&focus=MAL.4.6#week-48-friday",
       label: "Week 48 · Friday — Malachi",
     });
 
@@ -88,6 +95,61 @@ describe("resolveScriptureSelection — one canonical resolved reference", () =>
   it("accepts structured references too", () => {
     const resolved = resolveScriptureSelection({ book: "MAL", chapter: 4, verse: 6 });
     expect(resolved?.label).toBe("Malachi 4:6");
+  });
+});
+
+describe("universal verse → Reading Plan cell mapping", () => {
+  it("every chapter of every book belongs to exactly one real plan cell", () => {
+    for (const book of SCRIPTURE_BOOKS) {
+      for (let chapter = 1; chapter <= book.chapters; chapter += 1) {
+        const resolved = resolveScriptureSelection({ book: book.usfm, chapter });
+        expect(
+          resolved?.readingPlan,
+          `${book.name} ${chapter} has no Reading Plan cell`,
+        ).not.toBeNull();
+      }
+    }
+  });
+
+  it("Jude 20 maps to the whole-book Jude cell", () => {
+    const plan = resolveScriptureSelection("Jude 1:20")?.readingPlan;
+    expect(plan?.reading).toBe("Jude");
+    expect(plan?.startChapter).toBe(1);
+    expect(plan?.endChapter).toBe(1);
+  });
+
+  it("2 Peter and 2 John resolve to their compact-label cells", () => {
+    expect(resolveScriptureSelection("2 Peter 2:9")?.readingPlan?.reading).toBe("2Pet");
+    expect(resolveScriptureSelection("2 John 1:6")?.readingPlan?.reading).toBe("2John");
+  });
+
+  it("John 3:16 maps to the reading whose assigned range contains John 3", () => {
+    const plan = resolveScriptureSelection("John 3:16")?.readingPlan;
+    expect(plan).not.toBeNull();
+    expect(plan!.startChapter).toBeLessThanOrEqual(3);
+    expect(plan!.endChapter).toBeGreaterThanOrEqual(3);
+    expect(plan!.reading).toContain("John");
+  });
+
+  it("Psalm 23 maps to the assigned Psalms range containing it", () => {
+    const plan = resolveScriptureSelection("Psalm 23")?.readingPlan;
+    expect(plan).not.toBeNull();
+    expect(plan!.lane).toBe("Psalms");
+    expect(plan!.startChapter).toBeLessThanOrEqual(23);
+    expect(plan!.endChapter).toBeGreaterThanOrEqual(23);
+  });
+
+  it("a chapter-range reading carries every assigned chapter", () => {
+    const plan = resolveScriptureSelection("Deuteronomy 17")?.readingPlan;
+    expect(plan?.reading).toBe("Deut 16-19");
+    expect(plan?.startChapter).toBe(16);
+    expect(plan?.endChapter).toBe(19);
+  });
+
+  it("readHereHref is deterministic and carries the verse to highlight", () => {
+    expect(resolveScriptureSelection("John 3:16")?.readingPlan?.readHereHref).toMatch(
+      /^\/bible-reading-plan\?week=\d+&day=[a-z]+&focus=JHN\.3\.16#week-\d+-[a-z]+$/,
+    );
   });
 });
 

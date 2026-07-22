@@ -1,7 +1,8 @@
-// The embedded Life Essentials principle experience inside the shared
-// Scripture reader: full cards (number, title, summary, reference) with the
-// existing in-app player revealed on an explicit tap — genuine matches only,
-// no duplicated data, no fabricated destinations, no autoplay on open.
+// The embedded Life Essentials principle experience inside the Scripture
+// reader (now living in the Reading Plan cell reader): full cards (number,
+// title, summary, reference) with the existing in-app player revealed on an
+// explicit tap — genuine matches only, no duplicated data, no fabricated
+// destinations, no autoplay on open.
 import { describe, expect, it } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -15,7 +16,7 @@ const componentsDir = path.join(__dirname, "..", "..", "components");
 const read = (relative: string) =>
   fs.readFileSync(path.join(componentsDir, relative), "utf8");
 
-const overlay = read(path.join("scripture", "ScriptureReaderOverlay.tsx"));
+const overlay = read(path.join("scripture", "ReaderLifeEssentials.tsx"));
 const youTubeModal = read("YouTubeModal.tsx");
 
 describe("matching stays genuine", () => {
@@ -47,7 +48,7 @@ describe("matching stays genuine", () => {
   it("an unmatched chapter renders no Life Essentials section at all", () => {
     expect(getGeneGetzPrinciplesForChapter("GEN", 10)).toEqual([]);
     // The section is gated on genuine matches — no empty shell.
-    expect(overlay).toContain("getzMatches.length > 0 ?");
+    expect(overlay).toContain("getzMatches.length === 0) return null");
   });
 });
 
@@ -85,10 +86,6 @@ describe("reader principle cards (source contract)", () => {
     expect(overlay.match(/href=\{principle\.officialVideoUrl\}/g)?.length).toBeGreaterThanOrEqual(
       3,
     );
-  });
-
-  it("keeps keyboard access: the focus trap covers the embedded player", () => {
-    expect(overlay).toContain("iframe, [tabindex]");
   });
 
   it("builds no fabricated URLs — only verified ids and official destinations", () => {

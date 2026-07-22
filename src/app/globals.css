@@ -2269,3 +2269,18 @@ html[data-chp-visual-theme="light"] button.chp-bible-card-selected:hover {
 }
 
 /* end CHP_SCRIPTURE_READER */
+
+/* CHP_PLAN_CELL_READER_START
+   The Reading Plan cell reader row: the td spans the wide scrolling table,
+   so the reader itself sticks to the viewport's left edge and caps its width
+   to stay readable at every size. */
+.chp-plan-reader-sticky {
+  position: sticky;
+  left: 0;
+  max-width: min(52rem, calc(100vw - 2rem));
+}
+
+html[data-chp-visual-theme="light"] .chp-plan-cell-reader {
+  background: rgba(255, 255, 255, 0.75);
+}
+/* CHP_PLAN_CELL_READER_END */

@@ -1,7 +1,6 @@
 "use client";
 import * as CHPLocalBibleData from "../../lib/localBibleVerses";
 import { SCRIPTURE_BOOK_NAME_TO_CODE, bibleComUrlForPassage, referenceForPassage } from "../../lib/scripture";
-import ScriptureReader from "../../components/scripture/ScriptureReader";
 import SiteFooter from "../../components/SiteFooter";
 
 
@@ -1213,23 +1212,13 @@ export default function BibleExplorerPage() {
 
         <LazyBibleVerseLookup className="mt-8" initialReference="Romans 15:7" />
 
-        <section className="mx-auto mt-16 max-w-5xl border-t border-white/10 px-4 pt-14 sm:px-0">
-          <h2 className="text-center text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Read the Bible
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm font-semibold leading-6 text-zinc-300 sm:text-base">
-            Read any chapter right here. Search a book, chapter, or verse, or use
-            Prev and Next to keep reading.
-          </p>
-          <ScriptureReader className="mt-6" initialReference={{ book: "JHN", chapter: 1 }} />
-        </section>
-
         <section className="mt-16 border-t border-white/10 px-4 pt-14 pb-8 text-center">
           <h2 className="text-xl font-bold text-white">How it works</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-400">
-            Every board opens a fresh path through the Bible. Verse opens the exact
-            verse. Chapter opens the full chapter. Deep Dive opens when verified
-            Hebrew or Greek word details are available.
+            Every board deals a fresh path through the Bible. Read opens the
+            verse in its week of the 52-week Reading Plan, or on Bible.com.
+            Deep Dive opens when verified Hebrew or Greek word details are
+            available.
           </p>
         </section>
 </div>
