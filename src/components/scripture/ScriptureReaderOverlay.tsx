@@ -5,7 +5,8 @@
 // src/lib/scripture/readerBus.ts). Full-height sheet on phones, centered
 // panel on larger screens. The originating page keeps its state — closing
 // returns exactly where the reader was opened, and the browser back button
-// closes the reader instead of leaving the page.
+// closes the reader instead of leaving the page. Focus stays inside the
+// dialog while it is open and returns to the trigger on close.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -80,7 +81,31 @@ export default function ScriptureReaderOverlay() {
       closeNow();
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") requestClose();
+      if (event.key === "Escape") {
+        requestClose();
+        return;
+      }
+      // Keep Tab cycling inside the dialog while it is open.
+      if (event.key === "Tab") {
+        const panel = panelRef.current;
+        if (!panel) return;
+        const focusables = Array.from(
+          panel.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((element) => element.offsetParent !== null || element === document.activeElement);
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        if (event.shiftKey && (active === first || active === panel)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     }
 
     window.addEventListener("popstate", onPopState);
@@ -103,6 +128,9 @@ export default function ScriptureReaderOverlay() {
     ? getGeneGetzPrinciplesForChapter(current.book, current.chapter)
     : [];
 
+  const getzPillClass =
+    "inline-flex min-h-11 items-center justify-center rounded-full border border-amber-200/25 bg-amber-300/10 px-4 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20";
+
   return createPortal(
     <>
       <div
@@ -110,72 +138,60 @@ export default function ScriptureReaderOverlay() {
         aria-modal="true"
         aria-label={`Scripture reader — ${formatScriptureReference(reference)}`}
         onClick={requestClose}
-        className="fixed inset-0 z-[900] flex bg-black/80 sm:items-center sm:justify-center sm:p-4"
+        className="chp-reader-backdrop fixed inset-0 z-[900] flex bg-black/80 sm:items-center sm:justify-center sm:p-4"
       >
         <div
           ref={panelRef}
           tabIndex={-1}
           onClick={(event) => event.stopPropagation()}
-          className="flex h-dvh w-full flex-col overflow-y-auto bg-slate-950 p-4 outline-none sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:rounded-[2rem] sm:border sm:border-white/15 sm:p-6 sm:shadow-2xl sm:shadow-black/60"
+          className="chp-reader-panel flex h-dvh w-full flex-col overflow-hidden bg-slate-950 pt-[env(safe-area-inset-top)] outline-none sm:h-[min(50rem,calc(100dvh-2rem))] sm:max-w-2xl sm:rounded-[2rem] sm:border sm:border-white/15 sm:pt-0 sm:shadow-2xl sm:shadow-black/60"
         >
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-100">
-              Read Scripture
-            </p>
-            <button
-              type="button"
-              onClick={requestClose}
-              aria-label="Close Scripture reader"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-base font-black text-white transition hover:bg-white/20"
-            >
-              ✕
-            </button>
-          </div>
-
           <ScriptureReader
             key={openCount}
-            className="mt-3"
+            variant="fill"
             initialReference={reference}
             onReferenceChange={setCurrent}
-          />
-
-          {getzMatches.length > 0 ? (
-            <div className="mt-4 rounded-2xl border border-amber-200/15 bg-amber-300/[0.06] p-4 text-left">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-100">
-                {GENE_GETZ_SOURCE_LABEL}
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {getzMatches.slice(0, 2).map((principle) =>
-                  principle.youtubeId ? (
-                    <button
-                      key={`${principle.code}-${principle.principleNumber}`}
-                      type="button"
-                      onClick={() => setActiveVideo(principle)}
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
-                    >
-                      ▶ {principle.principleTitle}
-                    </button>
-                  ) : (
+            onRequestClose={requestClose}
+            afterScripture={
+              getzMatches.length > 0 ? (
+                <div className="mx-auto mt-5 max-w-md text-center">
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-amber-100">
+                    {GENE_GETZ_SOURCE_LABEL}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                    {getzMatches.slice(0, 2).map((principle) =>
+                      principle.youtubeId ? (
+                        <button
+                          key={`${principle.code}-${principle.principleNumber}`}
+                          type="button"
+                          onClick={() => setActiveVideo(principle)}
+                          className={getzPillClass}
+                        >
+                          ▶ {principle.principleTitle}
+                        </button>
+                      ) : (
+                        <a
+                          key={`${principle.code}-${principle.principleNumber}`}
+                          href={principle.officialVideoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={getzPillClass}
+                        >
+                          ▶ {principle.principleTitle}
+                        </a>
+                      ),
+                    )}
                     <a
-                      key={`${principle.code}-${principle.principleNumber}`}
-                      href={principle.officialVideoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-4 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20"
+                      href="/life-essentials"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-xs font-bold text-slate-200 transition hover:bg-white/10"
                     >
-                      ▶ {principle.principleTitle}
+                      All Life Essentials →
                     </a>
-                  ),
-                )}
-                <a
-                  href="/life-essentials"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-xs font-bold text-slate-200 transition hover:bg-white/10"
-                >
-                  All Life Essentials →
-                </a>
-              </div>
-            </div>
-          ) : null}
+                  </div>
+                </div>
+              ) : null
+            }
+          />
         </div>
       </div>
 

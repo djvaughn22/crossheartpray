@@ -2150,3 +2150,64 @@ html[data-chp-visual-theme="light"] .om-bar button {
   border-color: #cbd5e1 !important;
   color: #475569 !important;
 }
+
+/* CHP_SCRIPTURE_READER
+   The shared Scripture reading experience: a calm serif reading voice
+   (matches the Georgia voice of CrossHeartPray share cards), a brief
+   open animation that clarifies rather than performs, and light-theme
+   support for the pieces the generic flattener cannot reach. */
+
+.chp-scripture-serif {
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+@keyframes chp-reader-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes chp-reader-panel-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.chp-reader-backdrop {
+  animation: chp-reader-backdrop-in 150ms ease-out;
+}
+.chp-reader-panel {
+  animation: chp-reader-panel-in 210ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chp-reader-backdrop,
+  .chp-reader-panel {
+    animation: none;
+  }
+}
+
+/* Light theme: skeleton lines are divs, so the generic light flattener
+   would wash them into the white card. Give them a soft slate band, and
+   keep the selected-passage emphasis a gentle emerald. */
+html[data-chp-visual-theme="light"] .chp-scripture-surface {
+  background: #ffffff !important;
+}
+html[data-chp-visual-theme="light"] .chp-scripture-skeleton {
+  background: #e2e8f0 !important;
+}
+html[data-chp-visual-theme="light"] .chp-verse-target {
+  background: #d1fae5 !important;
+  --tw-ring-color: #6ee7b7 !important;
+}
+
+/* Landscape phones: the centered panel's outer margins go back to
+   Scripture — the reader becomes a full-height sheet again. */
+@media (max-height: 480px) {
+  .chp-reader-backdrop {
+    padding: 0 !important;
+  }
+  .chp-reader-panel {
+    height: 100dvh !important;
+    max-width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* end CHP_SCRIPTURE_READER */
