@@ -96,13 +96,12 @@ describe("CardReadMenu Context matters group (source contract)", () => {
     expect(menu).not.toContain("chapterHref");
   });
 
-  it("Read here goes to the exact Reading Plan cell — the one internal destination", () => {
-    expect(menu).toContain("resolved.readingPlan.readHereHref");
-    expect(menu).not.toContain("openScriptureReader");
-    expect(menu).not.toContain("Read chapter here");
-    // Exactly two actions: Read here and Bible.com ↗ — Read here IS the
-    // Reading Plan destination, so no duplicate internal button exists.
-    expect(menu.match(/role="menuitem"/g)?.length).toBe(2);
+  it("Read here opens a modal; Read on Bible Reading Plan is a secondary option", () => {
+    expect(menu).toContain("KindleReaderModal");
+    expect(menu).toContain("Read here");
+    expect(menu).toContain("On this page in a clean reader");
+    // Read here opens modal (button), Read on Bible Reading Plan (link), and Bible.com (link)
+    expect(menu.match(/role="menuitem"/g)?.length).toBe(3);
   });
 
   it("separates staying on CrossHeartPray from leaving for Bible.com", () => {

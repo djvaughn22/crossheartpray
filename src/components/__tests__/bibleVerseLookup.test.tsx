@@ -141,18 +141,17 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
     await user.click(screen.getByRole("button", { name: "Read Malachi 4:6" }));
     const menu = screen.getByRole("menu", { name: "Read Malachi 4:6" });
 
-    // Internal: Read here goes to the exact Reading Plan cell, carrying the
-    // verse to highlight — the one universal internal reading destination.
+    // Internal: Read here opens a modal on the current page.
     const readHere = within(menu).getByRole("menuitem", {
       name: /^Read here/,
-    }) as HTMLAnchorElement;
-    expect(readHere.getAttribute("href")).toBe(
-      "/bible-reading-plan?week=48&day=friday&focus=MAL.4.6#week-48-friday",
-    );
+    });
+    expect(readHere.tagName).toBe("BUTTON");
 
-    // No duplicate internal actions.
-    expect(within(menu).queryByRole("menuitem", { name: /chapter here/ })).toBeNull();
-    expect(within(menu).queryByRole("menuitem", { name: /^Reading Plan$/ })).toBeNull();
+    // Secondary option: Read on Bible Reading Plan navigates to the plan.
+    const readOnPlan = within(menu).getByRole("menuitem", {
+      name: /^Read on Bible Reading Plan/,
+    });
+    expect(readOnPlan.getAttribute("href")).toContain("/bible-reading-plan");
 
     // External: Bible.com ↗ — exact canonical verse, new-tab safety, honest label.
     const external = within(menu).getByRole("menuitem", {
