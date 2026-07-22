@@ -6,15 +6,13 @@ import {
   bibleReadingPlanReadingReference,
   type BibleReadingPlanWeek,
 } from "../lib/bibleReadingPlan";
-import ReadingPlanCellReader, {
-  type ReadingPlanCellAssignment,
-} from "./ReadingPlanCellReader";
 import {
   getAdjacentPlayablePrinciple,
   getGeneGetzPrinciplesForChapter,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
 import YouTubeModal from "./YouTubeModal";
+import KindleReaderModal from "./scripture/KindleReaderModal";
 import { track } from "../lib/analytics";
 import {
   checklistStats,
@@ -392,9 +390,15 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   const [progress, setProgress] = useState<ChecklistProgress>({});
   const [highlightedReadingId, setHighlightedReadingId] = useState("");
   const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
-  // The one open cell reader — a single mounted reader, never one per cell.
+  // Modal reader state
+  const [readerOpen, setReaderOpen] = useState(false);
   const [activeReadingId, setActiveReadingId] = useState("");
-  const [activeFocus, setActiveFocus] = useState<ScriptureReference | null>(null);
+  const [readerReference, setReaderReference] = useState<ScriptureReference | null>(null);
+  const [readerBounds, setReaderBounds] = useState<{
+    book: string;
+    startChapter: number;
+    endChapter: number;
+  } | null>(null);
   // External 📖 links honor the person's chosen translation when Bible.com
   // supports it; WEB otherwise. Read after mount — localStorage is
   // client-only.
@@ -428,26 +432,48 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  // Open a cell's inline reader and keep the URL a refresh-safe deep link.
+  // Open reader modal for a cell.
   const openCellReader = useCallback(
     (readingId: string, focus: ScriptureReference | null) => {
-      const parsed = parseReadingId(readingId);
-      if (!parsed) return;
+      const reading = readings.find((entry) => entry.id === readingId);
+      if (!reading || !reading.readerReference) return;
+
+      const range = bibleReadingPlanAssignmentForReading(reading.label);
+      if (!range) return;
+      const book = getScriptureBook(range.code);
+      if (!book) return;
+
+      const assignment = {
+        book: range.code,
+        startChapter: Math.min(range.startChapter, book.chapters),
+        endChapter: Math.min(range.endChapter, book.chapters),
+      };
+
       setActiveReadingId(readingId);
-      setActiveFocus(focus);
-      const focusParam = focus ? `&focus=${encodeURIComponent(toUsfmString(focus))}` : "";
-      window.history.replaceState(
-        null,
-        "",
-        `/bible-reading-plan?week=${parsed.week}&day=${parsed.daySlug}${focusParam}#${readingId}`,
+      setReaderReference(
+        focus && focus.book === reading.readerReference.book
+          ? focus
+          : reading.readerReference,
       );
+      setReaderBounds(assignment);
+      setReaderOpen(true);
+
+      const parsed = parseReadingId(readingId);
+      if (parsed) {
+        const focusParam = focus ? `&focus=${encodeURIComponent(toUsfmString(focus))}` : "";
+        window.history.replaceState(
+          null,
+          "",
+          `/bible-reading-plan?week=${parsed.week}&day=${parsed.daySlug}${focusParam}#${readingId}`,
+        );
+      }
     },
-    [],
+    [readings],
   );
 
   const closeCellReader = useCallback(() => {
+    setReaderOpen(false);
     setActiveReadingId("");
-    setActiveFocus(null);
     window.history.replaceState(null, "", "/bible-reading-plan");
   }, []);
 
@@ -481,14 +507,13 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         window.clearTimeout(clearHighlightTimer);
       }
 
-      // A reading deep link expands the cell's reader, focused on the verse
+      // A reading deep link opens the modal reader, focused on the verse
       // that brought the person here (?focus=MAL.4.6, USFM form).
       const focusRaw = new URLSearchParams(window.location.search).get("focus");
       const focusReference = focusRaw
         ? parseScriptureReference(decodeURIComponent(focusRaw))
         : null;
-      setActiveReadingId(targetId);
-      setActiveFocus(focusReference);
+      openCellReader(targetId, focusReference);
 
       setHighlightedReadingId(targetId);
 
@@ -520,25 +545,8 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
 
       window.removeEventListener("hashchange", highlightTargetCell);
     };
-  }, []);
+  }, [openCellReader]);
 
-  // The single active cell reader's reading and clamped assignment.
-  const activeReading = useMemo(
-    () => (activeReadingId ? readings.find((entry) => entry.id === activeReadingId) ?? null : null),
-    [activeReadingId, readings],
-  );
-  const activeAssignment = useMemo<ReadingPlanCellAssignment | null>(() => {
-    if (!activeReading) return null;
-    const range = bibleReadingPlanAssignmentForReading(activeReading.label);
-    if (!range) return null;
-    const book = getScriptureBook(range.code);
-    if (!book) return null;
-    return {
-      book: range.code,
-      startChapter: Math.min(range.startChapter, book.chapters),
-      endChapter: Math.min(range.endChapter, book.chapters),
-    };
-  }, [activeReading]);
 
   const readingIds = useMemo(() => readings.map((reading) => reading.id), [readings]);
   const { done: doneCount, remaining: daysLeft, percent } = checklistStats(readingIds, progress);
@@ -702,12 +710,10 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
           <tbody>
             {weeks.map((week, weekIndex) => {
               const weekNo = weekNumber(week, weekIndex + 1);
-              const readerInThisWeek =
-                activeReading && activeAssignment && activeReading.weekNo === weekNo;
 
               return (
-                <Fragment key={weekNo}>
                 <tr
+                  key={weekNo}
                   className="border-b border-white/[0.065] last:border-b-0"
                 >
                   <th className="border-r border-white/10 bg-slate-950/45 px-2 py-1 text-center text-xs font-black leading-none text-white">
@@ -806,29 +812,6 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     );
                   })}
                 </tr>
-
-                {readerInThisWeek ? (
-                  <tr className="chp-plan-reader-row border-b border-white/[0.065] print:hidden">
-                    <td colSpan={LANES.length + 1} className="p-0">
-                      {/* Sticky-left so the reader stays readable inside the
-                          horizontally scrolling plan table on every width. */}
-                      <div className="chp-plan-reader-sticky">
-                        <ReadingPlanCellReader
-                          key={activeReadingId}
-                          readingLabel={activeReading!.label}
-                          weekNo={activeReading!.weekNo}
-                          dayLabel={activeReading!.day}
-                          assignment={activeAssignment!}
-                          focus={activeFocus}
-                          isRead={Boolean(progress[activeReadingId])}
-                          onToggleRead={() => toggleReading(activeReadingId)}
-                          onClose={closeCellReader}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : null}
-                </Fragment>
               );
             })}
           </tbody>
@@ -844,6 +827,13 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
           onNext={() => setActiveVideo(getAdjacentPlayablePrinciple(activeVideo, 1))}
         />
       ) : null}
+
+      <KindleReaderModal
+        isOpen={readerOpen}
+        onClose={closeCellReader}
+        initialReference={readerReference ?? undefined}
+        chapterBounds={readerBounds ?? undefined}
+      />
     </section>
   );
 }

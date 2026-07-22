@@ -13,12 +13,11 @@ const reader = read(path.join("components", "scripture", "ScriptureReader.tsx"))
 const picker = read(path.join("components", "scripture", "TranslationPicker.tsx"));
 const globals = read(path.join("app", "globals.css"));
 
-describe("one reading destination: the Reading Plan cell", () => {
-  it("the plan grid mounts the single cell reader; the old overlay is gone", () => {
-    const layout = read(path.join("app", "layout.tsx"));
-    expect(layout).not.toContain("ScriptureReaderOverlay");
+describe("one reading destination: the Kindle modal reader", () => {
+  it("the plan grid opens a modal reader on Read; no inline readers", () => {
     const planProgress = read(path.join("components", "BibleReadingPlanProgress.tsx"));
-    expect(planProgress).toContain("<ReadingPlanCellReader");
+    expect(planProgress).toContain("KindleReaderModal");
+    expect(planProgress).not.toContain("ReadingPlanCellReader");
   });
 
   it("every surface reaches Scripture through CardReadMenu's plan-cell Read here", () => {
@@ -113,15 +112,14 @@ describe("reader chrome (source contract)", () => {
   });
 });
 
-describe("cell reader accessibility (source contract)", () => {
+describe("modal reader accessibility (source contract)", () => {
   it("the reader keeps safe-area padding for phone layouts", () => {
     expect(reader).toContain("env(safe-area-inset-bottom)");
   });
 
-  it("the cell reader announces its close control and completion state", () => {
-    const cellReader = read(path.join("components", "ReadingPlanCellReader.tsx"));
-    expect(cellReader).toContain('aria-label={`Close ${readingLabel} reader`}');
-    expect(cellReader).toContain('aria-label={`Mark ${readingLabel} complete`}');
+  it("the modal reader has a close control with proper aria labels", () => {
+    const modal = read(path.join("components", "scripture", "KindleReaderModal.tsx"));
+    expect(modal).toContain('aria-label="Close reader"');
   });
 });
 

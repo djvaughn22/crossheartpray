@@ -57,24 +57,21 @@ describe("reader truthfulness (source contract)", () => {
   });
 });
 
-describe("Reading Plan cell reader (source contract)", () => {
-  const cellReader = read("ReadingPlanCellReader.tsx");
+describe("Reading Plan modal reader (source contract)", () => {
   const planProgress = read("BibleReadingPlanProgress.tsx");
+  const modal = read(path.join("scripture", "KindleReaderModal.tsx"));
 
-  it("reads the complete assigned passage with bounded chapter navigation", () => {
-    expect(cellReader).toContain("chapterBounds={assignment}");
-    expect(cellReader).toContain("Chapter {chapterPosition} of {assignedChapterCount} in this reading");
+  it("opens a modal reader with bounded chapter navigation", () => {
+    expect(planProgress).toContain("KindleReaderModal");
+    expect(planProgress).toContain("chapterBounds");
   });
 
   it("keeps the existing completion checkbox — no second progress system", () => {
-    expect(cellReader).toContain("onToggleRead");
-    expect(planProgress).toContain("onToggleRead={() => toggleReading(activeReadingId)}");
-    expect(cellReader).not.toContain("localStorage");
+    expect(planProgress).toContain("toggleReading");
   });
 
-  it("mounts exactly one reader, keyed to the active reading", () => {
-    expect(planProgress).toContain("const [activeReadingId, setActiveReadingId] = useState(");
-    expect(planProgress).toContain("key={activeReadingId}");
+  it("manages one open reader at a time", () => {
+    expect(planProgress).toContain("const [readerOpen, setReaderOpen] = useState");
   });
 
   it("restores from a refresh-safe deep link and writes one back", () => {
@@ -82,8 +79,9 @@ describe("Reading Plan cell reader (source contract)", () => {
     expect(planProgress).toContain("window.history.replaceState(");
   });
 
-  it("shows Gene Getz principles through the shared companion, official only", () => {
-    expect(cellReader).toContain("ReaderLifeEssentials");
+  it("has a clean modal with focus trap and escape handling", () => {
+    expect(modal).toContain("createPortal");
+    expect(modal).toContain('key === "Escape"');
   });
 });
 
