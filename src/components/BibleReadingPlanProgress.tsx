@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   bibleReadingPlanAssignmentForReading,
   bibleReadingPlanReadingReference,
@@ -24,8 +24,12 @@ import {
   type ChecklistProgress,
 } from "../lib/checklistProgress";
 import {
+  BIBLE_COM_DEFAULT_VERSION,
+  BIBLE_COM_LINK_VERSIONS,
+  bibleComUrl,
   bibleComUrlForPassage,
   getScriptureBook,
+  loadTranslationPreference,
   parseScriptureReference,
   toUsfmString,
   type ScriptureReference,
@@ -391,6 +395,38 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   // The one open cell reader — a single mounted reader, never one per cell.
   const [activeReadingId, setActiveReadingId] = useState("");
   const [activeFocus, setActiveFocus] = useState<ScriptureReference | null>(null);
+  // External 📖 links honor the person's chosen translation when Bible.com
+  // supports it; WEB otherwise. Read after mount — localStorage is
+  // client-only.
+  const [linkVersion, setLinkVersion] = useState<{
+    id: number;
+    abbreviation: string;
+    label: string;
+  }>(BIBLE_COM_DEFAULT_VERSION);
+
+  useEffect(() => {
+    const savedId = loadTranslationPreference();
+    const saved = BIBLE_COM_LINK_VERSIONS.find((version) => version.id === savedId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- preference lives in localStorage, readable only after mount
+    if (saved) setLinkVersion(saved);
+  }, []);
+
+  // The expanded reader row fills the visible width of the scrolling table
+  // (never the full 1360px row), so the reading sits centered with no dead
+  // space beside it.
+  const tableWrapRef = useRef<HTMLDivElement | null>(null);
+  const [readerWidth, setReaderWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    function measure() {
+      const width = tableWrapRef.current?.clientWidth ?? 0;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- geometry is only known after mount
+      setReaderWidth(width > 0 ? width : null);
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   // Open a cell's inline reader and keep the URL a refresh-safe deep link.
   const openCellReader = useCallback(
@@ -600,7 +636,17 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
               ) : null}
 
               <a
-                href={nextReading.href}
+                href={
+                  nextReading.readerReference
+                    ? bibleComUrl(
+                        {
+                          book: nextReading.readerReference.book,
+                          chapter: nextReading.readerReference.chapter ?? 1,
+                        },
+                        linkVersion,
+                      )
+                    : nextReading.href
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-black leading-tight text-white transition hover:border-white/30 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:w-auto sm:text-base"
@@ -672,8 +718,15 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     const reading = readingForLane(week, laneIndex);
                     const label = labelForReading(reading);
                     const id = idForReading(reading, weekNo, laneIndex);
-                    const href = hrefForReading(reading);
                     const readHereRef = referenceForReading(reading);
+                    // External 📖 destination: the exact canonical assigned
+                    // passage, in the chosen translation when supported.
+                    const externalHref = readHereRef
+                      ? bibleComUrl(
+                          { book: readHereRef.book, chapter: readHereRef.chapter ?? 1 },
+                          linkVersion,
+                        )
+                      : hrefForReading(reading);
                     const isRead = Boolean(progress[id]);
                     const getz = geneGetzForReading(reading).find((p) => p.youtubeId);
 
@@ -700,32 +753,35 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                             ✓
                           </button>
 
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block min-w-0 flex-1 whitespace-nowrap text-left text-[0.72rem] font-black leading-snug text-emerald-50 underline decoration-emerald-300/45 decoration-2 underline-offset-3 transition hover:text-white hover:decoration-emerald-100"
-                            title={`${label} on Bible.com`}
+                          {/* Underlined label = Read here on CrossHeartPray:
+                              opens this cell's inline reader. */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              activeReadingId === id
+                                ? closeCellReader()
+                                : openCellReader(id, null)
+                            }
+                            title={`Read ${label} here`}
+                            aria-label={`Read ${label} here on CrossHeartPray`}
+                            aria-expanded={activeReadingId === id}
+                            className="block min-w-0 flex-1 cursor-pointer whitespace-nowrap text-left text-[0.72rem] font-black leading-snug text-emerald-50 underline decoration-emerald-300/45 decoration-2 underline-offset-3 transition hover:text-white hover:decoration-emerald-100"
                           >
                             {label}
-                          </a>
+                          </button>
 
-                          {readHereRef ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                activeReadingId === id
-                                  ? closeCellReader()
-                                  : openCellReader(id, null)
-                              }
-                              title={`Read ${label} here`}
-                              aria-label={`Read ${label} here on CrossHeartPray`}
-                              aria-expanded={activeReadingId === id}
-                              className="chp-getz-icon ml-auto shrink-0 cursor-pointer text-base leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
-                            >
-                              📖
-                            </button>
-                          ) : null}
+                          {/* 📖 = the external YouVersion/Bible.com action. */}
+                          <a
+                            href={externalHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Open ${label} in YouVersion/Bible.com`}
+                            aria-label={`Open ${label} in YouVersion/Bible.com in a new tab`}
+                            className="chp-getz-icon ml-auto shrink-0 cursor-pointer text-base leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
+                          >
+                            <span aria-hidden="true">📖</span>
+                            <span aria-hidden="true" className="align-super text-[0.5rem]">↗</span>
+                          </a>
 
                           {getz ? (
                             <span
