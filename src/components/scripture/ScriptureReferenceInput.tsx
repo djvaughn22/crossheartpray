@@ -13,6 +13,12 @@ const provider = getScriptureProvider();
 
 type ScriptureReferenceInputProps = {
   onSelect: (suggestion: ScriptureSuggestion) => void;
+  /**
+   * Controlled value. When provided, the host owns the text (pass
+   * onQueryChange to receive edits) — used by search boxes that mirror the
+   * canonical selected reference back into the field.
+   */
+  value?: string;
   /** Raw text as typed — lets a host form keep its own submit button working. */
   onQueryChange?: (query: string) => void;
   placeholder?: string;
@@ -22,10 +28,20 @@ type ScriptureReferenceInputProps = {
   inputClassName?: string;
   /** Clear the input after a pick (useful for "jump to" boxes). */
   clearOnSelect?: boolean;
+  /**
+   * How picking a book-only suggestion behaves:
+   * - "navigate" (default): fires onSelect immediately (the reader's go-to
+   *   box opens the book at chapter 1).
+   * - "refine": commits the book name into the field, keeps focus, and keeps
+   *   suggesting so the person can continue typing a chapter or verse
+   *   ("Revelation" → "Revelation 21:4"). Search boxes use this.
+   */
+  bookSelection?: "navigate" | "refine";
 };
 
 export default function ScriptureReferenceInput({
   onSelect,
+  value,
   onQueryChange,
   placeholder = "John 3:16",
   ariaLabel = "Search for a Bible reference",
@@ -33,28 +49,55 @@ export default function ScriptureReferenceInput({
   className = "",
   inputClassName = "",
   clearOnSelect = false,
+  bookSelection = "navigate",
 }: ScriptureReferenceInputProps) {
   const listboxId = useId();
-  const [query, setQuery] = useState(initialValue);
+  const [internalQuery, setInternalQuery] = useState(initialValue);
+  const query = value ?? internalQuery;
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const suggestions = useMemo(
     () => (query.trim() ? provider.suggestReferences(query) : []),
     [query],
   );
 
+  const updateQuery = useCallback(
+    (next: string) => {
+      setInternalQuery(next);
+      onQueryChange?.(next);
+    },
+    [onQueryChange],
+  );
+
   const pick = useCallback(
     (suggestion: ScriptureSuggestion) => {
-      setQuery(clearOnSelect ? "" : suggestion.label);
-      onQueryChange?.(clearOnSelect ? "" : suggestion.label);
+      // In "refine" mode a book-only pick commits the book name and keeps
+      // the person typing toward a chapter/verse instead of searching yet.
+      if (bookSelection === "refine" && suggestion.reference.chapter === undefined) {
+        updateQuery(`${suggestion.label} `);
+        setOpen(true);
+        setActiveIndex(-1);
+        inputRef.current?.focus();
+        return;
+      }
+      updateQuery(clearOnSelect ? "" : suggestion.label);
       setOpen(false);
       setActiveIndex(-1);
       onSelect(suggestion);
     },
-    [clearOnSelect, onQueryChange, onSelect],
+    [bookSelection, clearOnSelect, updateQuery, onSelect],
   );
+
+  // Keep the active option visible while arrowing through a scrolled list.
+  useEffect(() => {
+    if (!open || activeIndex < 0) return;
+    document
+      .getElementById(`${listboxId}-option-${activeIndex}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [open, activeIndex, listboxId]);
 
   // Close when focus/taps land outside (covers touch without blur races).
   useEffect(() => {
@@ -115,6 +158,7 @@ export default function ScriptureReferenceInput({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <input
+        ref={inputRef}
         type="text"
         role="combobox"
         aria-expanded={showList}
@@ -133,8 +177,7 @@ export default function ScriptureReferenceInput({
         placeholder={placeholder}
         value={query}
         onChange={(event) => {
-          setQuery(event.target.value);
-          onQueryChange?.(event.target.value);
+          updateQuery(event.target.value);
           setOpen(true);
           setActiveIndex(-1);
         }}

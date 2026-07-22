@@ -2,10 +2,12 @@ import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import DailyBingoActions from "./DailyBingoActions";
+import CardReadMenu from "./CardReadMenu";
 import {
   absoluteSiteUrl,
   type DailyBibleBingoPost,
 } from "../lib/dailyBibleBingo";
+import { referenceForPassage } from "../lib/scripture";
 
 const CARD_TONES = [
   "border-emerald-200/15 bg-emerald-300/10",
@@ -95,23 +97,13 @@ export default function DailyBibleBingoPostView({
             {featured.passage.text}
           </div>
 
-          <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
-            <a
-              href={featured.verseUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-300/10 px-5 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/15"
-            >
-              Read the verse
-            </a>
-            <a
-              href={featured.chapterUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
-            >
-              Read the chapter
-            </a>
+          <div className="mt-5 flex justify-center">
+            {(() => {
+              const readReference = referenceForPassage(featured.passage);
+              return readReference ? (
+                <CardReadMenu reference={readReference} />
+              ) : null;
+            })()}
           </div>
         </section>
 
@@ -140,23 +132,13 @@ export default function DailyBibleBingoPostView({
                 <p className="mt-2 text-xs font-semibold leading-5 text-slate-100/85">
                   {lane.passage.text}
                 </p>
-                <div className="mt-3 flex flex-wrap justify-center gap-2">
-                  <a
-                    href={lane.verseUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-emerald-200/25 bg-emerald-300/10 px-3 py-1.5 text-xs font-black text-emerald-100 transition hover:bg-emerald-300/15"
-                  >
-                    Verse
-                  </a>
-                  <a
-                    href={lane.chapterUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-black text-slate-200 transition hover:bg-white/10"
-                  >
-                    Chapter
-                  </a>
+                <div className="mt-3 flex justify-center">
+                  {(() => {
+                    const readReference = referenceForPassage(lane.passage);
+                    return readReference ? (
+                      <CardReadMenu reference={readReference} />
+                    ) : null;
+                  })()}
                 </div>
               </article>
             ))}

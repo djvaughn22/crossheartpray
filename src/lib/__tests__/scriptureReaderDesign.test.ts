@@ -21,13 +21,14 @@ describe("one shared reader across the seven primary surfaces", () => {
   });
 
   it("every surface reaches Scripture through the shared reader, not a copy", () => {
-    // Homepage + Bible Bingo + Daily Hope + Life Essentials go through
-    // CardReadMenu; the reading plan and bingo share-board call the bus
-    // directly; Explore Bible embeds the same ScriptureReader component.
+    // Homepage + Bible Bingo + Daily Hope + Life Essentials + the shared
+    // boards and daily pages go through CardReadMenu; the reading plan calls
+    // the bus directly; Explore Bible embeds the same ScriptureReader.
     for (const [file, marker] of [
       ["components/CardReadMenu.tsx", "openScriptureReader("],
       ["components/BibleReadingPlanProgress.tsx", "openScriptureReader("],
-      ["components/BibleBingoShareBoard.tsx", "openScriptureReader("],
+      ["components/BibleBingoShareBoard.tsx", "<CardReadMenu"],
+      ["components/DailyBibleBingoPostView.tsx", "<CardReadMenu"],
       ["app/explorebible/page.tsx", "ScriptureReader"],
     ] as const) {
       expect(read(file)).toContain(marker);

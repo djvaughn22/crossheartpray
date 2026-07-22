@@ -12,7 +12,6 @@ import CardInfoLegend from "./CardInfoLegend";
 import CardMore from "./CardMore";
 import CardReadMenu from "./CardReadMenu";
 import CentralTimeBadge from "./CentralTimeBadge";
-import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
 import GeneGetzResourceCard from "./GeneGetzResourceCard";
@@ -146,10 +145,6 @@ function dayLiteralPreview(day: DailyHopeDay) {
 
 function verseUrl(passage: DailyHopePassage) {
   return bibleComUrlForPassage(passage);
-}
-
-function chapterUrl(passage: DailyHopePassage) {
-  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
 
 function escapeHtml(value: string) {
@@ -943,19 +938,14 @@ export default function DailyHopeRoutine({
                         </div>
 
                         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
-                          {firstPassage ? (
-                            <CardReadMenu
-                              verseHref={verseUrl(firstPassage)}
-                              chapterHref={chapterUrl(firstPassage)}
-                              readingPlanHref={bibleReadingPlanHrefForReference(
-                                firstPassage.code,
-                                firstPassage.chapter,
-                              )}
-                              readHereReference={
-                                referenceForPassage(firstPassage) ?? undefined
-                              }
-                            />
-                          ) : null}
+                          {(() => {
+                            const readReference = firstPassage
+                              ? referenceForPassage(firstPassage)
+                              : null;
+                            return readReference ? (
+                              <CardReadMenu reference={readReference} />
+                            ) : null;
+                          })()}
 
                           <button
                             type="button"

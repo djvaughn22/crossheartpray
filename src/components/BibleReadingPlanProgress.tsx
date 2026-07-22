@@ -392,6 +392,11 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
           block: "center",
           inline: "center",
         });
+        // Deep links land keyboard focus on the reading itself without
+        // scroll-jumping — normal browsing (no hash/params) is untouched.
+        target
+          .querySelector<HTMLElement>("a, button")
+          ?.focus({ preventScroll: true });
       }, 80);
 
       clearHighlightTimer = window.setTimeout(() => {
@@ -452,7 +457,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
             </div>
             <div className="h-2 overflow-visible rounded-full border border-white/10 bg-white/10">
               <div
-                className="h-full rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.35)] transition-all"
+                className="h-full rounded-full bg-emerald-300/80 transition-all"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -493,7 +498,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                   <button
                     type="button"
                     onClick={() => openScriptureReader(readHereRef)}
-                    className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/35 bg-emerald-300/10 px-4 py-2 text-sm font-black leading-tight text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-300/18 hover:text-white sm:w-auto sm:text-base"
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/30 bg-white/[0.06] px-4 py-2 text-sm font-black leading-tight text-white transition hover:border-emerald-200/50 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:w-auto sm:text-base"
                     title={`Read ${nextReading.label} here`}
                   >
                     Read {nextReading.label} here
@@ -505,13 +510,14 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                 href={nextReading.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/35 bg-emerald-300/10 px-4 py-2 text-sm font-black leading-tight text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-300/18 hover:text-white sm:w-auto sm:text-base"
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-black leading-tight text-white transition hover:border-white/30 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:w-auto sm:text-base"
+                aria-label={`Open ${nextReading.label} on Bible.com in a new tab`}
                 title={`${nextReading.label} on Bible.com`}
               >
-                Read on Bible.com
+                Bible.com <span aria-hidden="true">↗</span>
               </a>
 
-              <label className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-300/10 px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200/40 hover:bg-emerald-300/18 sm:w-auto">
+              <label className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-white/[0.06] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white transition hover:border-emerald-200/45 hover:bg-white/[0.1] sm:w-auto">
                 <input
                   type="checkbox"
                   checked={Boolean(progress[nextReading.id])}
@@ -582,7 +588,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                         key={lane.key}
                         className={`chp-reading-plan-cell scroll-mt-36 border-r border-white/[0.07] px-2 py-1 text-left transition duration-500 last:border-r-0 ${
                           highlightedReadingId === id
-                            ? "chp-reading-target-cell bg-emerald-300/[0.18]"
+                            ? "chp-reading-target-cell bg-emerald-300/[0.06]"
                             : isRead
                               ? "bg-emerald-300/[0.075]"
                               : "bg-white/[0.015]"

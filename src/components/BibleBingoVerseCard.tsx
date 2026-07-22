@@ -18,6 +18,8 @@ export type BibleBingoCardPassage = {
   code: string;
   chapter: string;
   verse: string;
+  /** Inclusive end verse for passages like "John 3:16-18". */
+  endVerse?: string;
   text: string;
   group: string;
 };
@@ -33,7 +35,6 @@ type BibleBingoVerseCardProps = {
   onSpinVerse: () => Promise<void> | void;
   onOpenDeepDive: () => void;
   onWordClick: (wordStudy: VerifiedWordStudy) => void;
-  readingPlanHref?: string;
   /** Label for the expander button, e.g. "More Life Essentials". */
   moreLabel?: string;
   /** Extra content (Life Essentials, lane books…) revealed inside More. */
@@ -114,7 +115,6 @@ export default function BibleBingoVerseCard({
   onSpinVerse,
   onOpenDeepDive,
   onWordClick,
-  readingPlanHref,
   moreLabel,
   children,
 }: BibleBingoVerseCardProps) {
@@ -129,6 +129,9 @@ export default function BibleBingoVerseCard({
       chapter: chapterUrl(passage),
     };
   }, [passage]);
+
+  // The one canonical reference behind the card's read actions.
+  const readReference = useMemo(() => referenceForPassage(passage), [passage]);
 
   async function spinCard() {
     if (spinningNow) {
@@ -194,12 +197,7 @@ export default function BibleBingoVerseCard({
             {spinningNow ? "Shuffling..." : spinLabel}
           </button>
 
-          <CardReadMenu
-            verseHref={shareLinks.verse}
-            chapterHref={shareLinks.chapter}
-            readingPlanHref={readingPlanHref}
-            readHereReference={referenceForPassage(passage) ?? undefined}
-          />
+          {readReference ? <CardReadMenu reference={readReference} /> : null}
 
           <button
             type="button"

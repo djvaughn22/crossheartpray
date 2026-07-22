@@ -166,6 +166,7 @@ export function referenceForPassage(passage: {
   code: string;
   chapter: string | number;
   verse?: string | number;
+  endVerse?: string | number;
 }): ScriptureReference | null {
   const chapter = parseInt(String(passage.chapter), 10);
   if (!getScriptureBook(passage.code) || !Number.isInteger(chapter) || chapter < 1) {
@@ -175,6 +176,12 @@ export function referenceForPassage(passage: {
   if (passage.verse !== undefined) {
     const verse = parseInt(String(passage.verse), 10);
     if (Number.isInteger(verse) && verse >= 1) reference.verse = verse;
+    if (reference.verse !== undefined && passage.endVerse !== undefined) {
+      const endVerse = parseInt(String(passage.endVerse), 10);
+      if (Number.isInteger(endVerse) && endVerse > reference.verse) {
+        reference.endVerse = endVerse;
+      }
+    }
   }
   return reference;
 }

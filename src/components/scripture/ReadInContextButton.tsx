@@ -26,11 +26,11 @@ export default function ReadInContextButton({
     <a
       href={bibleComUrl(reference, version)}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className={className}
-      aria-label={`Read ${formatScriptureReference(reference)} on Bible.com`}
+      aria-label={`Open ${formatScriptureReference(reference)} on Bible.com in a new tab`}
     >
-      {label ?? `Read on Bible.com (${version.label})`}
+      {label ?? "Bible.com"} <span aria-hidden="true">↗</span>
     </a>
   );
 }

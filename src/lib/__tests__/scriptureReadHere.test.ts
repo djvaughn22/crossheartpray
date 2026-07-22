@@ -105,14 +105,31 @@ describe("shared reader overlay (source contract)", () => {
   });
 });
 
-describe("CardReadMenu Read here (source contract)", () => {
+describe("CardReadMenu Context matters group (source contract)", () => {
   const menu = read("CardReadMenu.tsx");
 
-  it("offers Read here only when a reference is provided, keeping both external links", () => {
-    expect(menu).toContain("readHereReference ? (");
-    expect(menu).toContain("openScriptureReader(readHereReference)");
-    expect(menu).toContain("href={verseHref}");
-    expect(menu).toContain("href={chapterHref}");
+  it("derives every action from one canonical resolved reference", () => {
+    expect(menu).toContain("resolveScriptureSelection(reference)");
+    expect(menu).toContain("openScriptureReader(resolved.reference)");
+    expect(menu).toContain("openScriptureReader(resolved.chapterReference)");
+    // No separately passed hrefs — that was how a card once showed Malachi
+    // while its buttons still said Zechariah.
+    expect(menu).not.toContain("verseHref");
+    expect(menu).not.toContain("chapterHref");
+  });
+
+  it("separates staying on CrossHeartPray from leaving for Bible.com", () => {
+    expect(menu).toContain("Context matters");
+    expect(menu).toContain("Stay on CrossHeartPray");
+    expect(menu).toContain("Read chapter here");
+    expect(menu).toContain("Other destinations");
+    expect(menu).toContain('rel="noopener noreferrer"');
+    expect(menu).toContain("on Bible.com in a new tab");
+  });
+
+  it("shows the Reading Plan action only for real dataset matches", () => {
+    expect(menu).toContain("resolved.readingPlan ? (");
+    expect(menu).toContain("resolved.readingPlan.href");
   });
 });
 

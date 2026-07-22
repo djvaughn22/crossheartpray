@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import BibleBingoVerseCard, {
   type BibleBingoCardPassage,
 } from "./BibleBingoVerseCard";
@@ -11,9 +11,17 @@ import {
 } from "../lib/originalLanguageWordStudy";
 import GeneGetzResourceCard from "./GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
-import { bibleReadingPlanHrefForReference } from "../lib/bibleReadingPlan";
 import { track } from "../lib/analytics";
-import { bibleComUrlForPassage, formatScriptureReference } from "../lib/scripture";
+import {
+  SCRIPTURE_BOOKS,
+  bibleComUrlForPassage,
+  getScriptureBook,
+  getScriptureProvider,
+  parseScriptureReference,
+  resolveScriptureSelection,
+  type ResolvedScriptureReference,
+  type ScriptureReference,
+} from "../lib/scripture";
 import ScriptureReferenceInput from "./scripture/ScriptureReferenceInput";
 
 type SpinMode = "gospel-epistles" | "gospel" | "epistles" | "proverbs" | "all";
@@ -36,6 +44,38 @@ type ActiveLookupWordStudy = {
 };
 
 const DEFAULT_REFERENCE = "Romans 15:7";
+
+const provider = getScriptureProvider();
+
+// Spin pools by USFM code — same canonical book table as everything else.
+const GOSPEL_CODES = ["MAT", "MRK", "LUK", "JHN"];
+const EPISTLE_CODES = [
+  "ROM", "1CO", "2CO", "GAL", "EPH", "PHP", "COL", "1TH", "2TH",
+  "1TI", "2TI", "TIT", "PHM", "HEB", "JAS", "1PE", "2PE", "1JN",
+  "2JN", "3JN", "JUD",
+];
+
+function spinPool(spinMode: SpinMode): string[] {
+  if (spinMode === "gospel") return GOSPEL_CODES;
+  if (spinMode === "epistles") return EPISTLE_CODES;
+  if (spinMode === "proverbs") return ["PRO"];
+  if (spinMode === "all") return SCRIPTURE_BOOKS.map((book) => book.usfm);
+  return [...GOSPEL_CODES, ...EPISTLE_CODES];
+}
+
+/** Uniform-by-chapter random chapter reference from the pool. */
+function randomChapterReference(spinMode: SpinMode): ScriptureReference {
+  const books = spinPool(spinMode)
+    .map((code) => getScriptureBook(code))
+    .filter((book): book is NonNullable<typeof book> => Boolean(book));
+  const totalChapters = books.reduce((sum, book) => sum + book.chapters, 0);
+  let pick = Math.floor(Math.random() * totalChapters);
+  for (const book of books) {
+    if (pick < book.chapters) return { book: book.usfm, chapter: pick + 1 };
+    pick -= book.chapters;
+  }
+  return { book: books[0].usfm, chapter: 1 };
+}
 
 function verseUrl(passage: BibleBingoCardPassage) {
   return bibleComUrlForPassage(passage);
@@ -91,6 +131,23 @@ function formatReferenceList(references: string[]) {
   return `${allButLast}, or ${last}`;
 }
 
+/** The verse card shape, derived entirely from one canonical resolution. */
+function passageFromResolved(
+  resolved: ResolvedScriptureReference,
+  text: string,
+): BibleBingoCardPassage {
+  return {
+    label: resolved.label,
+    book: resolved.bookName,
+    code: resolved.bookCode,
+    chapter: String(resolved.chapter),
+    verse: String(resolved.verse ?? 1),
+    ...(resolved.endVerse !== undefined ? { endVerse: String(resolved.endVerse) } : {}),
+    text,
+    group: resolved.testament === "OT" ? "Old Testament" : "New Testament",
+  };
+}
+
 export default function BibleVerseLookup({
   className = "mt-12",
   initialReference = DEFAULT_REFERENCE,
@@ -105,7 +162,6 @@ export default function BibleVerseLookup({
   const [query, setQuery] = useState("");
   const [passage, setPassage] = useState<BibleBingoCardPassage | null>(null);
   const [wordStudies, setWordStudies] = useState<VerifiedWordStudy[]>([]);
-  const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [isOpeningInitialVerse, setIsOpeningInitialVerse] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
@@ -113,24 +169,65 @@ export default function BibleVerseLookup({
   const [isLoadingWordStudies, setIsLoadingWordStudies] = useState(false);
   const [activeWordStudy, setActiveWordStudy] = useState<ActiveLookupWordStudy | null>(null);
 
-  const loadPassageByReference = useCallback(
-    async (reference: string, textOverride?: string) => {
-      const response = await fetch(
-        `https://openmirrorllc.com/api/local-verse-lookup?q=${encodeURIComponent(reference)}`,
-      );
+  // Request identity: only the newest selection may write results. A slow
+  // earlier lookup can never overwrite a faster later one, so the search
+  // field, verse card, and every action always describe the same reference.
+  const requestSeq = useRef(0);
 
-      const data = await response.json();
+  const showSelection = useCallback(
+    async (
+      reference: ScriptureReference,
+      options?: { textOverride?: string; claimedId?: number },
+    ): Promise<boolean> => {
+      const requestId = options?.claimedId ?? ++requestSeq.current;
+      if (requestSeq.current !== requestId) return false;
 
-      if (!response.ok) {
-        throw new Error(data.error ?? "No local verse match found.");
+      // Search selections always land on a concrete verse.
+      const resolved = resolveScriptureSelection({
+        ...reference,
+        chapter: reference.chapter ?? 1,
+        verse: reference.verse ?? 1,
+      });
+
+      if (!resolved) {
+        setPassage(null);
+        setError("Couldn’t find that reference. Try one like John 3:16.");
+        return false;
       }
 
-      setPassage({
-        ...data.passage,
-        text: textOverride ?? data.passage.text,
-      });
-      setNote(data.note ?? "");
       setError("");
+
+      try {
+        const chapterData = await provider.loadChapter(resolved.chapterReference);
+        if (requestSeq.current !== requestId) return false;
+
+        const firstVerse = resolved.verse ?? 1;
+        const lastVerse = resolved.endVerse ?? firstVerse;
+        const picked = chapterData.verses.filter(
+          (entry) => entry.verse >= firstVerse && entry.verse <= lastVerse,
+        );
+
+        if (!picked.length) {
+          setPassage(null);
+          setError(
+            `${resolved.chapterLabel} has ${chapterData.verses.length} verses.`,
+          );
+          return false;
+        }
+
+        const text =
+          options?.textOverride ?? picked.map((entry) => entry.text).join(" ");
+
+        setPassage(passageFromResolved(resolved, text));
+        // The search field mirrors the canonical selection.
+        setQuery(resolved.label);
+        return true;
+      } catch {
+        if (requestSeq.current !== requestId) return false;
+        setPassage(null);
+        setError(`Couldn’t open ${resolved.label} right now.`);
+        return false;
+      }
     },
     [],
   );
@@ -138,47 +235,18 @@ export default function BibleVerseLookup({
   useEffect(() => {
     let cancelled = false;
 
-    async function openInitialVerse() {
-      setIsOpeningInitialVerse(true);
-
-      try {
-        const response = await fetch(
-          `https://openmirrorllc.com/api/local-verse-lookup?q=${encodeURIComponent(initialReference)}`,
-        );
-
-        const data = await response.json();
-
-        if (cancelled) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error ?? "Unable to open initial verse.");
-        }
-
-        setPassage({
-          ...data.passage,
-          text: initialTextOverride ?? data.passage.text,
-        });
-        setNote("");
-        setError("");
-      } catch {
-        if (!cancelled) {
-          setError(`Unable to open ${initialReference} right now.`);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsOpeningInitialVerse(false);
-        }
+    (async () => {
+      const parsed = parseScriptureReference(initialReference);
+      if (parsed) {
+        await showSelection(parsed, { textOverride: initialTextOverride });
       }
-    }
-
-    openInitialVerse();
+      if (!cancelled) setIsOpeningInitialVerse(false);
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [initialReference, initialTextOverride]);
+  }, [initialReference, initialTextOverride, showSelection]);
 
   useEffect(() => {
     if (!passage) {
@@ -239,43 +307,44 @@ export default function BibleVerseLookup({
       return;
     }
 
-    setIsSearching(true);
-    setError("");
-    setNote("");
+    const parsed = parseScriptureReference(trimmedQuery);
 
-    try {
-      await loadPassageByReference(trimmedQuery);
-      track("verse_lookup", { search_term: trimmedQuery });
-    } catch (caught) {
+    if (!parsed) {
+      // An invalid search may not keep the previous verse's actions around.
+      requestSeq.current += 1;
       setPassage(null);
-      setError(caught instanceof Error ? caught.message : "No local verse match found.");
-    } finally {
-      setIsSearching(false);
+      setError(`Couldn’t find “${trimmedQuery}”. Try a reference like John 3:16.`);
+      return;
     }
+
+    setIsSearching(true);
+    const ok = await showSelection(parsed);
+    if (ok) track("verse_lookup", { search_term: trimmedQuery });
+    setIsSearching(false);
   }
 
   async function spinVerse() {
+    const claimedId = ++requestSeq.current;
     setIsSpinning(true);
     setError("");
-    setNote("");
 
     try {
-      const response = await fetch(`https://openmirrorllc.com/api/local-verse-lookup?random=${spinMode}`, {
-        cache: "no-store",
-      });
+      const chapterReference = randomChapterReference(spinMode);
+      const chapterData = await provider.loadChapter(chapterReference);
+      if (requestSeq.current !== claimedId) return;
 
-      const data = await response.json();
+      const randomVerse =
+        chapterData.verses[Math.floor(Math.random() * chapterData.verses.length)];
 
-      if (!response.ok) {
-        throw new Error(data.error ?? "Unable to spin a verse.");
+      const ok = await showSelection(
+        { ...chapterReference, verse: randomVerse?.verse ?? 1 },
+        { claimedId },
+      );
+      if (ok) track("verse_spin", { mode: spinMode });
+    } catch {
+      if (requestSeq.current === claimedId) {
+        setError("Couldn’t shuffle a verse right now. Try again.");
       }
-
-      setPassage(data.passage);
-      track("verse_spin", { mode: spinMode });
-      setNote(data.note ?? "");
-      setQuery("");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to spin a verse right now.");
     } finally {
       setIsSpinning(false);
     }
@@ -325,27 +394,16 @@ export default function BibleVerseLookup({
               className="flex-1"
               placeholder="Romans 15:7"
               ariaLabel="Bible verse to search"
+              value={query}
+              bookSelection="refine"
               onQueryChange={setQuery}
               onSelect={(suggestion) => {
-                // Book/chapter picks open at verse 1 so a verse card always
-                // has a verse to show.
-                const reference = {
-                  ...suggestion.reference,
-                  chapter: suggestion.reference.chapter ?? 1,
-                  verse: suggestion.reference.verse ?? 1,
-                };
-                const label = formatScriptureReference(reference);
-                setQuery(label);
                 setIsSearching(true);
-                setError("");
-                setNote("");
-                loadPassageByReference(label)
-                  .then(() => track("verse_lookup", { search_term: label }))
-                  .catch((caught) => {
-                    setPassage(null);
-                    setError(
-                      caught instanceof Error ? caught.message : "No local verse match found.",
-                    );
+                showSelection(suggestion.reference)
+                  .then((ok) => {
+                    if (ok) {
+                      track("verse_lookup", { search_term: suggestion.label });
+                    }
                   })
                   .finally(() => setIsSearching(false));
               }}
@@ -390,14 +448,9 @@ export default function BibleVerseLookup({
               isSpinning={isSpinning}
               spinLabel={spinLabel ?? defaultSpinLabel(spinMode)}
               spinOdds={defaultSpinOdds(spinMode)}
-              note={note}
               onSpinVerse={spinVerse}
               onOpenDeepDive={() => openWordStudy()}
               onWordClick={(wordStudy) => openWordStudy(wordStudy)}
-              readingPlanHref={bibleReadingPlanHrefForReference(
-                passage.code,
-                passage.chapter,
-              )}
               moreLabel={principles.length ? "More Life Essentials" : undefined}
             >
               <GeneGetzResourceCard principles={principles} />

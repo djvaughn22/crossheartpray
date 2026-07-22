@@ -23,7 +23,7 @@ export const DEFAULT_CARD_LEGEND: CardLegendItem[] = [
   {
     term: "Read",
     detail:
-      "Open the verse or the whole chapter in the Holy Bible app, or jump into the 52-week reading plan.",
+      "Context matters: read the verse or the whole chapter right here on CrossHeartPray, open the exact verse on Bible.com (↗ leaves the site), or jump to its week in the 52-week Reading Plan.",
   },
   {
     term: "Underlined words",

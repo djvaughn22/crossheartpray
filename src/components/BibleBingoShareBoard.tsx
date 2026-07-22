@@ -8,13 +8,10 @@ import {
   type VerifiedWordStudy,
   wordStudyLookupKey,
 } from "../lib/originalLanguageWordStudy";
+import CardReadMenu from "./CardReadMenu";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
-import {
-  bibleComUrlForPassage,
-  openScriptureReader,
-  referenceForPassage,
-} from "../lib/scripture";
+import { bibleComUrlForPassage, referenceForPassage } from "../lib/scripture";
 
 type ShareSection = {
   title: string;
@@ -36,10 +33,6 @@ type BibleBingoShareBoardProps = {
 
 function verseUrl(passage: BibleBingoPassage) {
   return bibleComUrlForPassage(passage);
-}
-
-function chapterUrl(passage: BibleBingoPassage) {
-  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
 
 function shareCardGridClass(index: number) {
@@ -165,35 +158,11 @@ export default function BibleBingoShareBoard({
 
                 <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                   {(() => {
-                    const readHereRef = referenceForPassage(passage);
-                    return readHereRef ? (
-                      <button
-                        type="button"
-                        onClick={() => openScriptureReader(readHereRef)}
-                        className="text-center justify-center items-center inline-flex rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/30"
-                      >
-                        Read here
-                      </button>
+                    const readReference = referenceForPassage(passage);
+                    return readReference ? (
+                      <CardReadMenu reference={readReference} />
                     ) : null;
                   })()}
-
-                  <a
-                    href={verseUrl(passage)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-center justify-center items-center inline-flex rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/30"
-                  >
-                    Verse
-                  </a>
-
-                  <a
-                    href={chapterUrl(passage)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-center justify-center items-center inline-flex rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/30"
-                  >
-                    Chapter
-                  </a>
 
                   <button
                     type="button"

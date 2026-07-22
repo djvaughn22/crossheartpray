@@ -48,6 +48,13 @@ export {
   type ScriptureReference,
 } from "./reference";
 
+export {
+  bibleComUrlForTranslation,
+  resolveScriptureSelection,
+  type ResolvedReadingPlanTarget,
+  type ResolvedScriptureReference,
+} from "./resolved";
+
 export { suggestScriptureReferences, type ScriptureSuggestion } from "./search";
 
 export {

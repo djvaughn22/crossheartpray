@@ -1,80 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   formatPrincipleRange,
   getAdjacentPlayablePrinciple,
   type LifeEssentialsPrinciple,
 } from "../lib/geneGetzLifeEssentials";
-import {
-  bibleReadingPlanDayForReference,
-  bibleReadingPlanDayHref,
-} from "../lib/bibleReadingPlan";
 import CardReadMenu from "./CardReadMenu";
 import YouTubeModal from "./YouTubeModal";
-import { bibleComUrlForPassage, type ScriptureReference } from "../lib/scripture";
+import { type ScriptureReference } from "../lib/scripture";
 
 type Group = { book: string; items: LifeEssentialsPrinciple[] };
-
-type ReadTarget = {
-  verseHref: string;
-  chapterHref: string;
-  verseLabel: string;
-  readingPlanHref?: string;
-  readingPlanNote?: string;
-  readHereReference: ScriptureReference;
-};
 
 function principleKey(p: LifeEssentialsPrinciple) {
   return `${p.code}-${p.principleNumber}-${p.startChapter}-${p.startVerse}`;
 }
 
-// Bible.com (YouVersion, WEBUS) link for the principle's passage range.
-function passageUrl(p: LifeEssentialsPrinciple) {
-  const endVerse =
-    p.startChapter === p.endChapter && p.endVerse > p.startVerse ? p.endVerse : undefined;
-  return bibleComUrlForPassage({
-    code: p.code,
+// The canonical reference for a principle's passage. CardReadMenu derives the
+// reader routes, the Bible.com link, and the real Reading Plan destination
+// from this one object.
+function principleReference(p: LifeEssentialsPrinciple): ScriptureReference {
+  return {
+    book: p.code,
     chapter: p.startChapter,
     verse: p.startVerse,
-    endVerse,
-  });
-}
-
-function chapterUrl(p: LifeEssentialsPrinciple) {
-  return bibleComUrlForPassage({ code: p.code, chapter: p.startChapter });
-}
-
-// Read destinations for each principle: passage + chapter on Bible.com, plus the
-// 52-week plan day that contains the start of the principle's passage (only when
-// a real plan match resolves from the canonical plan data).
-function buildReadTargets(groups: Group[]): Map<string, ReadTarget> {
-  const targets = new Map<string, ReadTarget>();
-  for (const group of groups) {
-    for (const p of group.items) {
-      const planDay = bibleReadingPlanDayForReference(p.code, p.startChapter);
-      const singleVerse =
-        p.startChapter === p.endChapter && p.startVerse === p.endVerse;
-      targets.set(principleKey(p), {
-        verseHref: passageUrl(p),
-        chapterHref: chapterUrl(p),
-        verseLabel: singleVerse ? "Open Verse" : "Open Passage",
-        readHereReference: {
-          book: p.code,
-          chapter: p.startChapter,
-          verse: p.startVerse,
-          ...(p.startChapter === p.endChapter && p.endVerse > p.startVerse
-            ? { endVerse: p.endVerse }
-            : {}),
-        },
-        readingPlanHref: planDay ? bibleReadingPlanDayHref(planDay) : undefined,
-        readingPlanNote: planDay
-          ? `Lands in Week ${planDay.week} · ${planDay.dayLabel} (${planDay.reading}).`
-          : undefined,
-      });
-    }
-  }
-  return targets;
+    ...(p.startChapter === p.endChapter && p.endVerse > p.startVerse
+      ? { endVerse: p.endVerse }
+      : {}),
+  };
 }
 
 // Full 1,500-principle index, grouped by book (collapsible). Click a principle to
@@ -89,7 +42,6 @@ export default function GeneGetzFullIndex({
 }) {
   const [active, setActive] = useState<LifeEssentialsPrinciple | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const readTargets = useMemo(() => buildReadTargets(groups), [groups]);
 
   function toggle(key: string) {
     setExpanded((prev) => {
@@ -122,7 +74,6 @@ export default function GeneGetzFullIndex({
               const key = principleKey(p);
               const isOpen = expanded.has(key);
               const bodyId = `principle-${key}`;
-              const read = readTargets.get(key);
 
               return (
                 <li
@@ -154,17 +105,10 @@ export default function GeneGetzFullIndex({
                     </button>
 
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      {read ? (
-                        <CardReadMenu
-                          verseHref={read.verseHref}
-                          chapterHref={read.chapterHref}
-                          verseLabel={read.verseLabel}
-                          readingPlanHref={read.readingPlanHref}
-                          readingPlanNote={read.readingPlanNote}
-                          readHereReference={read.readHereReference}
-                          triggerAriaLabel={`Read ${p.book} ${formatPrincipleRange(p)}`}
-                        />
-                      ) : null}
+                      <CardReadMenu
+                        reference={principleReference(p)}
+                        triggerAriaLabel={`Read ${p.book} ${formatPrincipleRange(p)}`}
+                      />
 
                       {p.youtubeId ? (
                         <button

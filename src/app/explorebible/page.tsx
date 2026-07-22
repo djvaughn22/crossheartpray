@@ -17,11 +17,7 @@ import {
   randomReferenceForSection,
   seededReferenceForSection,
 } from "../../lib/bibleRandom";
-import {
-  bibleReadingPlanDayForReference,
-  bibleReadingPlanHrefForReference,
-  bibleReadingPlanLabelForReference,
-} from "../../lib/bibleReadingPlan";
+import { bibleReadingPlanDayForReference } from "../../lib/bibleReadingPlan";
 import CardInfoLegend from "../../components/CardInfoLegend";
 import CardReadMenu from "../../components/CardReadMenu";
 import LazyBibleVerseLookup from "../../components/LazyBibleVerseLookup";
@@ -1096,12 +1092,10 @@ export default function BibleExplorerPage() {
               </div>
 
               <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row sm:flex-wrap sm:justify-center">
-                <CardReadMenu
-                  verseHref={verseUrl(focusedCard.passage)}
-                  chapterHref={chapterUrl(focusedCard.passage)}
-                  readingPlanHref={bibleReadingPlanHrefForReference(focusedCard.passage.code, focusedCard.passage.chapter)}
-                  readHereReference={referenceForPassage(focusedCard.passage) ?? undefined}
-                />
+                {(() => {
+                  const readReference = referenceForPassage(focusedCard.passage);
+                  return readReference ? <CardReadMenu reference={readReference} /> : null;
+                })()}
 
                 <button
                   type="button"

@@ -88,7 +88,7 @@ export default function ScriptureCard({ reference, text, className = "" }: Scrip
           >
             Read here
           </button>
-          <ReadInContextButton reference={reference} label="Read in context" />
+          <ReadInContextButton reference={reference} />
         </div>
       </div>
     </article>

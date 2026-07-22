@@ -1,40 +1,55 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { openScriptureReader, type ScriptureReference } from "../lib/scripture";
+import {
+  bibleComUrlForTranslation,
+  openScriptureReader,
+  resolveScriptureSelection,
+  type ScriptureReference,
+  type ScriptureTranslation,
+} from "../lib/scripture";
 
 type CardReadMenuProps = {
-  verseHref: string;
-  chapterHref: string;
-  readingPlanHref?: string;
-  /** When present, "Read here" leads the menu and opens the shared in-app reader. */
-  readHereReference?: ScriptureReference;
+  /** The canonical selected verse or passage. Everything derives from it. */
+  reference: ScriptureReference;
+  /** Optional translation for the Bible.com link (falls back to WEB). */
+  translation?: ScriptureTranslation;
   className?: string;
-  /** Accessible name for the Read trigger, e.g. "Read Genesis 1:26-28". */
+  /** Accessible name for the Read trigger. Defaults to "Read {label}". */
   triggerAriaLabel?: string;
-  /** Menu label for the verse link (default "Open Verse"). */
-  verseLabel?: string;
-  /** Sub-label for the reading-plan link (default "Track it in the 52-week plan."). */
-  readingPlanNote?: string;
 };
 
-// One "Read" button replacing the separate Verse / Chapter / Reading Plan pills.
-// Portaled to <body> like CrossHeartPrayShareMenu so it escapes card transforms.
+// The one "Context matters" action group for every verse surface. A "Read"
+// pill opens a portaled panel with two clearly separated groups:
+//
+//   Stay on CrossHeartPray:  Read here · Read chapter here (in-app reader)
+//   Other destinations:      Bible.com ↗ (external) · Reading Plan (internal)
+//
+// All routes, labels, and the Reading Plan destination come from ONE
+// ResolvedScriptureReference — never from separately passed hrefs, so the
+// heading and the actions can never disagree. Portaled to <body> like
+// CrossHeartPrayShareMenu so it escapes card transforms.
 export default function CardReadMenu({
-  verseHref,
-  chapterHref,
-  readingPlanHref,
-  readHereReference,
+  reference,
+  translation,
   className = "",
   triggerAriaLabel,
-  verseLabel = "Open Verse",
-  readingPlanNote = "Track it in the 52-week plan.",
 }: CardReadMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; center: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  const resolved = useMemo(
+    () => resolveScriptureSelection(reference),
+    [reference],
+  );
+
+  const showReadHere = resolved ? resolved.verse !== undefined : false;
+  const itemCount = resolved
+    ? (showReadHere ? 1 : 0) + 2 + (resolved.readingPlan ? 1 : 0)
+    : 0;
 
   function toggleOpen() {
     if (open) {
@@ -43,8 +58,8 @@ export default function CardReadMenu({
     }
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      // Keep the menu on-screen when the trigger sits near the bottom.
-      const estimatedHeight = readHereReference ? 310 : 250;
+      // Keep the panel on-screen when the trigger sits near the bottom.
+      const estimatedHeight = 120 + itemCount * 64;
       const top = Math.min(rect.bottom + 8, Math.max(12, window.innerHeight - estimatedHeight - 12));
       setCoords({ top, center: rect.left + rect.width / 2 });
     }
@@ -79,9 +94,15 @@ export default function CardReadMenu({
     };
   }, [open]);
 
+  if (!resolved) return null;
+
+  const bibleComHref = bibleComUrlForTranslation(resolved.reference, translation);
+
   const itemClass =
-    "block w-full rounded-xl px-3 py-3 text-left text-sm font-black text-white hover:bg-white/10";
+    "block w-full rounded-xl px-3 py-3 text-left text-sm font-black text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-300";
   const subClass = "mt-0.5 block text-xs font-semibold leading-5 text-slate-300";
+  const groupLabelClass =
+    "mt-2 block px-3 pb-1 text-[0.6rem] font-black uppercase tracking-[0.18em] text-slate-500 first:mt-0";
 
   return (
     <>
@@ -91,8 +112,8 @@ export default function CardReadMenu({
         onClick={toggleOpen}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={triggerAriaLabel}
-        className={`inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30 ${className}`}
+        aria-label={triggerAriaLabel ?? `Read ${resolved.label}`}
+        className={`inline-flex items-center justify-center rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-white/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 ${className}`}
       >
         Read
       </button>
@@ -108,6 +129,7 @@ export default function CardReadMenu({
               />
               <div
                 role="menu"
+                aria-label={`Read ${resolved.label}`}
                 ref={panelRef}
                 style={{
                   position: "fixed",
@@ -115,9 +137,17 @@ export default function CardReadMenu({
                   left: coords.center,
                   transform: "translateX(-50%)",
                 }}
-                className="z-[9999] w-64 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
+                className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
               >
-                {readHereReference ? (
+                <p className="border-b border-white/10 px-3 pb-2 pt-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
+                  Context matters
+                </p>
+
+                <span className={groupLabelClass} aria-hidden="true">
+                  Stay on CrossHeartPray
+                </span>
+
+                {showReadHere ? (
                   <button
                     type="button"
                     role="menuitem"
@@ -127,47 +157,59 @@ export default function CardReadMenu({
                       // item unmounts when the menu closes.
                       triggerRef.current?.focus();
                       setOpen(false);
-                      openScriptureReader(readHereReference);
+                      openScriptureReader(resolved.reference);
                     }}
                     className={itemClass}
                   >
                     Read here
-                    <span className={subClass}>Right here on CrossHeartPray.</span>
+                    <span className={subClass}>
+                      {resolved.label} in the CrossHeartPray reader.
+                    </span>
                   </button>
                 ) : null}
-                <a
-                  href={verseHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+
+                <button
+                  type="button"
                   role="menuitem"
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    triggerRef.current?.focus();
+                    setOpen(false);
+                    openScriptureReader(resolved.chapterReference);
+                  }}
                   className={itemClass}
                 >
-                  {verseLabel}
-                  <span className={subClass}>In the Holy Bible app or Bible.com.</span>
-                </a>
-                <a
-                  href={chapterHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  role="menuitem"
-                  onClick={() => setOpen(false)}
-                  className={itemClass}
-                >
-                  Read the Chapter
+                  Read chapter here
                   <span className={subClass}>
-                    Context matters. One verse is the doorway.
+                    All of {resolved.chapterLabel}, right here.
                   </span>
+                </button>
+
+                <span className={groupLabelClass} aria-hidden="true">
+                  Other destinations
+                </span>
+
+                <a
+                  href={bibleComHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  aria-label={`Open ${resolved.label} on Bible.com in a new tab`}
+                  onClick={() => setOpen(false)}
+                  className={itemClass}
+                >
+                  Bible.com <span aria-hidden="true">↗</span>
+                  <span className={subClass}>Leaves CrossHeartPray.</span>
                 </a>
-                {readingPlanHref ? (
+
+                {resolved.readingPlan ? (
                   <a
-                    href={readingPlanHref}
+                    href={resolved.readingPlan.href}
                     role="menuitem"
                     onClick={() => setOpen(false)}
                     className={itemClass}
                   >
-                    Open Reading Plan
-                    <span className={subClass}>{readingPlanNote}</span>
+                    Reading Plan
+                    <span className={subClass}>{resolved.readingPlan.label}.</span>
                   </a>
                 ) : null}
               </div>

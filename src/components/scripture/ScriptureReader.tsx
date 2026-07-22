@@ -208,7 +208,7 @@ export default function ScriptureReader({
 
   const externalReference = targetVerse ? { ...current, verse: targetVerse } : current;
   const externalLabel =
-    translation.access === "readHere" ? "Bible.com" : `${translation.label} on Bible.com`;
+    translation.access === "readHere" ? "Bible.com" : `${translation.label} · Bible.com`;
 
   const lastTargetVerse = targetEndVerse ?? targetVerse;
   const isTargetVerse = (verse: number) =>
@@ -302,7 +302,7 @@ export default function ScriptureReader({
               <ReadInContextButton
                 reference={current}
                 version={translation}
-                label={`Read ${heading} on Bible.com`}
+                label={`${heading} · Bible.com`}
               />
             </div>
           </div>
