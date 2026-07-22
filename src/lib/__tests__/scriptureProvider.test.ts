@@ -5,9 +5,9 @@ import * as path from "node:path";
 import {
   externalLinkFallbackProvider,
   getScriptureProvider,
-  isYouVersionReady,
   localWebProvider,
-  youVersionAppKey,
+  pickDefaultTranslation,
+  type ScriptureTranslation,
 } from "../scripture";
 import { normalizeBookToCode } from "../geneGetzLifeEssentials";
 import { SCRIPTURE_BOOK_NAME_TO_CODE } from "../scripture";
@@ -18,19 +18,9 @@ afterEach(() => {
 });
 
 describe("provider selection and capability", () => {
-  it("uses the local WEB provider when no YouVersion key is configured", () => {
-    vi.stubEnv("NEXT_PUBLIC_YOUVERSION_APP_KEY", "");
-    expect(youVersionAppKey()).toBeNull();
-    expect(isYouVersionReady()).toBe(false);
+  it("the embedded reader provider is local WEB; YouVersion rides through it server-side", () => {
     expect(getScriptureProvider().id).toBe("localWeb");
     expect(getScriptureProvider().determineReaderCapability()).toBe("embeddedReader");
-  });
-
-  it("stays on local WEB even with a key while the SDK is not installed", () => {
-    vi.stubEnv("NEXT_PUBLIC_YOUVERSION_APP_KEY", "some-future-key");
-    expect(youVersionAppKey()).toBe("some-future-key");
-    expect(isYouVersionReady()).toBe(false);
-    expect(getScriptureProvider().id).toBe("localWeb");
   });
 
   it("external fallback provider offers links only and refuses loadChapter", async () => {
@@ -47,15 +37,25 @@ describe("provider selection and capability", () => {
 });
 
 describe("translation truthfulness", () => {
-  it("only WEB is readable inside CrossHeartPray without the SDK", () => {
+  it("only WEB is readable in the static list; everything else links to Bible.com", () => {
     const translations = localWebProvider.listAvailableTranslations();
     const web = translations.find((translation) => translation.abbreviation === "WEBUS");
     expect(web?.access).toBe("readHere");
+    expect(web?.source).toBe("local");
     for (const translation of translations) {
       if (translation.abbreviation !== "WEBUS") {
         expect(translation.access).toBe("bibleComLink");
       }
     }
+  });
+
+  it("offers CSB, KJV, and NIV as external links in the static list", () => {
+    const abbreviations = localWebProvider
+      .listAvailableTranslations()
+      .map((translation) => translation.abbreviation);
+    expect(abbreviations).toEqual(
+      expect.arrayContaining(["CSB", "KJV", "NIV", "ESV", "NLT"]),
+    );
   });
 
   it("licensed translations build correct external Bible.com links", () => {
@@ -164,9 +164,66 @@ describe("no server-only secrets in client Scripture code", () => {
       for (const match of source.matchAll(/process\.env\.([A-Z0-9_]+)/g)) {
         expect(match[1], `${file} references process.env.${match[1]}`).toMatch(/^NEXT_PUBLIC_/);
       }
-      for (const banned of ["SOCIAL_ADMIN_KEY", "META_ACCESS_TOKEN", "CRON_SECRET"]) {
+      // The YouVersion App Key is server-side only: client Scripture code may
+      // neither read the env var nor import the server module that holds it.
+      for (const banned of [
+        "SOCIAL_ADMIN_KEY",
+        "META_ACCESS_TOKEN",
+        "CRON_SECRET",
+        "YVP_APP_KEY",
+        "youversionPlatform",
+      ]) {
         expect(source.includes(banned), `${file} mentions ${banned}`).toBe(false);
       }
     }
+  });
+});
+
+describe("truthful default-translation priority", () => {
+  const webLocal: ScriptureTranslation = {
+    id: 206,
+    abbreviation: "WEBUS",
+    label: "WEB",
+    access: "readHere",
+    source: "local",
+  };
+  const bsb: ScriptureTranslation = {
+    id: 3034,
+    abbreviation: "BSB",
+    label: "BSB",
+    access: "readHere",
+    source: "youVersion",
+  };
+  const csbReadable: ScriptureTranslation = {
+    id: 1713,
+    abbreviation: "CSB",
+    label: "CSB",
+    access: "readHere",
+    source: "youVersion",
+  };
+  const csbExternal: ScriptureTranslation = {
+    id: 1713,
+    abbreviation: "CSB",
+    label: "CSB",
+    access: "bibleComLink",
+    source: "bibleCom",
+  };
+
+  it("defaults to local WEB while CSB is only an external link", () => {
+    expect(pickDefaultTranslation([webLocal, bsb, csbExternal], null)).toBe(webLocal);
+  });
+
+  it("prefers CSB the moment it is genuinely readable here", () => {
+    expect(pickDefaultTranslation([webLocal, csbReadable, bsb], null)).toBe(csbReadable);
+  });
+
+  it("a saved readable preference beats the CSB default", () => {
+    expect(pickDefaultTranslation([webLocal, csbReadable, bsb], bsb.id)).toBe(bsb);
+  });
+
+  it("a saved external-only preference is ignored — external links are never 'read here'", () => {
+    expect(pickDefaultTranslation([webLocal, bsb, csbExternal], csbExternal.id)).toBe(
+      webLocal,
+    );
   });
 });

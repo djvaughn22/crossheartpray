@@ -1,6 +1,6 @@
 "use client";
 import * as CHPLocalBibleData from "../../lib/localBibleVerses";
-import { SCRIPTURE_BOOK_NAME_TO_CODE, bibleComUrlForPassage } from "../../lib/scripture";
+import { SCRIPTURE_BOOK_NAME_TO_CODE, bibleComUrlForPassage, referenceForPassage } from "../../lib/scripture";
 import ScriptureReader from "../../components/scripture/ScriptureReader";
 import SiteFooter from "../../components/SiteFooter";
 
@@ -1101,6 +1101,7 @@ export default function BibleExplorerPage() {
                   verseHref={verseUrl(focusedCard.passage)}
                   chapterHref={chapterUrl(focusedCard.passage)}
                   readingPlanHref={bibleReadingPlanHrefForReference(focusedCard.passage.code, focusedCard.passage.chapter)}
+                  readHereReference={referenceForPassage(focusedCard.passage) ?? undefined}
                 />
 
                 <button

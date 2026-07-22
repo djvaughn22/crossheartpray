@@ -11,7 +11,7 @@ import {
 } from "../lib/originalLanguageWordStudy";
 
 import { track } from "../lib/analytics";
-import { bibleComUrlForPassage } from "../lib/scripture";
+import { bibleComUrlForPassage, referenceForPassage } from "../lib/scripture";
 export type BibleBingoCardPassage = {
   label: string;
   book: string;
@@ -47,6 +47,7 @@ function verseUrl(passage: BibleBingoCardPassage) {
 function chapterUrl(passage: BibleBingoCardPassage) {
   return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
 }
+
 
 function escapeHtml(value: string) {
   return value
@@ -197,6 +198,7 @@ export default function BibleBingoVerseCard({
             verseHref={shareLinks.verse}
             chapterHref={shareLinks.chapter}
             readingPlanHref={readingPlanHref}
+            readHereReference={referenceForPassage(passage) ?? undefined}
           />
 
           <button

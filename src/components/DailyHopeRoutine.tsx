@@ -31,7 +31,7 @@ import type {
 } from "../lib/dailyHopeRoutine";
 
 import { track } from "../lib/analytics";
-import { bibleComUrlForPassage } from "../lib/scripture";
+import { bibleComUrlForPassage, referenceForPassage } from "../lib/scripture";
 type DailyHopeRoutineProps = {
   openingPrayers: DailyHopePrayerCard[];
   closingPrayer: DailyHopePrayerCard;
@@ -951,6 +951,9 @@ export default function DailyHopeRoutine({
                                 firstPassage.code,
                                 firstPassage.chapter,
                               )}
+                              readHereReference={
+                                referenceForPassage(firstPassage) ?? undefined
+                              }
                             />
                           ) : null}
 

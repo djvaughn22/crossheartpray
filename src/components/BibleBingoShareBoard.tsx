@@ -10,7 +10,11 @@ import {
 } from "../lib/originalLanguageWordStudy";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
-import { bibleComUrlForPassage } from "../lib/scripture";
+import {
+  bibleComUrlForPassage,
+  openScriptureReader,
+  referenceForPassage,
+} from "../lib/scripture";
 
 type ShareSection = {
   title: string;
@@ -160,6 +164,19 @@ export default function BibleBingoShareBoard({
                 </p>
 
                 <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                  {(() => {
+                    const readHereRef = referenceForPassage(passage);
+                    return readHereRef ? (
+                      <button
+                        type="button"
+                        onClick={() => openScriptureReader(readHereRef)}
+                        className="text-center justify-center items-center inline-flex rounded-full border border-white/25 bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/30"
+                      >
+                        Read here
+                      </button>
+                    ) : null;
+                  })()}
+
                   <a
                     href={verseUrl(passage)}
                     target="_blank"

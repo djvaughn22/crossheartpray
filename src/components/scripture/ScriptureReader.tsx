@@ -1,20 +1,27 @@
 "use client";
 
 // In-app Scripture reader, backed by the hybrid provider boundary
-// (src/lib/scripture/provider.ts). Today getScriptureProvider() returns the
-// local public-domain WEB provider; once the owner configures a YouVersion
-// Platform App Key and the SDK is installed, the provider swap happens there
-// — this component does not change. If chapter loading fails, the reader
-// falls back to a Bible.com deep link. No dead ends.
+// (src/lib/scripture/provider.ts).
 //
-// Translation truthfulness: only WEB is rendered inside CrossHeartPray. The
-// picker's other choices open the passage on Bible.com and are labeled that
-// way; the attribution line always names what is actually on screen.
+// Reading priority — verified, never assumed:
+//   1. A YouVersion Platform translation this application is genuinely
+//      licensed for (server-proxied; the App Key never reaches the client).
+//   2. The local public-domain World English Bible.
+//   3. A Bible.com deep link when both fail. No dead ends.
+//
+// Translation truthfulness: the picker is generated from the live
+// capability list (/api/scripture/translations). Text is always attributed
+// to the translation actually on screen — when a licensed translation cannot
+// load and WEB is shown instead, the reader says so plainly.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  fetchAvailableTranslations,
   formatScriptureReference,
   getScriptureProvider,
+  loadTranslationPreference,
+  pickDefaultTranslation,
+  saveTranslationPreference,
   type ScriptureChapter,
   type ScriptureReference,
   type ScriptureTranslation,
@@ -32,6 +39,10 @@ type ScriptureReaderProps = {
 
 const provider = getScriptureProvider();
 
+function isAbortError(caught: unknown): boolean {
+  return caught instanceof DOMException && caught.name === "AbortError";
+}
+
 export default function ScriptureReader({
   initialReference = { book: "JHN", chapter: 1 },
   className = "",
@@ -47,10 +58,33 @@ export default function ScriptureReader({
   const [chapterData, setChapterData] = useState<ScriptureChapter | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [translation, setTranslation] = useState<ScriptureTranslation>(
-    () => provider.listAvailableTranslations()[0],
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<ScriptureTranslation[]>(
+    () => provider.listAvailableTranslations(),
   );
+  const [translation, setTranslation] = useState<ScriptureTranslation>(
+    () => pickDefaultTranslation(provider.listAvailableTranslations(), null),
+  );
+  const userPickedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Upgrade to the live capability list once it arrives; a user's explicit
+  // in-session pick is never overridden.
+  useEffect(() => {
+    let cancelled = false;
+    fetchAvailableTranslations().then((available) => {
+      if (cancelled) return;
+      setTranslations(available);
+      setTranslation((previous) =>
+        userPickedRef.current
+          ? previous
+          : pickDefaultTranslation(available, loadTranslationPreference()),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const goTo = useCallback(
     (reference: ScriptureReference) => {
@@ -62,18 +96,56 @@ export default function ScriptureReader({
     [onReferenceChange],
   );
 
+  // The translation whose text should render: the picked one when readable
+  // here, otherwise local WEB (external-only picks just change the link).
+  const readTranslation =
+    translation.access === "readHere"
+      ? translation
+      : translations.find((entry) => entry.source === "local") ?? translation;
+
   useEffect(() => {
     const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- switching translation must show the loading state, not stale text under a new name
+    setIsLoading(true);
 
     (async () => {
       try {
-        const data = await provider.loadChapter(current, { signal: controller.signal });
+        let notice: string | null = null;
+        let data: ScriptureChapter;
+
+        if (readTranslation.source === "youVersion") {
+          const missingBook =
+            readTranslation.books &&
+            readTranslation.books.length > 0 &&
+            !readTranslation.books.includes(current.book);
+
+          if (missingBook) {
+            notice = `${readTranslation.label} doesn't include this book — showing the World English Bible (WEB) instead.`;
+            data = await provider.loadChapter(current, { signal: controller.signal });
+          } else {
+            try {
+              data = await provider.loadChapter(current, {
+                signal: controller.signal,
+                translation: readTranslation,
+              });
+            } catch (caught) {
+              if (isAbortError(caught)) throw caught;
+              notice = `Couldn't load ${readTranslation.label} right now — showing the World English Bible (WEB) instead.`;
+              data = await provider.loadChapter(current, { signal: controller.signal });
+            }
+          }
+        } else {
+          data = await provider.loadChapter(current, { signal: controller.signal });
+        }
+
         setChapterData(data);
         setLoadFailed(false);
+        setFallbackNotice(notice);
       } catch (caught) {
-        if (!(caught instanceof DOMException && caught.name === "AbortError")) {
+        if (!isAbortError(caught)) {
           setChapterData(null);
           setLoadFailed(true);
+          setFallbackNotice(null);
         }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -81,7 +153,7 @@ export default function ScriptureReader({
     })();
 
     return () => controller.abort();
-  }, [current]);
+  }, [current, readTranslation]);
 
   // Scroll the target verse into view once its chapter is on screen;
   // otherwise start each chapter at the top.
@@ -159,6 +231,15 @@ export default function ScriptureReader({
         </button>
       </div>
 
+      {!isLoading && fallbackNotice ? (
+        <p
+          role="status"
+          className="mt-3 rounded-xl border border-amber-200/20 bg-amber-300/10 px-3 py-2 text-xs font-semibold leading-5 text-amber-100"
+        >
+          {fallbackNotice}
+        </p>
+      ) : null}
+
       <div
         ref={scrollRef}
         className="mt-4 max-h-[60svh] overflow-y-auto rounded-2xl border border-white/10 bg-black/15 px-4 py-4 sm:px-6"
@@ -210,9 +291,13 @@ export default function ScriptureReader({
         </p>
         <div className="flex items-center gap-2">
           <TranslationPicker
-            translations={provider.listAvailableTranslations()}
+            translations={translations}
             selectedId={translation.id}
-            onChange={setTranslation}
+            onChange={(picked) => {
+              userPickedRef.current = true;
+              setTranslation(picked);
+              saveTranslationPreference(picked.id);
+            }}
           />
           <ReadInContextButton
             reference={externalReference}

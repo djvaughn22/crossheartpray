@@ -1,87 +1,79 @@
 # YouVersion Platform — hybrid Scripture architecture
 
-_Last checked: July 21, 2026_
+_Last verified against the live API: July 21, 2026_
 
 CrossHeartPray uses a hybrid Scripture architecture: the local public-domain
-World English Bible is the fast, reliable foundation; the YouVersion Platform
-becomes the preferred enhanced reading layer once the owner configures a real
-App Key. Licensed translations are never copied into the local dataset or
-cached in ways YouVersion does not permit. Every feature goes through the
-shared Scripture system (`src/lib/scripture`, `src/components/scripture`).
+World English Bible is the fast, always-available foundation; the YouVersion
+Platform is the enhanced reading layer for translations the application is
+genuinely licensed for. Licensed text is never copied into the local dataset
+or persisted; every feature goes through the shared Scripture system
+(`src/lib/scripture`, `src/components/scripture`).
 
-Background: CrossHeartPray never had a YouVersion App Key — plain
-`bible.com/bible/206/...` web links never needed one. Nothing here has ever
-called a YouVersion API.
+## CURRENT STATE (verified live, July 21, 2026)
 
-## CURRENTLY WORKING (no key, $0, license-clean)
+The owner's real App Key is configured as **`YVP_APP_KEY`** in `.env.local`
+and in Vercel (Development, Preview, Production). It is a **server-side**
+credential here:
 
-- **Local WEB reader** — `ScriptureReader` on /explorebible reads any chapter
-  in-app from `/api/scripture/chapter` (local WEB text, a few KB per chapter,
-  hard-cached). Previous/Next walks the whole canon.
-- **Autocomplete** — `ScriptureReferenceInput` suggests as you type
-  ("John 3", "II Tim", "1 pe"), full keyboard + touch + ARIA combobox.
-- **Structured references** — `ScriptureReference` objects everywhere; no
-  raw string parsing in features. `toUsfmString()` emits the same USFM the
-  YouVersion SDK consumes (`JHN.3.16`).
-- **Chapter navigation** — `adjacentChapter()` crosses book boundaries
-  (Malachi 4 → Matthew 1).
-- **Centralized Bible.com links** — every deep link flows through
-  `bibleComUrl` / `bibleComUrlForPassage`. No page keeps its own book table
-  or URL builder. (One deliberate exception: `bibleReadingPlan.ts` keeps its
-  reading-plan *range* parser — "Genesis 1-11"-style plan strings are a
-  different grammar, and its behavior is locked by its own tests.)
-- **External translation links** — `TranslationPicker` offers WEB
-  ("read here") plus KJV/NIV/ESV/NLT explicitly labeled "on Bible.com".
-  Licensed text is never rendered locally.
-- **Fallback behavior** — if a chapter fetch fails, the reader shows a
-  Bible.com deep link for the same chapter. No dead ends.
+- The official REST API (`https://api.youversion.com/v1`, header
+  `X-YVP-App-Key`) is called only from API routes via
+  `src/lib/youversionPlatform.ts`.
+- The key never appears in a client bundle, log, or test snapshot.
+  `scriptureProvider.test.ts` bans it from all client Scripture code.
+- The official React SDK (`@youversion/platform-react-ui`) is NOT installed —
+  it would require handing the key to client code, and the REST API covers
+  everything this site needs (version list + chapter passages).
 
-Provider boundary (`src/lib/scripture/provider.ts`): components call a
-`ScriptureProvider` interface (`resolveReference`, `suggestReferences`,
-`loadChapter`, `buildExternalUrl`, `listAvailableTranslations`,
-`determineReaderCapability`). `getScriptureProvider()` picks
-youVersion → localWeb by priority; `externalLinkFallbackProvider` covers
-failures. Today it always returns localWeb.
+### What the key is licensed for (live `/v1/bibles` response)
 
-## OWNER ACTION REQUIRED (only DJ can do these)
+11 English versions, all public-domain/freely licensed: WEB (206, served
+locally instead), BSB, ASV, LSV, FBV, Geneva (enggnv), WMB, WMBBE, TCENT
+(NT only), CPDV, TOJB2011.
 
-1. Create (or access) the developer account at **platform.youversion.com**
-   as Open Mirror LLC — free.
-2. Review and accept the current YouVersion Platform Terms of Use.
-3. Register CrossHeartPray as an app in the Developer Dashboard.
-4. Copy the **App Key**. If Sign in with YouVersion is ever wanted, also add
-   `https://crossheartpray.com` (and preview origins) to the Callback URI
-   list — not needed for Bible reading only.
-5. Add the key locally in `.env.local` and in Vercel → crossheartpray →
-   Settings → Environment Variables:
-   `NEXT_PUBLIC_YOUVERSION_APP_KEY=<the key>`
-   The official React SDK receives the App Key in client code
-   (`<YouVersionProvider appKey={...}>` — developers.youversion.com/sdks/react),
-   so client visibility is the documented contract; it is a public
-   identifier, not a server secret. Never commit it.
-6. Redeploy (any push to main, or a Vercel redeploy).
-7. After the SDK work lands (below), verify on the live site: attribution
-   shows for every licensed translation, and only permitted translations are
-   readable in-app.
+**CSB (1713), KJV (1), and NIV (111) are NOT licensed to this application**
+— the API answers 403 for them (verified July 21, 2026). They are offered as
+external Bible.com links only and are never rendered in-app. The default
+in-app translation is therefore local WEB, not CSB.
 
-## FUTURE IMPLEMENTATION (after the key exists)
+### Endpoints used
 
-1. `npm install @youversion/platform-react-ui` (React ≥ 19.1 required — we
-   run 19.2.4).
-2. Implement the youVersion `ScriptureProvider` and flip
-   `YOUVERSION_SDK_INSTALLED` in `src/lib/scripture/provider.ts`; wrap
-   Scripture surfaces in `<YouVersionProvider>`.
-3. Swap `ScriptureReader`'s body for `BibleReader.Root` when the provider
-   reports YouVersion capability; mark permitted translations `readHere` in
-   `listAvailableTranslations` so `TranslationPicker` upgrades itself.
-4. Retain the local WEB reader as the automatic fallback whenever the key,
-   network, or a licensed translation is unavailable.
-5. Before release, verify licensing: attribution rendered for every
-   version (`BibleCard` automatic; `BibleTextView` manual via
-   `version.copyright`), SDK usage reporting untouched, no YouVersion marks
-   in our UI, no AI features over Platform content.
+- `GET /v1/bibles?language_ranges[]=en` — the licensed-version list. This is
+  the licensing gate: nothing outside this list is ever proxied.
+- `GET /v1/bibles/{id}/passages/{BOOK}.{chapter}?format=html` — chapter text
+  with verse markers (`span.yv-v`), parsed server-side into verse-numbered
+  text. The API itself replies `cache-control: public, max-age=86400`, so the
+  proxy's in-memory caches and CDN headers stay within that policy.
 
-SDK references: React docs at developers.youversion.com/sdks/react ·
-source at github.com/youversion/platform-sdk-react · components:
-`BibleReader`, `BibleCard`, `BibleTextView`, `VerseOfTheDay`,
-`BibleChapterPicker`, `BibleVersionPicker`, `YouVersionAuthButton`.
+### Server proxy routes
+
+- `GET /api/scripture/translations` — truthful capability list: local WEB
+  (readHere), licensed YouVersion versions (readHere), well-known external
+  translations (bibleComLink). Falls back to local + external when the key or
+  platform is unavailable — the reader never breaks.
+- `GET /api/scripture/chapter?book=JHN&chapter=3[&version=3034]` — local WEB
+  by default; a licensed YouVersion version when requested. Failures return
+  an error status and the client reader falls back to local WEB, keeping the
+  external Bible.com option. No dead ends.
+
+## HOW CSB / KJV / NIV BECOME READABLE IN-APP (owner action)
+
+1. In platform.youversion.com → Developer Dashboard, request licensing for
+   the wanted translations (YouVersion's "fast-track Bible licensing") and
+   complete whatever approval/"Make Live" step the dashboard requires.
+2. No code change is needed: once the platform includes a version in
+   `/v1/bibles` for this app, it appears in the picker as "read here", CSB
+   becomes the preferred default for new visitors
+   (`pickDefaultTranslation`), and attribution comes from the version's
+   `copyright` field automatically.
+3. After granting, verify on the live site: the version reads in-app, the
+   attribution line names it, and unlicensed versions still open externally.
+
+## READER PRIORITY (implemented and test-locked)
+
+1. Licensed YouVersion translation, when selected and available.
+2. Local WEB (also the visible fallback when YouVersion fails — the reader
+   says so plainly and never mislabels WEB as another translation).
+3. Bible.com deep link when both fail.
+
+User translation choice persists in localStorage
+(`crossheartpray:scripture:translation:v1`) — no account required.

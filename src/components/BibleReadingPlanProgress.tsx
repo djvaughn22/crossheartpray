@@ -16,7 +16,11 @@ import {
   toggleChecklistItem,
   type ChecklistProgress,
 } from "../lib/checklistProgress";
-import { bibleComUrlForPassage } from "../lib/scripture";
+import {
+  bibleComUrlForPassage,
+  openScriptureReader,
+  type ScriptureReference,
+} from "../lib/scripture";
 
 type BibleReadingPlanProgressProps = {
   weeks: BibleReadingPlanWeek[];
@@ -303,13 +307,22 @@ function bibleUrl(reading: unknown): string {
 }
 
 // Recover {code, chapter} from the parsed bible.com URL (zero-risk reuse of
-// bibleUrl's book/chapter parsing), then return the Life Essentials principles
-// that overlap that chapter — powers the 1-click Gene Getz video icon per cell.
+// bibleUrl's book/chapter parsing). Multi-chapter readings ("Genesis 1-11")
+// resolve to their first chapter — the in-app reader's Next button continues
+// the reading from there.
+function referenceFromWebHref(href: string): ScriptureReference | null {
+  const m = href.match(/\/bible\/206\/([A-Z0-9]+)\.(\d+)\.WEBUS/);
+  if (!m) return null;
+  const chapter = Number(m[2]);
+  return Number.isInteger(chapter) && chapter >= 1 ? { book: m[1], chapter } : null;
+}
+
+// The Life Essentials principles that overlap a reading's first chapter —
+// powers the 1-click Gene Getz video icon per cell.
 function geneGetzForReading(reading: unknown): LifeEssentialsPrinciple[] {
-  const url = bibleUrl(reading);
-  const m = url.match(/\/bible\/206\/([A-Z0-9]+)\.(\d+)\.WEBUS/);
-  if (!m) return [];
-  return getGeneGetzPrinciplesForChapter(m[1], m[2]);
+  const reference = referenceFromWebHref(bibleUrl(reading));
+  if (!reference) return [];
+  return getGeneGetzPrinciplesForChapter(reference.book, reference.chapter ?? 1);
 }
 
 function flattenPlan(weeks: BibleReadingPlanWeek[]) {
@@ -474,14 +487,28 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
+              {(() => {
+                const readHereRef = referenceFromWebHref(nextReading.href);
+                return readHereRef ? (
+                  <button
+                    type="button"
+                    onClick={() => openScriptureReader(readHereRef)}
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/35 bg-emerald-300/10 px-4 py-2 text-sm font-black leading-tight text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-300/18 hover:text-white sm:w-auto sm:text-base"
+                    title={`Read ${nextReading.label} here`}
+                  >
+                    Read {nextReading.label} here
+                  </button>
+                ) : null;
+              })()}
+
               <a
                 href={nextReading.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-emerald-200/35 bg-emerald-300/10 px-4 py-2 text-sm font-black leading-tight text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-300/18 hover:text-white sm:w-auto sm:text-base"
-                title={nextReading.label}
+                title={`${nextReading.label} on Bible.com`}
               >
-                Read {nextReading.label}
+                Read on Bible.com
               </a>
 
               <label className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-300/10 px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200/40 hover:bg-emerald-300/18 sm:w-auto">
@@ -545,6 +572,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     const label = labelForReading(reading);
                     const id = idForReading(reading, weekNo, laneIndex);
                     const href = bibleUrl(reading);
+                    const readHereRef = referenceFromWebHref(href);
                     const isRead = Boolean(progress[id]);
                     const getz = geneGetzForReading(reading).find((p) => p.youtubeId);
 
@@ -576,10 +604,22 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block min-w-0 flex-1 whitespace-nowrap text-left text-[0.72rem] font-black leading-snug text-emerald-50 underline decoration-emerald-300/45 decoration-2 underline-offset-3 transition hover:text-white hover:decoration-emerald-100"
-                            title={label}
+                            title={`${label} on Bible.com`}
                           >
                             {label}
                           </a>
+
+                          {readHereRef ? (
+                            <button
+                              type="button"
+                              onClick={() => openScriptureReader(readHereRef)}
+                              title={`Read ${label} here`}
+                              aria-label={`Read ${label} here on CrossHeartPray`}
+                              className="chp-getz-icon ml-auto shrink-0 cursor-pointer text-base leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
+                            >
+                              📖
+                            </button>
+                          ) : null}
 
                           {getz ? (
                             <span

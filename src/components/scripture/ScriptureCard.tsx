@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import {
   formatScriptureReference,
   getScriptureProvider,
+  openScriptureReader,
   type ScriptureReference,
 } from "../../lib/scripture";
 import ReadInContextButton from "./ReadInContextButton";
@@ -79,7 +80,16 @@ export default function ScriptureCard({ reference, text, className = "" }: Scrip
         <p className="text-xs font-semibold text-zinc-400">
           World English Bible (WEB), public domain.
         </p>
-        <ReadInContextButton reference={reference} label="Read in context" />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openScriptureReader(reference)}
+            className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-sm font-black text-white transition hover:bg-white/15"
+          >
+            Read here
+          </button>
+          <ReadInContextButton reference={reference} label="Read in context" />
+        </div>
       </div>
     </article>
   );

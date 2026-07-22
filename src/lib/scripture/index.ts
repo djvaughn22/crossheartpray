@@ -4,7 +4,9 @@
 // - Pass ScriptureReference objects, never re-parse raw strings.
 // - Build every Bible.com link through bibleComUrl().
 // - Text rendered inside CrossHeartPray comes from the local World English
-//   Bible (public domain); everything else deep-links to Bible.com.
+//   Bible (public domain) or a YouVersion translation this application is
+//   genuinely licensed for; everything else deep-links to Bible.com.
+// - Text is never labeled as a translation it is not.
 
 export {
   SCRIPTURE_BOOKS,
@@ -18,15 +20,18 @@ export {
 
 export {
   externalLinkFallbackProvider,
+  fetchAvailableTranslations,
   getScriptureProvider,
-  isYouVersionReady,
+  loadTranslationPreference,
   localWebProvider,
-  youVersionAppKey,
+  pickDefaultTranslation,
+  saveTranslationPreference,
   type ReaderCapability,
   type ScriptureChapter,
   type ScriptureProvider,
   type ScriptureProviderId,
   type ScriptureTranslation,
+  type ScriptureTranslationSource,
 } from "./provider";
 
 export {
@@ -37,9 +42,16 @@ export {
   bibleComUrlForPassage,
   formatScriptureReference,
   parseScriptureReference,
+  referenceForPassage,
   toUsfmString,
   type BibleComLinkVersion,
   type ScriptureReference,
 } from "./reference";
 
 export { suggestScriptureReferences, type ScriptureSuggestion } from "./search";
+
+export {
+  SCRIPTURE_READER_OPEN_EVENT,
+  openScriptureReader,
+  type ScriptureReaderOpenDetail,
+} from "./readerBus";

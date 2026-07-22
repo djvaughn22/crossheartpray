@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { openScriptureReader, type ScriptureReference } from "../lib/scripture";
 
 type CardReadMenuProps = {
   verseHref: string;
   chapterHref: string;
   readingPlanHref?: string;
+  /** When present, "Read here" leads the menu and opens the shared in-app reader. */
+  readHereReference?: ScriptureReference;
   className?: string;
   /** Accessible name for the Read trigger, e.g. "Read Genesis 1:26-28". */
   triggerAriaLabel?: string;
@@ -22,6 +25,7 @@ export default function CardReadMenu({
   verseHref,
   chapterHref,
   readingPlanHref,
+  readHereReference,
   className = "",
   triggerAriaLabel,
   verseLabel = "Open Verse",
@@ -40,7 +44,7 @@ export default function CardReadMenu({
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
       // Keep the menu on-screen when the trigger sits near the bottom.
-      const estimatedHeight = 250;
+      const estimatedHeight = readHereReference ? 310 : 250;
       const top = Math.min(rect.bottom + 8, Math.max(12, window.innerHeight - estimatedHeight - 12));
       setCoords({ top, center: rect.left + rect.width / 2 });
     }
@@ -113,6 +117,24 @@ export default function CardReadMenu({
                 }}
                 className="z-[9999] w-64 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
               >
+                {readHereReference ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      // Focus the persistent Read trigger first so the reader
+                      // overlay can restore focus there on close — this menu
+                      // item unmounts when the menu closes.
+                      triggerRef.current?.focus();
+                      setOpen(false);
+                      openScriptureReader(readHereReference);
+                    }}
+                    className={itemClass}
+                  >
+                    Read here
+                    <span className={subClass}>Right here on CrossHeartPray.</span>
+                  </button>
+                ) : null}
                 <a
                   href={verseHref}
                   target="_blank"

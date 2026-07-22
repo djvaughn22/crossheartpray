@@ -23,10 +23,13 @@ export type ScriptureReference = {
 // Bible.com's URL code; `label` is what people see.
 export const BIBLE_COM_DEFAULT_VERSION = { id: 206, abbreviation: "WEBUS", label: "WEB" };
 
-// Deep-link translations offered by TranslationPicker. These only change which
-// Bible.com page opens; text rendered inside CrossHeartPray stays WEB.
+// Deep-link translations offered by TranslationPicker. These only change
+// which Bible.com page opens; text rendered inside CrossHeartPray comes from
+// local WEB or a genuinely licensed YouVersion translation, never from these
+// links.
 export const BIBLE_COM_LINK_VERSIONS = [
   BIBLE_COM_DEFAULT_VERSION,
+  { id: 1713, abbreviation: "CSB", label: "CSB" },
   { id: 1, abbreviation: "KJV", label: "KJV" },
   { id: 111, abbreviation: "NIV", label: "NIV" },
   { id: 59, abbreviation: "ESV", label: "ESV" },
@@ -150,6 +153,30 @@ export function bibleComUrlForPassage(passage: {
     }
   }
   return bibleComUrl(reference);
+}
+
+/**
+ * Structured reference from CrossHeartPray's existing passage shape
+ * ({ code, chapter, verse } with string fields) — the "Read here" twin of
+ * bibleComUrlForPassage. parseInt so range verses like "16-18" open at the
+ * first verse. Null when the fields don't parse; callers then simply omit
+ * the in-app option and keep their external links.
+ */
+export function referenceForPassage(passage: {
+  code: string;
+  chapter: string | number;
+  verse?: string | number;
+}): ScriptureReference | null {
+  const chapter = parseInt(String(passage.chapter), 10);
+  if (!getScriptureBook(passage.code) || !Number.isInteger(chapter) || chapter < 1) {
+    return null;
+  }
+  const reference: ScriptureReference = { book: passage.code, chapter };
+  if (passage.verse !== undefined) {
+    const verse = parseInt(String(passage.verse), 10);
+    if (Number.isInteger(verse) && verse >= 1) reference.verse = verse;
+  }
+  return reference;
 }
 
 /** Previous/next chapter across book boundaries; null past either end of the canon. */

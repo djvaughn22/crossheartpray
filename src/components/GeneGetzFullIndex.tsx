@@ -12,7 +12,7 @@ import {
 } from "../lib/bibleReadingPlan";
 import CardReadMenu from "./CardReadMenu";
 import YouTubeModal from "./YouTubeModal";
-import { bibleComUrlForPassage } from "../lib/scripture";
+import { bibleComUrlForPassage, type ScriptureReference } from "../lib/scripture";
 
 type Group = { book: string; items: LifeEssentialsPrinciple[] };
 
@@ -22,6 +22,7 @@ type ReadTarget = {
   verseLabel: string;
   readingPlanHref?: string;
   readingPlanNote?: string;
+  readHereReference: ScriptureReference;
 };
 
 function principleKey(p: LifeEssentialsPrinciple) {
@@ -58,6 +59,14 @@ function buildReadTargets(groups: Group[]): Map<string, ReadTarget> {
         verseHref: passageUrl(p),
         chapterHref: chapterUrl(p),
         verseLabel: singleVerse ? "Open Verse" : "Open Passage",
+        readHereReference: {
+          book: p.code,
+          chapter: p.startChapter,
+          verse: p.startVerse,
+          ...(p.startChapter === p.endChapter && p.endVerse > p.startVerse
+            ? { endVerse: p.endVerse }
+            : {}),
+        },
         readingPlanHref: planDay ? bibleReadingPlanDayHref(planDay) : undefined,
         readingPlanNote: planDay
           ? `Lands in Week ${planDay.week} · ${planDay.dayLabel} (${planDay.reading}).`
@@ -152,6 +161,7 @@ export default function GeneGetzFullIndex({
                           verseLabel={read.verseLabel}
                           readingPlanHref={read.readingPlanHref}
                           readingPlanNote={read.readingPlanNote}
+                          readHereReference={read.readHereReference}
                           triggerAriaLabel={`Read ${p.book} ${formatPrincipleRange(p)}`}
                         />
                       ) : null}
