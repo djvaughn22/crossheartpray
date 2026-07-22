@@ -2210,4 +2210,38 @@ html[data-chp-visual-theme="light"] .chp-verse-target {
   }
 }
 
+/* Choose-a-Bible picker: same calm entrance as the reader panel. */
+@keyframes chp-picker-panel-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+.chp-picker-backdrop {
+  animation: chp-reader-backdrop-in 150ms ease-out;
+}
+.chp-picker-panel {
+  animation: chp-picker-panel-in 210ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chp-picker-backdrop,
+  .chp-picker-panel {
+    animation: none;
+  }
+}
+
+/* Light theme: the backdrop stays a scrim (the generic inset flattener
+   would paint it opaque), the panel becomes a white card, and the selected
+   Bible card keeps its gentle emerald (the button flattener would wash it
+   white — same precedent as .chp-pnav-active). */
+html[data-chp-visual-theme="light"] div.chp-picker-backdrop {
+  background: rgba(15, 23, 42, 0.4) !important;
+}
+html[data-chp-visual-theme="light"] div.chp-picker-panel {
+  background: #ffffff !important;
+}
+html[data-chp-visual-theme="light"] button.chp-bible-card-selected,
+html[data-chp-visual-theme="light"] button.chp-bible-card-selected:hover {
+  background: #ecfdf5 !important;
+  border-color: #6ee7b7 !important;
+}
+
 /* end CHP_SCRIPTURE_READER */

@@ -51,6 +51,13 @@ export {
 export { suggestScriptureReferences, type ScriptureSuggestion } from "./search";
 
 export {
+  isRecommendedTranslation,
+  matchesTranslationSearch,
+  recommendedRank,
+  translationDisplayName,
+} from "./translationNames";
+
+export {
   SCRIPTURE_READER_OPEN_EVENT,
   openScriptureReader,
   type ScriptureReaderOpenDetail,

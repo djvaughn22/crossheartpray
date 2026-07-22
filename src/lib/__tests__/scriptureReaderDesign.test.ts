@@ -68,10 +68,32 @@ describe("reader chrome (source contract)", () => {
     expect(reader).toContain("can't be read inside CrossHeartPray yet");
   });
 
-  it("keeps the translation picker an accessible native select", () => {
-    expect(picker).toContain("<select");
-    expect(picker).toContain("aria-label={ariaLabel}");
-    expect(picker).toContain('ariaLabel = "Translation"');
+  it("the translation picker is a dialog of full-name Bible cards, not an abbreviation menu", () => {
+    expect(picker).toContain('role="dialog"');
+    expect(picker).toContain('aria-modal="true"');
+    expect(picker).toContain("translationDisplayName");
+    expect(picker).not.toContain("<select");
+  });
+
+  it("the picker groups by experience and keeps the wording human", () => {
+    expect(picker).toContain(">Recommended<");
+    expect(picker).toContain("More translations");
+    expect(picker).toContain("Reads inside CrossHeartPray");
+    expect(picker).toContain("Opens in YouVersion");
+    // The tiny legend — the whole idea in two lines.
+    expect(picker).toContain("Read the Bible without leaving CrossHeartPray.");
+    expect(picker).toContain("Opens the official YouVersion Bible.");
+  });
+
+  it("the picker searches by name and marks the current Bible clearly", () => {
+    expect(picker).toContain("matchesTranslationSearch");
+    expect(picker).toContain("chp-bible-card-selected");
+    expect(picker).toContain("aria-current");
+  });
+
+  it("the picker closes itself on Escape without closing the reader", () => {
+    expect(picker).toContain("event.stopPropagation()");
+    expect(picker).toContain('aria-label="Close Bible picker"');
   });
 });
 
@@ -96,6 +118,18 @@ describe("motion and theming (source contract)", () => {
   it("the open animation is disabled under prefers-reduced-motion", () => {
     expect(globals).toMatch(
       /@media \(prefers-reduced-motion: reduce\) \{\s*\.chp-reader-backdrop,\s*\.chp-reader-panel \{\s*animation: none;/,
+    );
+    expect(globals).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{\s*\.chp-picker-backdrop,\s*\.chp-picker-panel \{\s*animation: none;/,
+    );
+  });
+
+  it("light theme keeps the picker scrim and the selected Bible card's emerald", () => {
+    expect(globals).toContain(
+      'html[data-chp-visual-theme="light"] div.chp-picker-backdrop',
+    );
+    expect(globals).toContain(
+      'html[data-chp-visual-theme="light"] button.chp-bible-card-selected',
     );
   });
 
