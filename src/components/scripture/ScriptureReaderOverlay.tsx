@@ -18,17 +18,24 @@ import {
 } from "../../lib/scripture";
 import {
   GENE_GETZ_SOURCE_LABEL,
+  formatPrincipleRange,
   getGeneGetzPrinciplesForChapter,
   type LifeEssentialsPrinciple,
 } from "../../lib/geneGetzLifeEssentials";
-import YouTubeModal from "../YouTubeModal";
+import { track } from "../../lib/analytics";
 import ScriptureReader from "./ScriptureReader";
+
+function principleKey(principle: LifeEssentialsPrinciple) {
+  return `${principle.code}-${principle.principleNumber}-${principle.startChapter}-${principle.startVerse}`;
+}
 
 export default function ScriptureReaderOverlay() {
   const [reference, setReference] = useState<ScriptureReference | null>(null);
   const [current, setCurrent] = useState<ScriptureReference | null>(null);
   const [openCount, setOpenCount] = useState(0);
-  const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
+  // Which principle's embedded player is revealed — playback starts only on
+  // the explicit Watch tap, never when the reader opens.
+  const [playingKey, setPlayingKey] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const pushedHistoryRef = useRef(false);
@@ -58,7 +65,7 @@ export default function ScriptureReaderOverlay() {
   const closeNow = useCallback(() => {
     setReference(null);
     setCurrent(null);
-    setActiveVideo(null);
+    setPlayingKey(null);
     pushedHistoryRef.current = false;
     triggerRef.current?.focus?.();
     triggerRef.current = null;
@@ -91,7 +98,7 @@ export default function ScriptureReaderOverlay() {
         if (!panel) return;
         const focusables = Array.from(
           panel.querySelectorAll<HTMLElement>(
-            'a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])',
+            'a[href], button:not([disabled]), select, input, iframe, [tabindex]:not([tabindex="-1"])',
           ),
         ).filter((element) => element.offsetParent !== null || element === document.activeElement);
         if (focusables.length === 0) return;
@@ -128,8 +135,8 @@ export default function ScriptureReaderOverlay() {
     ? getGeneGetzPrinciplesForChapter(current.book, current.chapter)
     : [];
 
-  const getzPillClass =
-    "inline-flex min-h-11 items-center justify-center rounded-full border border-amber-200/25 bg-amber-300/10 px-4 text-xs font-bold text-amber-50 transition hover:bg-amber-300/20";
+  const watchPillClass =
+    "inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-200/30 bg-emerald-300/10 px-5 text-sm font-bold text-emerald-50 transition hover:bg-emerald-300/20";
 
   return createPortal(
     <>
@@ -150,58 +157,129 @@ export default function ScriptureReaderOverlay() {
             key={openCount}
             variant="fill"
             initialReference={reference}
-            onReferenceChange={setCurrent}
+            onReferenceChange={(next) => {
+              setCurrent(next);
+              setPlayingKey(null);
+            }}
             onRequestClose={requestClose}
             afterScripture={
               getzMatches.length > 0 ? (
-                <div className="mx-auto mt-5 max-w-md text-center">
-                  <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-amber-100">
-                    {GENE_GETZ_SOURCE_LABEL}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    {getzMatches.slice(0, 2).map((principle) =>
-                      principle.youtubeId ? (
-                        <button
-                          key={`${principle.code}-${principle.principleNumber}`}
-                          type="button"
-                          onClick={() => setActiveVideo(principle)}
-                          className={getzPillClass}
+                <section
+                  aria-label={GENE_GETZ_SOURCE_LABEL}
+                  className="mx-auto mt-6 max-w-[38rem] text-left"
+                >
+                  <div className="rounded-2xl border border-emerald-200/25 bg-emerald-300/[0.07] p-4 sm:p-5">
+                    <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-emerald-100">
+                      {GENE_GETZ_SOURCE_LABEL}
+                    </p>
+
+                    {getzMatches.map((principle) => {
+                      const key = principleKey(principle);
+                      const playing = playingKey === key;
+                      return (
+                        <article
+                          key={key}
+                          className="mt-3 rounded-xl border border-white/10 bg-black/25 p-4"
                         >
-                          ▶ {principle.principleTitle}
-                        </button>
-                      ) : (
-                        <a
-                          key={`${principle.code}-${principle.principleNumber}`}
-                          href={principle.officialVideoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={getzPillClass}
-                        >
-                          ▶ {principle.principleTitle}
-                        </a>
-                      ),
-                    )}
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-100">
+                            Principle {principle.principleNumber} · {principle.book}{" "}
+                            {formatPrincipleRange(principle)}
+                          </p>
+                          <h4 className="mt-1 text-base font-bold leading-6 text-white">
+                            {principle.principleTitle}
+                          </h4>
+                          <p className="mt-1.5 text-xs leading-5 text-slate-300">
+                            {principle.shortPrincipleSummary}
+                          </p>
+
+                          {playing && principle.youtubeId ? (
+                            <>
+                              {/* The same in-app player CrossHeartPray already
+                                  uses (YouTubeModal), embedded in the reader.
+                                  It mounts only on the explicit Watch tap. */}
+                              <div className="-mx-4 mt-3 aspect-video overflow-hidden border-y border-white/10 bg-black sm:mx-0 sm:rounded-xl sm:border-x">
+                                <iframe
+                                  className="h-full w-full"
+                                  src={`https://www.youtube-nocookie.com/embed/${principle.youtubeId}?autoplay=1&rel=0&controls=1&playsinline=1&fs=1`}
+                                  title={`Principle ${principle.principleNumber} · ${principle.principleTitle}`}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                  allowFullScreen
+                                  referrerPolicy="strict-origin-when-cross-origin"
+                                />
+                              </div>
+                              <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-400">
+                                Player not loading?{" "}
+                                <a
+                                  href={principle.officialVideoUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-100 underline decoration-white/25 underline-offset-2 hover:text-white"
+                                >
+                                  Watch on the official player
+                                </a>
+                                .
+                              </p>
+                            </>
+                          ) : null}
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                            {principle.youtubeId ? (
+                              <button
+                                type="button"
+                                aria-expanded={playing}
+                                onClick={() => {
+                                  if (!playing) {
+                                    track("media_play", {
+                                      content_type: "getz_video",
+                                      content_title: principle.principleTitle,
+                                    });
+                                  }
+                                  setPlayingKey(playing ? null : key);
+                                }}
+                                className={watchPillClass}
+                              >
+                                {playing ? "Hide player" : "▶ Watch principle"}
+                              </button>
+                            ) : (
+                              <a
+                                href={principle.officialVideoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={watchPillClass}
+                              >
+                                ▶ Watch principle
+                              </a>
+                            )}
+                            <a
+                              href={principle.officialVideoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-semibold text-emerald-100/70 underline decoration-white/20 underline-offset-4 hover:text-emerald-50"
+                            >
+                              Official page
+                            </a>
+                          </div>
+
+                          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                            {principle.sourceLabel ?? GENE_GETZ_SOURCE_LABEL}
+                          </p>
+                        </article>
+                      );
+                    })}
+
                     <a
                       href="/life-essentials"
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-xs font-bold text-slate-200 transition hover:bg-white/10"
+                      className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-xs font-bold text-slate-200 transition hover:bg-white/10"
                     >
                       All Life Essentials →
                     </a>
                   </div>
-                </div>
+                </section>
               ) : null
             }
           />
         </div>
       </div>
-
-      {activeVideo?.youtubeId ? (
-        <YouTubeModal
-          videoId={activeVideo.youtubeId}
-          title={`Principle ${activeVideo.principleNumber} · ${activeVideo.principleTitle}`}
-          onClose={() => setActiveVideo(null)}
-        />
-      ) : null}
     </>,
     document.body,
   );
