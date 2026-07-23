@@ -571,12 +571,10 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     if (!toggleButton) return;
 
     // Scroll the button into view if it's below the viewport
-    if (tableWrapRef.current) {
-      const rect = toggleButton.getBoundingClientRect();
-      // If button is below viewport, scroll to it
-      if (rect.bottom > window.innerHeight) {
-        toggleButton.scrollIntoView({ behavior: 'auto', block: 'center' });
-      }
+    const rect = toggleButton.getBoundingClientRect();
+    // If button is below viewport, scroll to it
+    if (rect.bottom > window.innerHeight) {
+      toggleButton.scrollIntoView({ behavior: 'auto', block: 'center' });
     }
 
     // Restore focus
@@ -586,11 +584,11 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     toggleButton.classList.add('chp-returned-focus');
 
     // Clear the returned focus indicator when the button is blurred
-    function handleBlur() {
+    const handleBlur = () => {
       toggleButton.classList.remove('chp-returned-focus');
       setReturnFocusToId("");
       toggleButton.removeEventListener('blur', handleBlur);
-    }
+    };
 
     toggleButton.addEventListener('blur', handleBlur);
 
