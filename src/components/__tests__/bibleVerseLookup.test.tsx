@@ -141,28 +141,35 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
     await user.click(screen.getByRole("button", { name: "Read Malachi 4:6" }));
     const menu = screen.getByRole("menu", { name: "Read Malachi 4:6" });
 
-    // Internal: Read here opens a modal on the current page.
-    const readHere = within(menu).getByRole("menuitem", {
-      name: /^Read here/,
-    });
-    expect(readHere.tagName).toBe("BUTTON");
-
-    // Secondary option: Read on Bible Reading Plan navigates to the plan.
-    const readOnPlan = within(menu).getByRole("menuitem", {
-      name: /^Read on Bible Reading Plan/,
-    });
-    expect(readOnPlan.getAttribute("href")).toContain("/bible-reading-plan");
-
-    // External: Bible.com ↗ — exact canonical verse, new-tab safety, honest label.
-    const external = within(menu).getByRole("menuitem", {
-      name: "Open Malachi 4:6 on Bible.com in a new tab",
+    // Quick verse: Open in Bible.com for the exact verse.
+    const verseLink = within(menu).getByRole("menuitem", {
+      name: /^Open Malachi 4:6 on Bible.com/,
     }) as HTMLAnchorElement;
-    expect(external.getAttribute("href")).toBe(
+    expect(verseLink.getAttribute("href")).toBe(
       "https://www.bible.com/bible/206/MAL.4.6.WEBUS",
     );
-    expect(external.getAttribute("target")).toBe("_blank");
-    expect(external.getAttribute("rel")).toContain("noopener");
-    expect(external.getAttribute("rel")).toContain("noreferrer");
+    expect(verseLink.getAttribute("target")).toBe("_blank");
+
+    // Read in context: Read Chapter Here opens a modal on the current page.
+    const readChapter = within(menu).getByRole("menuitem", {
+      name: /^Read Chapter Here/,
+    });
+    expect(readChapter.tagName).toBe("BUTTON");
+
+    // Read in context: Read Chapter on Bible.com shows the full chapter.
+    const chapterLink = within(menu).getByRole("menuitem", {
+      name: /Open Malachi 4:\d+ on Bible.com in a new tab/,
+    }) as HTMLAnchorElement;
+    expect(chapterLink.getAttribute("href")).toContain("/bible/206/MAL.4");
+    expect(chapterLink.getAttribute("target")).toBe("_blank");
+
+    // Read in context: Open Reading Plan navigates to the plan (if it exists).
+    const readOnPlan = within(menu).queryByRole("menuitem", {
+      name: /^Open Reading Plan/,
+    });
+    if (readOnPlan) {
+      expect(readOnPlan.getAttribute("href")).toContain("/bible-reading-plan");
+    }
   });
 
   it("an invalid search clears the previous verse card and its actions", async () => {

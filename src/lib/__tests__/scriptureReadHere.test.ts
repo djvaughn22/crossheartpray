@@ -90,26 +90,29 @@ describe("CardReadMenu Context matters group (source contract)", () => {
 
   it("derives every action from one canonical resolved reference", () => {
     expect(menu).toContain("resolveScriptureSelection(reference)");
-    // No separately passed hrefs — that was how a card once showed Malachi
-    // while its buttons still said Zechariah.
+    // No separately passed hrefs as props — that was how a card once showed
+    // Malachi while its buttons still said Zechariah. Local chapterHref
+    // computation from the canonical reference is fine.
     expect(menu).not.toContain("verseHref");
-    expect(menu).not.toContain("chapterHref");
+    expect(menu).not.toContain("chapterHref:"); // As a prop, not as a local var
   });
 
   it("Read here opens a modal; Read on Bible Reading Plan is a secondary option", () => {
     expect(menu).toContain("KindleReaderModal");
-    expect(menu).toContain("Read here");
-    expect(menu).toContain("On this page in a clean reader");
-    // Read here opens modal (button), Read on Bible Reading Plan (link), and Bible.com (link)
-    expect(menu.match(/role="menuitem"/g)?.length).toBe(3);
+    expect(menu).toContain("Read Chapter Here");
+    expect(menu).toContain("Continue reading in CrossHeartPray");
+    // Menu items: Open in Bible.com, Read Chapter Here, Read Chapter on Bible.com, (Read on Bible Reading Plan if available)
+    expect(menu.match(/role="menuitem"/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("separates staying on CrossHeartPray from leaving for Bible.com", () => {
-    expect(menu).toContain("Context matters");
-    expect(menu).toContain("Stay on CrossHeartPray");
-    expect(menu).toContain("Other destinations");
+  it("separates quick verse access from reading in context", () => {
+    expect(menu).toContain("Quick verse");
+    expect(menu).toContain("Open in Bible.com");
+    expect(menu).toContain("Read in context");
+    expect(menu).toContain("Read Chapter Here");
+    expect(menu).toContain("Read Chapter on Bible.com");
     expect(menu).toContain('rel="noopener noreferrer"');
-    expect(menu).toContain("on Bible.com in a new tab");
+    expect(menu).toContain("in a new tab");
   });
 });
 

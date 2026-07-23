@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import KindleReaderModal from "./scripture/KindleReaderModal";
 import {
+  bibleComUrl,
   bibleComUrlForTranslation,
   resolveScriptureSelection,
   type ScriptureReference,
@@ -50,7 +51,9 @@ export default function CardReadMenu({
     [reference],
   );
 
-  const itemCount = resolved ? (resolved.readingPlan ? 1 : 0) + 1 : 0;
+  // Estimate menu height for positioning: 2 sections + ~4 items (read here,
+  // chapter on Bible.com, reading plan if available, verse on Bible.com).
+  const itemCount = resolved ? (resolved.readingPlan ? 4 : 3) : 0;
 
   function toggleOpen() {
     if (open) {
@@ -99,6 +102,13 @@ export default function CardReadMenu({
 
   const bibleComHref = bibleComUrlForTranslation(resolved.reference, translation);
 
+  // Chapter-only link (no verse) for "Read Chapter on Bible.com".
+  const chapterOnlyRef: ScriptureReference = {
+    book: resolved.reference.book,
+    chapter: resolved.reference.chapter || 1,
+  };
+  const chapterHref = bibleComUrl(chapterOnlyRef, translation);
+
   const itemClass =
     "block w-full rounded-xl px-3 py-3 text-left text-sm font-black text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-300";
   const subClass = "mt-0.5 block text-xs font-semibold leading-5 text-slate-300";
@@ -140,43 +150,9 @@ export default function CardReadMenu({
                 }}
                 className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
               >
-                <p className="border-b border-white/10 px-3 pb-2 pt-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
-                  Context matters
-                </p>
-
+                {/* Quick Verse section */}
                 <span className={groupLabelClass} aria-hidden="true">
-                  Stay on CrossHeartPray
-                </span>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setOpen(false);
-                    setReaderOpen(true);
-                  }}
-                  className={itemClass}
-                >
-                  Read here
-                  <span className={subClass}>On this page in a clean reader.</span>
-                </button>
-
-                {resolved.readingPlan ? (
-                  <a
-                    href={resolved.readingPlan.readHereHref}
-                    role="menuitem"
-                    onClick={() => setOpen(false)}
-                    className={itemClass}
-                  >
-                    Read on Bible Reading Plan
-                    <span className={subClass}>
-                      {resolved.readingPlan.label}.
-                    </span>
-                  </a>
-                ) : null}
-
-                <span className={groupLabelClass} aria-hidden="true">
-                  Other destinations
+                  Quick verse
                 </span>
 
                 <a
@@ -188,9 +164,54 @@ export default function CardReadMenu({
                   onClick={() => setOpen(false)}
                   className={itemClass}
                 >
-                  Bible.com <span aria-hidden="true">↗</span>
-                  <span className={subClass}>Leaves CrossHeartPray.</span>
+                  Open in Bible.com
+                  <span className={subClass}>View this verse in Bible.com or your app.</span>
                 </a>
+
+                {/* Read in Context section */}
+                <span className={groupLabelClass} aria-hidden="true">
+                  Read in context
+                </span>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    setReaderOpen(true);
+                  }}
+                  className={itemClass}
+                >
+                  Read Chapter Here
+                  <span className={subClass}>Continue reading in CrossHeartPray.</span>
+                </button>
+
+                <a
+                  href={chapterHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  aria-label={`Open ${resolved.reference.book} ${resolved.reference.chapter} on Bible.com in a new tab`}
+                  onClick={() => setOpen(false)}
+                  className={itemClass}
+                >
+                  Read Chapter on Bible.com
+                  <span className={subClass}>Read the full chapter on Bible.com.</span>
+                </a>
+
+                {resolved.readingPlan ? (
+                  <a
+                    href={resolved.readingPlan.readHereHref}
+                    role="menuitem"
+                    onClick={() => setOpen(false)}
+                    className={itemClass}
+                  >
+                    Open Reading Plan
+                    <span className={subClass}>
+                      Jump to {resolved.readingPlan.label}.
+                    </span>
+                  </a>
+                ) : null}
               </div>
             </>,
             document.body,
