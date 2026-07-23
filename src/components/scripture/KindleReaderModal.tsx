@@ -65,8 +65,8 @@ export default function KindleReaderModal({
           ✕
         </button>
 
-        {/* Reader */}
-        <div className="h-full overflow-hidden">
+        {/* Reader with padding to prevent overlap with close button */}
+        <div className="h-full overflow-hidden pt-16">
           <ScriptureReader
             variant="fill"
             initialReference={initialReference}
