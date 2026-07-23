@@ -97,20 +97,21 @@ describe("CardReadMenu Context matters group (source contract)", () => {
     expect(menu).not.toContain("chapterHref:"); // As a prop, not as a local var
   });
 
-  it("Read here opens a modal; Read on Bible Reading Plan is a secondary option", () => {
+  it("Read here is first action; Read in Bible Plan is second when available", () => {
     expect(menu).toContain("KindleReaderModal");
-    expect(menu).toContain("Read Chapter Here");
-    expect(menu).toContain("Continue reading in CrossHeartPray");
-    // Menu items: Open in Bible.com, Read Chapter Here, Read Chapter on Bible.com, (Read on Bible Reading Plan if available)
+    expect(menu).toContain("Read here");
+    expect(menu).toContain("Open the chapter in CrossHeartPray");
+    // Menu items: Read here, Read in Bible Plan (if available), Open verse in Bible.com, Open chapter in Bible.com
     expect(menu.match(/role="menuitem"/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("separates quick verse access from reading in context", () => {
-    expect(menu).toContain("Quick verse");
-    expect(menu).toContain("Open in Bible.com");
-    expect(menu).toContain("Read in context");
-    expect(menu).toContain("Read Chapter Here");
-    expect(menu).toContain("Read Chapter on Bible.com");
+  it("separates internal CrossHeartPray actions from external Bible.com links", () => {
+    expect(menu).toContain("Read on CrossHeartPray");
+    expect(menu).toContain("Read here");
+    expect(menu).toContain("Read in Bible Plan");
+    expect(menu).toContain("Open on Bible.com");
+    expect(menu).toContain("Open verse in Bible.com");
+    expect(menu).toContain("Open chapter in Bible.com");
     expect(menu).toContain('rel="noopener noreferrer"');
     expect(menu).toContain("in a new tab");
   });

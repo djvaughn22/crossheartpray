@@ -399,6 +399,8 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     startChapter: number;
     endChapter: number;
   } | null>(null);
+  // Persistent return focus tracking after reader closes
+  const [returnFocusToId, setReturnFocusToId] = useState<string>("");
   // External 📖 links honor the person's chosen translation when Bible.com
   // supports it; WEB otherwise. Read after mount — localStorage is
   // client-only.
@@ -475,15 +477,12 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     setReaderOpen(false);
     window.history.replaceState(null, "", "/bible-reading-plan");
 
-    // Focus the mark-complete button for this day after closing the reader.
+    // Keep focus on the mark-complete button after closing the reader.
+    // Set returnFocusToId so the useEffect can restore focus persistently.
     const parsed = parseReadingId(activeReadingId);
     if (parsed) {
-      window.setTimeout(() => {
-        const cellId = `week-${parsed.week}-${parsed.daySlug}`;
-        const cell = document.getElementById(cellId);
-        const toggleButton = cell?.querySelector<HTMLButtonElement>('button.chp-read-check');
-        toggleButton?.focus();
-      }, 0);
+      const cellId = `week-${parsed.week}-${parsed.daySlug}`;
+      setReturnFocusToId(cellId);
     }
 
     setActiveReadingId("");
@@ -559,6 +558,46 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     };
   }, [openCellReader]);
 
+  // Restore focus persistently to the mark-complete button after closing the reader.
+  // This effect runs after every render to ensure focus is maintained even if the
+  // component re-renders or state changes occur.
+  useEffect(() => {
+    if (!returnFocusToId) return;
+
+    const cell = document.getElementById(returnFocusToId);
+    if (!cell) return;
+
+    const toggleButton = cell.querySelector<HTMLButtonElement>('button.chp-read-check');
+    if (!toggleButton) return;
+
+    // Scroll the button into view if it's below the viewport
+    if (tableWrapRef.current) {
+      const rect = toggleButton.getBoundingClientRect();
+      // If button is below viewport, scroll to it
+      if (rect.bottom > window.innerHeight) {
+        toggleButton.scrollIntoView({ behavior: 'auto', block: 'center' });
+      }
+    }
+
+    // Restore focus
+    toggleButton.focus({ preventScroll: true });
+
+    // Add visual indicator for returned focus
+    toggleButton.classList.add('chp-returned-focus');
+
+    // Clear the returned focus indicator when the button is blurred
+    function handleBlur() {
+      toggleButton.classList.remove('chp-returned-focus');
+      setReturnFocusToId("");
+      toggleButton.removeEventListener('blur', handleBlur);
+    }
+
+    toggleButton.addEventListener('blur', handleBlur);
+
+    return () => {
+      toggleButton.removeEventListener('blur', handleBlur);
+    };
+  }, [returnFocusToId]);
 
   const readingIds = useMemo(() => readings.map((reading) => reading.id), [readings]);
   const { done: doneCount, remaining: daysLeft, percent } = checklistStats(readingIds, progress);

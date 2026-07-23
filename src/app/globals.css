@@ -2094,6 +2094,12 @@ a[href]:hover {
 .chp-reading-progress-shell button.chp-read-check:hover {
   filter: brightness(1.12) !important;
 }
+/* Strong visual indicator for returned focus after reader close */
+.chp-reading-progress-shell button.chp-read-check.chp-returned-focus {
+  outline: 3px solid #34d399 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25) !important;
+}
 
 /* Reading-plan Gene Getz video icon — a bare 🎬 pinned to the right of the cell
    (rendered as a <span role="button"> so the pill button styling never applies). */

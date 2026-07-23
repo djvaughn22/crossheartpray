@@ -51,8 +51,8 @@ export default function CardReadMenu({
     [reference],
   );
 
-  // Estimate menu height for positioning: 2 sections + ~4 items (read here,
-  // chapter on Bible.com, reading plan if available, verse on Bible.com).
+  // Estimate menu height for positioning: internal actions + Bible.com actions
+  // (read here, reading plan if available, verse on Bible.com, chapter on Bible.com).
   const itemCount = resolved ? (resolved.readingPlan ? 4 : 3) : 0;
 
   function toggleOpen() {
@@ -150,29 +150,12 @@ export default function CardReadMenu({
                 }}
                 className="z-[9999] w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-slate-950 p-2 text-left shadow-2xl shadow-black/60"
               >
-                {/* Quick Verse section */}
+                {/* Internal reading actions section */}
                 <span className={groupLabelClass} aria-hidden="true">
-                  Quick verse
+                  Read on CrossHeartPray
                 </span>
 
-                <a
-                  href={bibleComHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  role="menuitem"
-                  aria-label={`Open ${resolved.label} on Bible.com in a new tab`}
-                  onClick={() => setOpen(false)}
-                  className={itemClass}
-                >
-                  Open in Bible.com
-                  <span className={subClass}>View this verse in Bible.com or your app.</span>
-                </a>
-
-                {/* Read in Context section */}
-                <span className={groupLabelClass} aria-hidden="true">
-                  Read in context
-                </span>
-
+                {/* 1. Read here — primary internal action */}
                 <button
                   type="button"
                   role="menuitem"
@@ -182,10 +165,45 @@ export default function CardReadMenu({
                   }}
                   className={itemClass}
                 >
-                  Read Chapter Here
-                  <span className={subClass}>Continue reading in CrossHeartPray.</span>
+                  Read here
+                  <span className={subClass}>Open the chapter in CrossHeartPray.</span>
                 </button>
 
+                {/* 2. Read in Bible Plan — secondary internal action when available */}
+                {resolved.readingPlan ? (
+                  <a
+                    href={resolved.readingPlan.readHereHref}
+                    role="menuitem"
+                    onClick={() => setOpen(false)}
+                    className={itemClass}
+                  >
+                    Read in Bible Plan
+                    <span className={subClass}>
+                      Jump to {resolved.readingPlan.label}.
+                    </span>
+                  </a>
+                ) : null}
+
+                {/* External Bible.com actions section */}
+                <span className={groupLabelClass} aria-hidden="true">
+                  Open on Bible.com
+                </span>
+
+                {/* 3. Open verse in Bible.com */}
+                <a
+                  href={bibleComHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  aria-label={`Open ${resolved.label} on Bible.com in a new tab`}
+                  onClick={() => setOpen(false)}
+                  className={itemClass}
+                >
+                  Open verse in Bible.com
+                  <span className={subClass}>View this verse in a new tab.</span>
+                </a>
+
+                {/* 4. Open chapter in Bible.com */}
                 <a
                   href={chapterHref}
                   target="_blank"
@@ -195,23 +213,9 @@ export default function CardReadMenu({
                   onClick={() => setOpen(false)}
                   className={itemClass}
                 >
-                  Read Chapter on Bible.com
-                  <span className={subClass}>Read the full chapter on Bible.com.</span>
+                  Open chapter in Bible.com
+                  <span className={subClass}>View the full chapter in a new tab.</span>
                 </a>
-
-                {resolved.readingPlan ? (
-                  <a
-                    href={resolved.readingPlan.readHereHref}
-                    role="menuitem"
-                    onClick={() => setOpen(false)}
-                    className={itemClass}
-                  >
-                    Open Reading Plan
-                    <span className={subClass}>
-                      Jump to {resolved.readingPlan.label}.
-                    </span>
-                  </a>
-                ) : null}
               </div>
             </>,
             document.body,
