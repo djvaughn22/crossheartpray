@@ -473,9 +473,21 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
 
   const closeCellReader = useCallback(() => {
     setReaderOpen(false);
-    setActiveReadingId("");
     window.history.replaceState(null, "", "/bible-reading-plan");
-  }, []);
+
+    // Focus the mark-complete button for this day after closing the reader.
+    const parsed = parseReadingId(activeReadingId);
+    if (parsed) {
+      window.setTimeout(() => {
+        const cellId = `week-${parsed.week}-${parsed.daySlug}`;
+        const cell = document.getElementById(cellId);
+        const toggleButton = cell?.querySelector<HTMLButtonElement>('button.chp-read-check');
+        toggleButton?.focus();
+      }, 0);
+    }
+
+    setActiveReadingId("");
+  }, [activeReadingId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe hydration: saved progress lives in localStorage, readable only after mount
