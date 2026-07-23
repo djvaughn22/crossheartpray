@@ -21,19 +21,21 @@ type CardReadMenuProps = {
   triggerAriaLabel?: string;
 };
 
-// The one "Context matters" action group for every verse surface. A "Read"
-// pill opens a portaled panel with two clearly separated choices:
+// The one "Read" action menu for every verse surface. A "Read" button opens
+// a portaled panel with four clearly separated actions, ordered:
 //
-//   Stay on CrossHeartPray:  Read here — the exact 52-week Reading Plan cell
-//                            containing this verse, expanded for reading with
-//                            the verse highlighted.
-//   Other destinations:      Bible.com ↗ (external, new tab)
+//   Internal (CrossHeartPray):
+//     1. Read here — opens the containing chapter in a modal reader
+//     2. Read in Bible Plan — navigates to the exact reading-plan week/day (if mapped)
 //
-// The Reading Plan IS the internal reading destination, so there is no
-// separate plan button and no duplicate chapter action. Everything derives
-// from ONE ResolvedScriptureReference — never from separately passed hrefs,
-// so the heading and the actions can never disagree. Portaled to <body> like
-// CrossHeartPrayShareMenu so it escapes card transforms.
+//   External (Bible.com in new tab):
+//     3. Open verse in Bible.com — the selected verse or range
+//     4. Open chapter in Bible.com — the full chapter
+//
+// Everything derives from ONE ResolvedScriptureReference — never from
+// separately passed hrefs — so the heading and the actions can never
+// disagree. Portaled to <body> like CrossHeartPrayShareMenu so it escapes
+// card transforms.
 export default function CardReadMenu({
   reference,
   translation,
