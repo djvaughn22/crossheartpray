@@ -51,6 +51,14 @@ type ScriptureReaderProps = {
    * releases the bounds.
    */
   chapterBounds?: { book: string; startChapter: number; endChapter: number };
+  /** Reading plan context to display in header (week, day, lane, chapters). */
+  readingContext?: {
+    week: number;
+    day: string;
+    lane: string;
+    startChapter: number;
+    endChapter: number;
+  };
   className?: string;
   onReferenceChange?: (reference: ScriptureReference) => void;
 };
@@ -70,6 +78,7 @@ export default function ScriptureReader({
   onRequestClose,
   afterScripture,
   chapterBounds,
+  readingContext,
   className = "",
   onReferenceChange,
 }: ScriptureReaderProps) {
@@ -272,9 +281,19 @@ export default function ScriptureReader({
             ✕
           </button>
         ) : null}
-        <p className="chp-scripture-serif min-w-0 flex-1 truncate text-lg font-bold tracking-tight text-white sm:text-xl">
-          {heading}
-        </p>
+        <div className="min-w-0 flex-1">
+          <p className="chp-scripture-serif truncate text-lg font-bold tracking-tight text-white sm:text-xl">
+            {heading}
+          </p>
+          {readingContext && (
+            <p className="mt-1 truncate text-xs font-semibold text-slate-300">
+              Week {readingContext.week} · {readingContext.day} · {readingContext.lane} ·{" "}
+              {readingContext.startChapter === readingContext.endChapter
+                ? `Chapter ${readingContext.startChapter}`
+                : `Chapters ${readingContext.startChapter}–${readingContext.endChapter}`}
+            </p>
+          )}
+        </div>
         <TranslationPicker
           compact
           translations={translations}

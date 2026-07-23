@@ -399,6 +399,13 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     startChapter: number;
     endChapter: number;
   } | null>(null);
+  const [readerContext, setReaderContext] = useState<{
+    week: number;
+    day: string;
+    lane: string;
+    startChapter: number;
+    endChapter: number;
+  } | null>(null);
   // Persistent return focus tracking after reader closes
   const [returnFocusToId, setReturnFocusToId] = useState<string>("");
   // External 📖 links honor the person's chosen translation when Bible.com
@@ -451,6 +458,9 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         endChapter: Math.min(range.endChapter, book.chapters),
       };
 
+      const parsed = parseReadingId(readingId);
+      const week = parsed?.week ?? reading.weekNo;
+
       setActiveReadingId(readingId);
       setReaderReference(
         focus && focus.book === reading.readerReference.book
@@ -458,9 +468,14 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
           : reading.readerReference,
       );
       setReaderBounds(assignment);
+      setReaderContext({
+        week,
+        day: reading.day,
+        lane: reading.lane,
+        startChapter: assignment.startChapter,
+        endChapter: assignment.endChapter,
+      });
       setReaderOpen(true);
-
-      const parsed = parseReadingId(readingId);
       if (parsed) {
         const focusParam = focus ? `&focus=${encodeURIComponent(toUsfmString(focus))}` : "";
         window.history.replaceState(
@@ -475,6 +490,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
 
   const closeCellReader = useCallback(() => {
     setReaderOpen(false);
+    setReaderContext(null);
     window.history.replaceState(null, "", "/bible-reading-plan");
 
     // Keep focus on the mark-complete button after closing the reader.
@@ -882,6 +898,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         onClose={closeCellReader}
         initialReference={readerReference ?? undefined}
         chapterBounds={readerBounds ?? undefined}
+        readingContext={readerContext ?? undefined}
       />
     </section>
   );

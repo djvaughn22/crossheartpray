@@ -11,6 +11,13 @@ type KindleReaderModalProps = {
   initialReference?: ScriptureReference;
   chapterBounds?: { book: string; startChapter: number; endChapter: number };
   afterScripture?: ReactNode;
+  readingContext?: {
+    week: number;
+    day: string;
+    lane: string;
+    startChapter: number;
+    endChapter: number;
+  };
 };
 
 export default function KindleReaderModal({
@@ -19,6 +26,7 @@ export default function KindleReaderModal({
   initialReference,
   chapterBounds,
   afterScripture,
+  readingContext,
 }: KindleReaderModalProps) {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -73,6 +81,7 @@ export default function KindleReaderModal({
             chapterBounds={chapterBounds}
             onRequestClose={onClose}
             afterScripture={afterScripture}
+            readingContext={readingContext}
           />
         </div>
       </div>
