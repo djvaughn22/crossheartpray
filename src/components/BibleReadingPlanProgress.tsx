@@ -320,12 +320,12 @@ function bibleUrl(reading: unknown): string {
 // Recover {code, chapter} from the parsed bible.com URL (zero-risk reuse of
 // bibleUrl's book/chapter parsing). Multi-chapter readings ("Genesis 1-11")
 // resolve to their first chapter — the in-app reader's Next button continues
-// the reading from there.
+// the reading from there. Matches both BSB (current default) and legacy WEBUS.
 function referenceFromWebHref(href: string): ScriptureReference | null {
-  const m = href.match(/\/bible\/206\/([A-Z0-9]+)\.(\d+)\.WEBUS/);
+  const m = href.match(/\/bible\/(206|3034)\/([A-Z0-9]+)\.(\d+)\.(WEBUS|BSB)/);
   if (!m) return null;
-  const chapter = Number(m[2]);
-  return Number.isInteger(chapter) && chapter >= 1 ? { book: m[1], chapter } : null;
+  const chapter = Number(m[3]);
+  return Number.isInteger(chapter) && chapter >= 1 ? { book: m[2], chapter } : null;
 }
 
 // Canonical reference for a reading — the plan lib's own label parser first
@@ -902,7 +902,11 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         readingId={activeReadingId || undefined}
         isCompleted={progress[activeReadingId] ?? false}
         onMarkComplete={(id) => {
-          toggleChecklistItem(id, progress, setProgress);
+          setProgress((current) => {
+            const next = toggleChecklistItem(current, id);
+            saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
+            return next;
+          });
           setReturnFocusToId(id);
         }}
       />
