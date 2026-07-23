@@ -51,11 +51,11 @@ type ScriptureReaderProps = {
    * releases the bounds.
    */
   chapterBounds?: { book: string; startChapter: number; endChapter: number };
-  /** Reading plan context to display in header (week, day, lane, chapters). */
+  /** Reading plan context to display in header (week, day, book, chapters). */
   readingContext?: {
     week: number;
     day: string;
-    lane: string;
+    book: string;
     startChapter: number;
     endChapter: number;
   };
@@ -297,10 +297,10 @@ export default function ScriptureReader({
           </p>
           {readingContext && (
             <p className="mt-1 truncate text-xs font-semibold text-slate-300">
-              Week {readingContext.week} · {readingContext.day} · {readingContext.lane} ·{" "}
+              Week {readingContext.week} · {readingContext.day} · {readingContext.book}{" "}
               {readingContext.startChapter === readingContext.endChapter
-                ? `Chapter ${readingContext.startChapter}`
-                : `Chapters ${readingContext.startChapter}–${readingContext.endChapter}`}
+                ? readingContext.startChapter
+                : `${readingContext.startChapter}–${readingContext.endChapter}`}
             </p>
           )}
         </div>
@@ -423,20 +423,23 @@ export default function ScriptureReader({
               readingId &&
               onMarkComplete && (
                 <div className="mx-auto mt-8 max-w-md space-y-3">
-                  {!justMarkedComplete ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onMarkComplete(readingId);
-                        setJustMarkedComplete(true);
-                      }}
-                      aria-pressed={isCompleted}
-                      className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-                    >
-                      {isCompleted ? "Marked read" : "Mark this day read"}
-                    </button>
-                  ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onMarkComplete(readingId);
+                      setJustMarkedComplete(true);
+                    }}
+                    aria-pressed={isCompleted}
+                    aria-label={isCompleted ? "Mark this reading as unread" : "Mark this day read"}
+                    className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                  >
+                    {isCompleted ? "Mark unread" : "Mark this day read"}
+                  </button>
+                  {isCompleted && (
                     <>
+                      <p className="text-center text-xs font-semibold text-slate-300">
+                        Marked read
+                      </p>
                       <button
                         type="button"
                         onClick={onRequestClose}

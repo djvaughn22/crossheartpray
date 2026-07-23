@@ -402,7 +402,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   const [readerContext, setReaderContext] = useState<{
     week: number;
     day: string;
-    lane: string;
+    book: string;
     startChapter: number;
     endChapter: number;
   } | null>(null);
@@ -471,7 +471,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
       setReaderContext({
         week,
         day: reading.day,
-        lane: reading.lane,
+        book: book.name,
         startChapter: assignment.startChapter,
         endChapter: assignment.endChapter,
       });

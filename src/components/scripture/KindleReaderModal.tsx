@@ -14,7 +14,7 @@ type KindleReaderModalProps = {
   readingContext?: {
     week: number;
     day: string;
-    lane: string;
+    book: string;
     startChapter: number;
     endChapter: number;
   };
