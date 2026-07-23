@@ -899,6 +899,12 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         initialReference={readerReference ?? undefined}
         chapterBounds={readerBounds ?? undefined}
         readingContext={readerContext ?? undefined}
+        readingId={activeReadingId || undefined}
+        isCompleted={progress[activeReadingId] ?? false}
+        onMarkComplete={(id) => {
+          toggleChecklistItem(id, progress, setProgress);
+          setReturnFocusToId(id);
+        }}
       />
     </section>
   );

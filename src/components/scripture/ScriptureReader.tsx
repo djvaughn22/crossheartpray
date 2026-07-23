@@ -59,6 +59,12 @@ type ScriptureReaderProps = {
     startChapter: number;
     endChapter: number;
   };
+  /** Reading ID for completion tracking in Bible Reading Plan. */
+  readingId?: string;
+  /** Whether this reading is already marked complete. */
+  isCompleted?: boolean;
+  /** Called when user marks this reading complete. */
+  onMarkComplete?: (readingId: string) => void;
   className?: string;
   onReferenceChange?: (reference: ScriptureReference) => void;
 };
@@ -79,6 +85,9 @@ export default function ScriptureReader({
   afterScripture,
   chapterBounds,
   readingContext,
+  readingId,
+  isCompleted,
+  onMarkComplete,
   className = "",
   onReferenceChange,
 }: ScriptureReaderProps) {
@@ -104,6 +113,7 @@ export default function ScriptureReader({
   );
   const userPickedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [justMarkedComplete, setJustMarkedComplete] = useState(false);
 
   // Upgrade to the live capability list once it arrives; a user's explicit
   // in-session pick is never overridden.
@@ -405,6 +415,39 @@ export default function ScriptureReader({
             </p>
 
             {afterScripture}
+
+            {/* Mark complete button - show only on final chapter of Bible Reading Plan reading */}
+            {readingContext &&
+              chapterBounds &&
+              current.chapter === chapterBounds.endChapter &&
+              readingId &&
+              onMarkComplete && (
+                <div className="mx-auto mt-8 max-w-md space-y-3">
+                  {!justMarkedComplete ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onMarkComplete(readingId);
+                        setJustMarkedComplete(true);
+                      }}
+                      aria-pressed={isCompleted}
+                      className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                    >
+                      {isCompleted ? "Marked read" : "Mark this day read"}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={onRequestClose}
+                        className="w-full rounded-xl bg-slate-700 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                      >
+                        Close and return to plan
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
           </>
         )}
       </div>

@@ -18,6 +18,9 @@ type KindleReaderModalProps = {
     startChapter: number;
     endChapter: number;
   };
+  readingId?: string;
+  isCompleted?: boolean;
+  onMarkComplete?: (readingId: string) => void;
 };
 
 export default function KindleReaderModal({
@@ -27,6 +30,9 @@ export default function KindleReaderModal({
   chapterBounds,
   afterScripture,
   readingContext,
+  readingId,
+  isCompleted,
+  onMarkComplete,
 }: KindleReaderModalProps) {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -82,6 +88,9 @@ export default function KindleReaderModal({
             onRequestClose={onClose}
             afterScripture={afterScripture}
             readingContext={readingContext}
+            readingId={readingId}
+            isCompleted={isCompleted}
+            onMarkComplete={onMarkComplete}
           />
         </div>
       </div>
