@@ -212,8 +212,8 @@ export default function BibleBingoEmailBatch({
         </h1>
 
         <p className="mx-auto mt-4 max-w-xl text-base font-semibold leading-7 text-slate-300">
-          These are the same seven readings from your email. Take them one at
-          a time or throughout the week.
+          Your next seven readings are ready. Open your Bible Bingo 7 and
+          continue through the plan.
         </p>
 
         <div className="mx-auto mt-6 max-w-md">

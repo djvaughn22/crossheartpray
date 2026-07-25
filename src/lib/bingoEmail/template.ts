@@ -92,7 +92,7 @@ export function renderBingoBatchEmail(
                 <div style="font-size:12px; font-weight:800; letter-spacing:0.22em; text-transform:uppercase; color:#047857; margin-bottom:8px;">Cross Heart Pray</div>
                 <h1 style="font-family: Georgia, 'Times New Roman', serif; margin:0; font-size:32px; line-height:1.15; color:#0f172a;">Your Bible Bingo 7</h1>
                 <p style="margin:12px auto 0; max-width:480px; color:#475569; font-size:15px; line-height:1.6; font-weight:600;">
-                  Your next seven readings are ready. Take them one at a time or throughout the week.
+                  Your next seven readings are ready. Open your Bible Bingo 7 and continue through the plan.
                 </p>
                 <p style="margin:20px 0 0;">
                   <a href="${batchUrl}" style="display:inline-block; background:#047857; color:#ffffff; padding:13px 24px; border-radius:999px; text-decoration:none; font-weight:800; font-size:15px;">
@@ -134,7 +134,7 @@ export function renderBingoBatchEmail(
   const text = [
     "Cross Heart Pray — Your Bible Bingo 7",
     "",
-    "Your next seven readings are ready. Take them one at a time or throughout the week.",
+    "Your next seven readings are ready. Open your Bible Bingo 7 and continue through the plan.",
     "",
     textCards,
     "",
