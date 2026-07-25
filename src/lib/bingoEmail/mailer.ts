@@ -12,6 +12,16 @@ export type BingoEmailMessage = {
 
 export type BingoEmailSender = (message: BingoEmailMessage) => Promise<void>;
 
+// Replies go to the official mailbox (Microsoft/GoDaddy receives them
+// normally there). Resend is OUTBOUND-ONLY: no inbound receiving, no reply
+// webhooks, no MX involvement — this application never handles incoming
+// mail or forwarding.
+export const BINGO_EMAIL_DEFAULT_REPLY_TO = "hi@crossheartpray.com";
+
+export function getBingoEmailReplyTo() {
+  return process.env.BINGO_EMAIL_REPLY_TO?.trim() || BINGO_EMAIL_DEFAULT_REPLY_TO;
+}
+
 /**
  * The configured sender, or null when RESEND_API_KEY / BINGO_EMAIL_FROM are
  * absent (signup fails closed rather than silently dropping email).
@@ -21,6 +31,8 @@ export function getBingoEmailSender(): BingoEmailSender | null {
   const from = process.env.BINGO_EMAIL_FROM?.trim();
 
   if (!apiKey || !from) return null;
+
+  const replyTo = getBingoEmailReplyTo();
 
   return async function sendViaResend(message) {
     const response = await fetch("https://api.resend.com/emails", {
@@ -32,6 +44,7 @@ export function getBingoEmailSender(): BingoEmailSender | null {
       body: JSON.stringify({
         from,
         to: [message.to],
+        reply_to: [replyTo],
         subject: message.subject,
         html: message.html,
         text: message.text,

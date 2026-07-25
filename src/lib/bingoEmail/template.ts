@@ -111,6 +111,7 @@ export function renderBingoBatchEmail(
               <td align="center" style="padding:16px 0 0;">
                 <p style="color:#64748b; font-size:13px; line-height:1.7; margin:0;">
                   These readings come from the 52-week Bible Reading Plan.<br/>
+                  Questions? Just reply to this email.<br/>
                   <a href="${manageUrl}" style="color:#065f46; font-weight:700;">Manage email settings</a>
                   &nbsp;·&nbsp;
                   <a href="${unsubscribeUrl}" style="color:#065f46; font-weight:700;">Unsubscribe</a>
@@ -141,6 +142,7 @@ export function renderBingoBatchEmail(
     "",
     `Set ${setNumber} of ${totalSets} · ${planCompletedCount} of ${planTotal} readings completed`,
     "",
+    "Questions? Just reply to this email.",
     `Manage email settings: ${manageUrl}`,
     `Unsubscribe: ${unsubscribeUrl}`,
   ].join("\n");
