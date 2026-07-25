@@ -3,6 +3,10 @@
     {
       "path": "/api/social/instagram/publish",
       "schedule": "30 13 * * *"
+    },
+    {
+      "path": "/api/bingo-email/send",
+      "schedule": "0 13 * * *"
     }
   ]
 }

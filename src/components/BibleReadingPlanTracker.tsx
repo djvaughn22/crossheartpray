@@ -1,4 +1,5 @@
 import { type BibleReadingPlanWeek } from "../lib/bibleReadingPlan";
+import BibleBingoEmailSignup from "./BibleBingoEmailSignup";
 import BibleReadingPlanProgress from "./BibleReadingPlanProgress";
 import ReadingPlanPdfActions from "./ReadingPlanPdfActions";
 import SiteFooter from "./SiteFooter";
@@ -76,6 +77,10 @@ export default function BibleReadingPlanTracker({ weeks }: BibleReadingPlanTrack
 
         <div id="reading-plan-board" className="chp-reading-progress-shell mt-4 scroll-mt-6">
           <BibleReadingPlanProgress weeks={weeks} />
+        </div>
+
+        <div className="print:hidden">
+          <BibleBingoEmailSignup />
         </div>
 
         <SiteFooter />

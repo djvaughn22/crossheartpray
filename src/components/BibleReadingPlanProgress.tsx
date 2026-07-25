@@ -39,8 +39,12 @@ type BibleReadingPlanProgressProps = {
 
 type AnyRecord = Record<string, unknown>;
 
-const STORAGE_KEY = "crossheartpray:bible-reading-plan:v1";
-const PROGRESS_EVENT = "crossheartpray:bible-reading-plan-progress";
+export const BIBLE_READING_PLAN_STORAGE_KEY = "crossheartpray:bible-reading-plan:v1";
+export const BIBLE_READING_PLAN_PROGRESS_EVENT =
+  "crossheartpray:bible-reading-plan-progress";
+
+const STORAGE_KEY = BIBLE_READING_PLAN_STORAGE_KEY;
+const PROGRESS_EVENT = BIBLE_READING_PLAN_PROGRESS_EVENT;
 
 const LANES = [
   {

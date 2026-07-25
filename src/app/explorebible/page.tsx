@@ -10,6 +10,8 @@ import GeneGetzResourceCard from "../../components/GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../../lib/geneGetzLifeEssentials";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import BibleBingoEmailBatch from "../../components/BibleBingoEmailBatch";
+import BibleBingoEmailSignup from "../../components/BibleBingoEmailSignup";
 import {
   bibleBingoBoardIdFromPassages,
   bibleBingoOddsForSection,
@@ -568,7 +570,7 @@ function languageButtonClass(language: OriginalLanguage, activeLanguage: Origina
   return "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10";
 }
 
-export default function BibleExplorerPage() {
+function BibleExplorerExperience() {
   const [path, setPath] = useState(() => buildDailyPath());
   const [spinVersions, setSpinVersions] = useState(() => sections.map(() => 0));
   const [spinningCards, setSpinningCards] = useState(() => sections.map(() => false));
@@ -1466,7 +1468,51 @@ export default function BibleExplorerPage() {
           }
         }
       `}</style>
+          <BibleBingoEmailSignup />
           <SiteFooter />
     </main>
   );
+}
+
+// When an email's ?batch=TOKEN link opens this page, the SAME page renders
+// the saved emailed batch instead of dealing random cards — no separate
+// batch page exists. The param is read post-mount from window.location
+// (same pattern the Bible Reading Plan deep links use), so visitors
+// without a batch link get the existing prerendered experience untouched.
+export default function BibleExplorerPage() {
+  const [emailBatch, setEmailBatch] = useState<{
+    token: string;
+    focusCard: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("batch");
+    if (!token) return;
+    const requestedCard = Number(params.get("card") ?? "");
+    setEmailBatch({
+      token,
+      focusCard:
+        Number.isInteger(requestedCard) && requestedCard >= 1
+          ? requestedCard
+          : null,
+    });
+  }, []);
+
+  if (emailBatch) {
+    return (
+      <main className="chp-lively-dark-page min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-5xl px-6 py-8">
+          <SiteHeader />
+          <BibleBingoEmailBatch
+            token={emailBatch.token}
+            focusCard={emailBatch.focusCard}
+          />
+          <SiteFooter />
+        </div>
+      </main>
+    );
+  }
+
+  return <BibleExplorerExperience />;
 }
