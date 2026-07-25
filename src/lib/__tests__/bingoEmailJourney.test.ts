@@ -1,77 +1,92 @@
 import { describe, expect, it } from "vitest";
 import {
-  BINGO_EMAIL_BATCH_SIZE,
-  bingoEmailBatchReadingIds,
+  BINGO_EMAIL_WEEKDAY_SLUGS,
+  bingoEmailBatchReadingIdsAt,
+  bingoEmailBatchSizeForCadence,
   bingoEmailCardForReadingId,
   bingoEmailJourneyOrder,
   bingoEmailPlanSize,
   bingoEmailTotalBatches,
+  bingoEmailWeekdaySlugFor,
 } from "../bingoEmail/journey";
 import { BIBLE_READING_PLAN_WEEKS } from "../bibleReadingPlan";
 
-describe("bingo email journey order", () => {
-  it("uses the existing reading plan as the only source: every plan entry appears exactly once", () => {
-    const order = bingoEmailJourneyOrder("seed-a");
+describe("canonical journey order", () => {
+  it("covers every plan reading exactly once for every start weekday", () => {
     const planSize = bingoEmailPlanSize();
-
-    expect(order).toHaveLength(planSize);
-    expect(new Set(order).size).toBe(planSize);
-    for (const id of order) {
-      expect(bingoEmailCardForReadingId(id)).not.toBeNull();
+    for (const start of BINGO_EMAIL_WEEKDAY_SLUGS) {
+      const order = bingoEmailJourneyOrder(start);
+      expect(order).toHaveLength(planSize);
+      expect(new Set(order).size).toBe(planSize);
     }
   });
 
-  it("is deterministic for a seed and different across seeds", () => {
-    expect(bingoEmailJourneyOrder("seed-a")).toEqual(
-      bingoEmailJourneyOrder("seed-a"),
-    );
-    expect(bingoEmailJourneyOrder("seed-a")).not.toEqual(
-      bingoEmailJourneyOrder("seed-b"),
-    );
+  it("starts on the subscriber's weekday: Monday, Wednesday, Friday", () => {
+    expect(bingoEmailJourneyOrder("monday")[0]).toBe("week-1-monday");
+    expect(bingoEmailJourneyOrder("wednesday")[0]).toBe("week-1-wednesday");
+    expect(bingoEmailJourneyOrder("friday")[0]).toBe("week-1-friday");
   });
 
-  it("gives every batch of seven one reading per bingo lane (weekday)", () => {
-    const order = bingoEmailJourneyOrder("seed-lanes");
-    const totalBatches = bingoEmailTotalBatches(order.length);
+  it("a Wednesday start rotates Wednesday through Tuesday, then Week 2 Wednesday", () => {
+    const order = bingoEmailJourneyOrder("wednesday");
+    expect(order.slice(0, 8)).toEqual([
+      "week-1-wednesday",
+      "week-1-thursday",
+      "week-1-friday",
+      "week-1-saturday",
+      "week-1-sunday",
+      "week-1-monday",
+      "week-1-tuesday",
+      "week-2-wednesday",
+    ]);
+  });
 
-    for (let sequence = 0; sequence < totalBatches; sequence += 1) {
-      const ids = bingoEmailBatchReadingIds(order, sequence);
-      expect(ids).toHaveLength(BINGO_EMAIL_BATCH_SIZE);
-      const slugs = ids.map((id) => bingoEmailCardForReadingId(id)!.daySlug);
-      expect(new Set(slugs).size).toBe(BINGO_EMAIL_BATCH_SIZE);
+  it("increments the plan week only after all seven weekday readings", () => {
+    const order = bingoEmailJourneyOrder("friday");
+    const weekOf = (id: string) => Number(id.match(/^week-(\d+)-/)![1]);
+    for (let position = 0; position < order.length; position += 1) {
+      expect(weekOf(order[position])).toBe(Math.floor(position / 7) + 1);
     }
   });
 
-  it("never repeats a reading across batches until the whole plan is used", () => {
-    const order = bingoEmailJourneyOrder("seed-norepeat");
-    const seen = new Set<string>();
-    for (let s = 0; s < bingoEmailTotalBatches(order.length); s += 1) {
-      for (const id of bingoEmailBatchReadingIds(order, s)) {
-        expect(seen.has(id)).toBe(false);
-        seen.add(id);
-      }
+  it("keeps canonical plan weeks: each group of seven is one complete week", () => {
+    const order = bingoEmailJourneyOrder("wednesday");
+    for (let week = 0; week < order.length / 7; week += 1) {
+      const slice = order.slice(week * 7, week * 7 + 7);
+      const slugs = slice.map((id) => id.replace(/^week-\d+-/, ""));
+      expect([...slugs].sort()).toEqual([...BINGO_EMAIL_WEEKDAY_SLUGS].sort());
     }
-    expect(seen.size).toBe(order.length);
   });
 
-  it("handles a plan not divisible by seven: the final batch holds the remainder", () => {
+  it("batch sizes follow cadence: Weekly seven, Daily one", () => {
+    expect(bingoEmailBatchSizeForCadence("weekly")).toBe(7);
+    expect(bingoEmailBatchSizeForCadence("daily")).toBe(1);
+  });
+
+  it("slices batches by position, with a short final remainder", () => {
     const shortWeeks = [
       BIBLE_READING_PLAN_WEEKS[0],
       { week: 2, days: BIBLE_READING_PLAN_WEEKS[1].days.slice(0, 3) },
     ];
-    const order = bingoEmailJourneyOrder("seed-short", shortWeeks);
-
+    const order = bingoEmailJourneyOrder("wednesday", shortWeeks);
     expect(order).toHaveLength(10);
-    expect(bingoEmailBatchReadingIds(order, 0)).toHaveLength(7);
-    expect(bingoEmailBatchReadingIds(order, 1)).toHaveLength(3);
-    expect(bingoEmailBatchReadingIds(order, 2)).toHaveLength(0);
+    expect(bingoEmailBatchReadingIdsAt(order, 0, 7)).toHaveLength(7);
+    expect(bingoEmailBatchReadingIdsAt(order, 7, 7)).toHaveLength(3);
+    expect(bingoEmailBatchReadingIdsAt(order, 3, 1)).toEqual([order[3]]);
+    expect(bingoEmailBatchReadingIdsAt(order, 10, 7)).toHaveLength(0);
+    expect(bingoEmailBatchReadingIdsAt(order, -1, 7)).toHaveLength(0);
     expect(bingoEmailTotalBatches(order.length)).toBe(2);
   });
 
-  it("rejects nonsense sequences", () => {
-    const order = bingoEmailJourneyOrder("seed-a");
-    expect(bingoEmailBatchReadingIds(order, -1)).toHaveLength(0);
-    expect(bingoEmailBatchReadingIds(order, 2.5)).toHaveLength(0);
+  it("resolves weekdays in America/Chicago (the documented default timezone)", () => {
+    // 2026-07-22T12:00Z is Wednesday morning in Chicago;
+    // 2026-07-23T03:00Z is still Wednesday EVENING there (Thursday UTC).
+    expect(bingoEmailWeekdaySlugFor(new Date("2026-07-22T12:00:00.000Z"))).toBe(
+      "wednesday",
+    );
+    expect(bingoEmailWeekdaySlugFor(new Date("2026-07-23T03:00:00.000Z"))).toBe(
+      "wednesday",
+    );
   });
 
   it("card data links each reading to the existing plan cell", () => {

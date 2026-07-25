@@ -1,8 +1,9 @@
 "use client";
 
 // Email signup for Bible Bingo 7 — shared by the Bible Bingo 7 page and the
-// Bible Reading Plan page. Weekly is the recommended default; Daily moves
-// through the same 52-week plan in about 52 days. Calm copy only.
+// Bible Reading Plan page. Weekly (recommended default) delivers all seven
+// readings for the plan week together; Daily delivers one reading each day
+// through the same 52-week plan. Calm copy only.
 
 import { useId, useState } from "react";
 
@@ -92,9 +93,8 @@ export default function BibleBingoEmailSignup() {
           Get Your Bible Bingo 7
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm font-semibold leading-6 text-slate-300">
-          Receive seven readings from the Bible Reading Plan at a time. Choose
-          a weekly journey or receive seven each day and move through the plan
-          faster.
+          Follow the 52-week Bible Reading Plan by email. Choose one reading
+          each day or receive all seven readings for the week together.
         </p>
       </div>
 
@@ -140,13 +140,14 @@ export default function BibleBingoEmailSignup() {
                 className="mt-1 h-4 w-4 accent-emerald-400"
               />
               <span className="text-sm font-semibold leading-6 text-slate-200">
-                <span className="font-black text-white">Weekly</span>
+                <span className="font-black text-white">
+                  Weekly — seven readings each week
+                </span>
                 <span className="ml-2 rounded-full border border-emerald-200/30 bg-emerald-300/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.14em] text-emerald-100">
                   Recommended
                 </span>
                 <br />
-                Seven readings once per week — the 52-week plan at its natural
-                pace.
+                Receive all seven readings for the week together.
               </span>
             </label>
             <label className="flex min-h-11 cursor-pointer items-start gap-3">
@@ -159,10 +160,13 @@ export default function BibleBingoEmailSignup() {
                 className="mt-1 h-4 w-4 accent-emerald-400"
               />
               <span className="text-sm font-semibold leading-6 text-slate-200">
-                <span className="font-black text-white">Daily</span>
+                <span className="font-black text-white">
+                  Daily — one reading each day
+                </span>
                 <br />
-                Seven readings every day — the same plan, finished in about 52
-                days.
+                Start on any day of the week and receive the matching reading
+                from Week 1. Continue one reading each day through the
+                complete 52-week plan.
               </span>
             </label>
           </div>

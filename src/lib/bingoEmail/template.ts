@@ -4,7 +4,7 @@
 // all render from the same saved batch data, which is what guarantees the
 // email cards always match the cards the website shows for that token.
 //
-// Copy stays calm and direct (no streaks, pressure, or performance talk).
+// Copy stays calm and direct (no pressure or performance talk).
 // Cards carry passage references and plan labels only — no translation
 // text — so nothing copyrighted rides along in the email.
 
@@ -149,3 +149,108 @@ export function renderBingoBatchEmail(
 
   return { subject, preheader, html, text };
 }
+
+export type BingoEmailDailyEmailInput = {
+  card: BingoEmailReadingCard;
+  /** Completed readings so far (for "18 of 364 readings completed"). */
+  planCompletedCount: number;
+  planTotal: number;
+  /** Deep link that opens this exact reading on the Bible Reading Plan page. */
+  readingUrl: string;
+  manageUrl: string;
+  unsubscribeUrl: string;
+};
+
+/**
+ * Daily cadence: exactly ONE reading card, whose button opens the exact
+ * reading inside the existing Bible Reading Plan page.
+ */
+export function renderBingoDailyEmail(
+  input: BingoEmailDailyEmailInput,
+): BingoEmailRenderedEmail {
+  const {
+    card,
+    planCompletedCount,
+    planTotal,
+    readingUrl,
+    manageUrl,
+    unsubscribeUrl,
+  } = input;
+
+  const subject = `Today's Bible Reading — ${card.reading}`;
+  const preheader = "Today's reading is ready.";
+
+  const html = `
+  <div style="margin:0; padding:0; background:#eef2f7;">
+    <div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">${escapeHtml(preheader)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;">
+      <tr>
+        <td align="center" style="padding:28px 12px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px; font-family: Arial, Helvetica, sans-serif; color:#0f172a;">
+            <tr>
+              <td align="center" style="padding:0 0 18px;">
+                <div style="font-size:32px; line-height:1; margin-bottom:10px;">✝️ ❤️ 🙏</div>
+                <div style="font-size:12px; font-weight:800; letter-spacing:0.22em; text-transform:uppercase; color:#047857; margin-bottom:8px;">Cross Heart Pray</div>
+                <h1 style="font-family: Georgia, 'Times New Roman', serif; margin:0; font-size:30px; line-height:1.15; color:#0f172a;">Today&#39;s Bible Reading</h1>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+                  <tr>
+                    <td style="border:1px solid #dbe3ee; border-radius:18px; padding:22px 20px; background:#ffffff;">
+                      <div style="font-size:28px; text-align:center; margin:0 0 8px;">${card.emoji}</div>
+                      <div style="text-align:center; font-size:11px; line-height:1.4; letter-spacing:0.16em; text-transform:uppercase; color:#047857; font-weight:800; margin:0 0 8px;">
+                        ${escapeHtml(card.laneTitle)}
+                      </div>
+                      <div style="font-family: Georgia, 'Times New Roman', serif; text-align:center; color:#0f172a; font-weight:bold; font-size:26px; line-height:1.25; margin:4px 0 6px;">
+                        ${escapeHtml(card.reading)}
+                      </div>
+                      <div style="text-align:center; color:#64748b; font-size:13px; font-weight:600; margin:0 0 16px;">
+                        Week ${card.week} · ${escapeHtml(card.dayLabel)} · ${escapeHtml(card.category)}
+                      </div>
+                      <div style="text-align:center;">
+                        <a href="${readingUrl}" style="display:inline-block; background:#047857; color:#ffffff; padding:13px 24px; border-radius:999px; text-decoration:none; font-weight:800; font-size:15px;">
+                          Open Today&#39;s Reading
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <p style="color:#64748b; font-size:13px; line-height:1.7; margin:0;">
+                  ${planCompletedCount} of ${planTotal} readings completed<br/>
+                  This reading comes from the 52-week Bible Reading Plan.<br/>
+                  Questions? Just reply to this email.<br/>
+                  <a href="${manageUrl}" style="color:#065f46; font-weight:700;">Manage email settings</a>
+                  &nbsp;·&nbsp;
+                  <a href="${unsubscribeUrl}" style="color:#065f46; font-weight:700;">Unsubscribe</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+
+  const text = [
+    "Cross Heart Pray — Today's Bible Reading",
+    "",
+    `${card.reading} — Week ${card.week}, ${card.dayLabel} (${card.category})`,
+    "",
+    `Open Today's Reading: ${readingUrl}`,
+    "",
+    `${planCompletedCount} of ${planTotal} readings completed`,
+    "",
+    "Questions? Just reply to this email.",
+    `Manage email settings: ${manageUrl}`,
+    `Unsubscribe: ${unsubscribeUrl}`,
+  ].join("\n");
+
+  return { subject, preheader, html, text };
+}
+

@@ -16,8 +16,15 @@ export type BingoEmailSubscriber = {
   status: BingoEmailSubscriberStatus;
   cadence: BingoEmailCadence;
   manageToken: string;
+  /** Legacy random-journey seed — kept for schema stability, unused. */
   journeySeed: string;
   journeyNumber: number;
+  /**
+   * Plan weekday slug ("wednesday") the current journey began on, recorded
+   * when its first batch is created (America/Chicago). Defines the weekday
+   * rotation for the whole journey; null until the first send.
+   */
+  startDaySlug: string | null;
   /** Count of readings already used (sent) in the current journey. */
   journeyPosition: number;
   journeyCompletedAt: string | null;
@@ -225,9 +232,8 @@ export async function getBingoEmailStore(): Promise<BingoEmailStore | null> {
 // /bible-bingo/manage?token=demo-manage-token-000000 can be exercised
 // without a database or email provider. Never runs in production or tests.
 async function seedDevDemo(store: BingoEmailStore) {
-  const { bingoEmailBatchReadingIds, bingoEmailJourneyOrder } = await import(
-    "./journey"
-  );
+  const { bingoEmailBatchReadingIdsAt, bingoEmailJourneyOrder: journeyOrder } =
+    await import("./journey");
   const nowIso = new Date().toISOString();
   const subscriber: BingoEmailSubscriber = {
     id: "demo-subscriber",
@@ -237,6 +243,7 @@ async function seedDevDemo(store: BingoEmailStore) {
     manageToken: "demo-manage-token-000000",
     journeySeed: "demo-seed",
     journeyNumber: 1,
+    startDaySlug: "wednesday",
     journeyPosition: 7,
     journeyCompletedAt: null,
     consentAt: nowIso,
@@ -253,11 +260,8 @@ async function seedDevDemo(store: BingoEmailStore) {
     journeyNumber: 1,
     sequence: 0,
     token: "demo-batch-token-000000",
-    readingIds: bingoEmailBatchReadingIds(
-      bingoEmailJourneyOrder("demo-seed|journey-1"),
-      0,
-    ),
-    idempotencyKey: "demo-subscriber:j1:s0",
+    readingIds: bingoEmailBatchReadingIdsAt(journeyOrder("wednesday"), 0, 7),
+    idempotencyKey: "demo-subscriber:j1:p0",
     createdAt: nowIso,
     scheduledFor: nowIso,
     sentAt: nowIso,

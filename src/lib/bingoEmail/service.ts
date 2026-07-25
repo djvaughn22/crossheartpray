@@ -16,15 +16,17 @@
 import type { BibleReadingPlanWeek } from "../bibleReadingPlan";
 import {
   BINGO_EMAIL_BATCH_SIZE,
-  bingoEmailBatchReadingIds,
+  bingoEmailBatchReadingIdsAt,
+  bingoEmailBatchSizeForCadence,
   bingoEmailCardForReadingId,
   bingoEmailJourneyOrder,
   bingoEmailPlanSize,
   bingoEmailTotalBatches,
+  bingoEmailWeekdaySlugFor,
   type BingoEmailReadingCard,
 } from "./journey";
 import type { BingoEmailSender } from "./mailer";
-import { renderBingoBatchEmail } from "./template";
+import { renderBingoBatchEmail, renderBingoDailyEmail } from "./template";
 import { newBingoEmailId, newBingoEmailToken } from "./tokens";
 import type {
   BingoEmailBatch,
@@ -72,6 +74,8 @@ export type BingoEmailBatchView = {
 export type BingoEmailManageView = {
   status: BingoEmailSubscriber["status"];
   cadence: BingoEmailCadence;
+  /** Readings delivered so far in the current journey. */
+  readingsSent: number;
   setsSent: number;
   totalSets: number;
   planCompletedCount: number;
@@ -125,11 +129,11 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
   const nextSendAfter = (fromIso: string, cadence: BingoEmailCadence) =>
     new Date(Date.parse(fromIso) + cadenceIntervalMs(cadence)).toISOString();
 
+  // Canonical plan order rotated to the journey's recorded start weekday.
+  // Before the first send (no weekday recorded yet), Sunday-first — the
+  // real rotation is fixed the moment the first batch is created.
   const journeyOrderFor = (subscriber: BingoEmailSubscriber) =>
-    bingoEmailJourneyOrder(
-      `${subscriber.journeySeed}|journey-${subscriber.journeyNumber}`,
-      planWeeks,
-    );
+    bingoEmailJourneyOrder(subscriber.startDaySlug ?? "sunday", planWeeks);
 
   const cardFor = (id: string): BingoEmailReadingCard =>
     bingoEmailCardForReadingId(id, planWeeks) ?? {
@@ -148,6 +152,13 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
     `${baseUrl}/explorebible?batch=${batch.token}`;
   const manageUrlFor = (subscriber: BingoEmailSubscriber) =>
     `${baseUrl}/bible-bingo/manage?token=${subscriber.manageToken}`;
+  // Daily button target: the exact reading on the EXISTING Bible Reading
+  // Plan page (its own week/day/anchor deep-link system), carrying the
+  // batch token so the plan page can sync completion server-side.
+  const dailyReadingUrlFor = (batch: BingoEmailBatch) => {
+    const card = cardFor(batch.readingIds[0]);
+    return `${baseUrl}/bible-reading-plan?week=${card.week}&day=${card.daySlug}&bingoBatch=${batch.token}#${card.id}`;
+  };
 
   async function subscribe(input: {
     email: unknown;
@@ -201,6 +212,7 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
       manageToken: newBingoEmailToken(),
       journeySeed: newBingoEmailToken(),
       journeyNumber: 1,
+      startDaySlug: null,
       journeyPosition: 0,
       journeyCompletedAt: null,
       consentAt: nowIso,
@@ -218,6 +230,19 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
     subscriber: BingoEmailSubscriber,
   ): Promise<BingoEmailSendOutcome> {
     const nowIso = now().toISOString();
+
+    // The journey's weekday rotation is anchored to the delivery weekday
+    // (America/Chicago) of its FIRST batch — a Wednesday signup starts at
+    // Week 1 Wednesday. Recorded once, then fixed for the whole journey:
+    // a pause never re-anchors it, so plan coverage is always complete
+    // even if calendar weekdays drift after resuming.
+    if (!subscriber.startDaySlug) {
+      const startDaySlug = bingoEmailWeekdaySlugFor(now());
+      subscriber = (await store.updateSubscriber(subscriber.id, {
+        startDaySlug,
+      })) ?? { ...subscriber, startDaySlug };
+    }
+
     const order = journeyOrderFor(subscriber);
 
     if (subscriber.journeyPosition >= order.length) {
@@ -228,18 +253,24 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
       return "journey-complete";
     }
 
-    const sequence = Math.floor(
-      subscriber.journeyPosition / BINGO_EMAIL_BATCH_SIZE,
-    );
-    const idempotencyKey = `${subscriber.id}:j${subscriber.journeyNumber}:s${sequence}`;
+    // One batch per journey position: Weekly advances by 7, Daily by 1.
+    // Keying on the position (not a batch counter) keeps retries and
+    // cadence switches idempotent — the same position always maps to the
+    // same saved batch.
+    const position = subscriber.journeyPosition;
+    const idempotencyKey = `${subscriber.id}:j${subscriber.journeyNumber}:p${position}`;
 
     const batch = await store.createBatch({
       id: newBingoEmailId(),
       subscriberId: subscriber.id,
       journeyNumber: subscriber.journeyNumber,
-      sequence,
+      sequence: position,
       token: newBingoEmailToken(),
-      readingIds: bingoEmailBatchReadingIds(order, sequence),
+      readingIds: bingoEmailBatchReadingIdsAt(
+        order,
+        position,
+        bingoEmailBatchSizeForCadence(subscriber.cadence),
+      ),
       idempotencyKey,
       createdAt: nowIso,
       scheduledFor: subscriber.nextSendAt,
@@ -262,16 +293,31 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
     );
 
     const manageUrl = manageUrlFor(subscriber);
-    const email = renderBingoBatchEmail({
-      cards: batch.readingIds.map(cardFor),
-      setNumber: batch.sequence + 1,
-      totalSets: bingoEmailTotalBatches(order.length),
-      planCompletedCount: completions.length,
-      planTotal: order.length,
-      batchUrl: batchUrlFor(batch),
-      manageUrl,
-      unsubscribeUrl: `${manageUrl}&action=unsubscribe`,
-    });
+    const unsubscribeUrl = `${manageUrl}&action=unsubscribe`;
+
+    // A retry renders from the SAVED batch, so a Daily batch created
+    // before a switch to Weekly (or vice versa) resends its own readings
+    // rather than choosing new ones.
+    const email =
+      batch.readingIds.length === 1
+        ? renderBingoDailyEmail({
+            card: cardFor(batch.readingIds[0]),
+            planCompletedCount: completions.length,
+            planTotal: order.length,
+            readingUrl: dailyReadingUrlFor(batch),
+            manageUrl,
+            unsubscribeUrl,
+          })
+        : renderBingoBatchEmail({
+            cards: batch.readingIds.map(cardFor),
+            setNumber: Math.floor(batch.sequence / BINGO_EMAIL_BATCH_SIZE) + 1,
+            totalSets: bingoEmailTotalBatches(order.length),
+            planCompletedCount: completions.length,
+            planTotal: order.length,
+            batchUrl: batchUrlFor(batch),
+            manageUrl,
+            unsubscribeUrl,
+          });
 
     try {
       await sendEmail({
@@ -367,7 +413,7 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
     }));
 
     return {
-      setNumber: batch.sequence + 1,
+      setNumber: Math.floor(batch.sequence / BINGO_EMAIL_BATCH_SIZE) + 1,
       totalSets: bingoEmailTotalBatches(order.length),
       cards,
       batchCompletedCount: cards.filter((card) => card.completed).length,
@@ -420,6 +466,7 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
     return {
       status: subscriber.status,
       cadence: subscriber.cadence,
+      readingsSent: subscriber.journeyPosition,
       setsSent: Math.ceil(subscriber.journeyPosition / BINGO_EMAIL_BATCH_SIZE),
       totalSets: bingoEmailTotalBatches(order.length),
       planCompletedCount: completedIds.size,
@@ -493,6 +540,8 @@ export function createBingoEmailService(options: BingoEmailServiceOptions) {
         await store.updateSubscriber(subscriber.id, {
           journeyNumber: subscriber.journeyNumber + 1,
           journeySeed: newBingoEmailToken(),
+          // Fresh journey re-anchors to the weekday of its own first send.
+          startDaySlug: null,
           journeyPosition: 0,
           journeyCompletedAt: null,
           nextSendAt: nowIso,

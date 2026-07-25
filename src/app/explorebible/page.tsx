@@ -1490,6 +1490,7 @@ export default function BibleExplorerPage() {
     const token = params.get("batch");
     if (!token) return;
     const requestedCard = Number(params.get("card") ?? "");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe hydration: the batch token lives in the URL, readable only after mount
     setEmailBatch({
       token,
       focusCard:

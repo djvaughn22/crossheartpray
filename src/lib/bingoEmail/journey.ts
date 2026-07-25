@@ -1,10 +1,16 @@
-// Bible Bingo 7 email journey — deterministic, lane-balanced reading order.
+// Bible Bingo 7 email journey — canonical 52-week plan order with a
+// weekday rotation anchored to the subscriber's start weekday.
 //
-// The 52-week plan has exactly one reading per lane (Sunday–Saturday) per
-// week, so a full journey is 52 batches of 7 with one card per lane — the
-// same seven lanes the Bible Bingo 7 board deals. The order is derived
-// entirely from a stored seed: the same seed always produces the same
-// order, so switching Daily/Weekly or retrying a send can never reshuffle.
+// The journey visits the plan's weeks IN ORDER (Week 1 → Week 52). Within
+// each week the seven weekday readings are rotated so position 0 is the
+// weekday the subscriber's journey began on (recorded at first send,
+// America/Chicago — the site's Central-time convention). A Wednesday start
+// reads Week 1 Wed→Thu→Fri→Sat→Sun→Mon→Tue, then Week 2 Wednesday, and so
+// on: all 364 readings exactly once, no randomization.
+//
+// Both cadences share this one order — Weekly takes seven at a time (a
+// complete plan week), Daily takes one at a time — so switching cadence
+// can never duplicate, skip, or reset anything.
 //
 // Reading ids are the SAME ids the Bible Reading Plan checklist uses
 // ("week-12-friday"), so emailed progress and the plan page line up.
@@ -17,10 +23,11 @@ import {
 } from "../bibleReadingPlan";
 import { BIBLE_BINGO_SECTIONS } from "../dailyBibleBingo";
 
+/** Weekly cadence batch size; Daily sends one reading per email. */
 export const BINGO_EMAIL_BATCH_SIZE = 7;
 
 // Sunday-first, matching BIBLE_BINGO_SECTIONS and the plan's weekly rhythm.
-const LANE_SLUGS = [
+export const BINGO_EMAIL_WEEKDAY_SLUGS = [
   "sunday",
   "monday",
   "tuesday",
@@ -29,6 +36,19 @@ const LANE_SLUGS = [
   "friday",
   "saturday",
 ];
+
+const CHICAGO_WEEKDAY_FORMAT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago",
+  weekday: "long",
+});
+
+/**
+ * The plan weekday slug for a moment in time, in the application's
+ * documented default timezone (America/Chicago).
+ */
+export function bingoEmailWeekdaySlugFor(date: Date): string {
+  return CHICAGO_WEEKDAY_FORMAT.format(date).toLowerCase();
+}
 
 export type BingoEmailReadingCard = {
   /** Same id the Bible Reading Plan checklist stores ("week-1-monday"). */
@@ -68,7 +88,7 @@ function daysById(weeks: BibleReadingPlanWeek[]) {
 }
 
 function laneSectionForSlug(daySlug: string) {
-  const index = LANE_SLUGS.indexOf(daySlug);
+  const index = BINGO_EMAIL_WEEKDAY_SLUGS.indexOf(daySlug);
   return index >= 0 ? BIBLE_BINGO_SECTIONS[index] : null;
 }
 
@@ -95,91 +115,64 @@ export function bingoEmailCardForReadingId(
   };
 }
 
-/* ------------------------------------------------ deterministic shuffle */
-
-function hashSeed(value: string) {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-function mulberry32(seedNumber: number) {
-  let state = seedNumber || 1;
-  return function next() {
-    state |= 0;
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function seededShuffle<T>(items: T[], seed: string): T[] {
-  const random = mulberry32(hashSeed(seed));
-  const result = [...items];
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(random() * (index + 1));
-    [result[index], result[swap]] = [result[swap], result[index]];
-  }
-  return result;
-}
-
-/* ---------------------------------------------------------- the journey */
+/* --------------------------------------------------- the canonical order */
 
 /**
- * The complete randomized reading order for one journey seed.
- *
- * Each lane (weekday) is shuffled independently, then lanes are interleaved
- * round-robin, so every consecutive group of BATCH_SIZE readings holds one
- * reading per lane while lanes last. Deterministic: same seed, same order.
- * Handles uneven lanes and plan-size changes without assuming 364 entries.
+ * The complete journey order for one start weekday: plan weeks in
+ * canonical sequence, each week's readings rotated so the start weekday
+ * comes first. Deterministic — the start weekday alone defines the order.
+ * Readings whose weekday sits outside the known seven (future-proofing)
+ * are appended at the end of their week so nothing is ever dropped.
  */
 export function bingoEmailJourneyOrder(
-  seed: string,
+  startDaySlug: string,
   weeks: BibleReadingPlanWeek[] = BIBLE_READING_PLAN_WEEKS,
 ): string[] {
-  const days = planDays(weeks);
-  const knownSlugs = LANE_SLUGS.filter((slug) =>
-    days.some((day) => day.daySlug === slug),
+  const startIndex = Math.max(
+    0,
+    BINGO_EMAIL_WEEKDAY_SLUGS.indexOf(startDaySlug),
   );
-  const extraSlugs = [...new Set(days.map((day) => day.daySlug))].filter(
-    (slug) => !LANE_SLUGS.includes(slug),
-  );
-
-  const lanes = [...knownSlugs, ...extraSlugs].map((slug) =>
-    seededShuffle(
-      days.filter((day) => day.daySlug === slug).map(bingoEmailReadingId),
-      `${seed}|${slug}`,
-    ),
+  const rotation = BINGO_EMAIL_WEEKDAY_SLUGS.map(
+    (_, offset) =>
+      BINGO_EMAIL_WEEKDAY_SLUGS[
+        (startIndex + offset) % BINGO_EMAIL_WEEKDAY_SLUGS.length
+      ],
   );
 
   const order: string[] = [];
-  const longestLane = Math.max(0, ...lanes.map((lane) => lane.length));
-  for (let round = 0; round < longestLane; round += 1) {
-    for (const lane of lanes) {
-      if (round < lane.length) order.push(lane[round]);
+  for (const week of weeks) {
+    for (const slug of rotation) {
+      for (const day of week.days) {
+        if (day.daySlug === slug) order.push(bingoEmailReadingId(day));
+      }
+    }
+    for (const day of week.days) {
+      if (!BINGO_EMAIL_WEEKDAY_SLUGS.includes(day.daySlug)) {
+        order.push(bingoEmailReadingId(day));
+      }
     }
   }
 
   return order;
 }
 
+/** How many readings one email carries for a cadence. */
+export function bingoEmailBatchSizeForCadence(cadence: "weekly" | "daily") {
+  return cadence === "daily" ? 1 : BINGO_EMAIL_BATCH_SIZE;
+}
+
 /**
- * Reading ids for one batch (sequence 0 is the first email). The final
- * batch may hold fewer than BATCH_SIZE readings; past the end is [].
+ * Reading ids for the batch that starts at `position` (count of readings
+ * already delivered). The final batch may hold fewer readings than the
+ * cadence size; past the end is [].
  */
-export function bingoEmailBatchReadingIds(
+export function bingoEmailBatchReadingIdsAt(
   order: string[],
-  sequence: number,
+  position: number,
+  size: number,
 ): string[] {
-  if (!Number.isInteger(sequence) || sequence < 0) return [];
-  return order.slice(
-    sequence * BINGO_EMAIL_BATCH_SIZE,
-    (sequence + 1) * BINGO_EMAIL_BATCH_SIZE,
-  );
+  if (!Number.isInteger(position) || position < 0 || size < 1) return [];
+  return order.slice(position, position + size);
 }
 
 export function bingoEmailTotalBatches(planSize: number) {

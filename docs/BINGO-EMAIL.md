@@ -1,30 +1,40 @@
-# Bible Bingo 7 Email Subscriptions
+# Bible Bingo Email Subscriptions
 
-Emails readers seven Bible Reading Plan cards at a time and opens those
-exact cards inside the existing Bible Bingo 7 page (`/explorebible`).
-No separate email product page exists.
+Emails readers the 52-week Bible Reading Plan: Weekly delivers all seven
+readings for the plan week together (opened as a board on the existing
+Bible Bingo 7 page), Daily delivers one reading each day (opened at the
+exact cell on the existing Bible Reading Plan page). No separate email
+product page exists.
 
 ## How it works
 
-- Signup lives on `/explorebible` and `/bible-reading-plan` (Weekly is the
-  recommended default; Daily moves through the plan in ~52 days).
-- Each subscriber gets a randomized journey through all 364 plan readings,
-  derived from a stored seed: lanes (Sunday–Saturday) are shuffled
-  independently, so every set of seven has one card per bingo lane —
-  52 sets cover the whole plan with no repeats.
-- Every email's seven cards are saved as a batch with a secure token.
-  `/explorebible?batch=TOKEN` renders that exact batch — refresh and other
-  devices always show the same cards. Reading ids are the plan's own
-  checklist ids (`week-12-friday`), and each card deep-links into the
-  existing Bible Reading Plan cell.
+- Signup lives on `/explorebible` and `/bible-reading-plan`. Weekly is the
+  recommended default (seven readings each week); Daily sends one reading
+  each day and finishes the plan in 364 daily readings — 52 weeks.
+- The journey follows the CANONICAL plan order — Week 1 → Week 52, no
+  randomization. Within each week the seven weekday readings rotate to the
+  weekday the journey began on (recorded at the first send,
+  America/Chicago): a Wednesday start reads Week 1 Wed→Thu→Fri→Sat→Sun→
+  Mon→Tue, then Week 2 Wednesday. All 364 readings, exactly once. Both
+  cadences share this one order and one position, so switching Weekly↔Daily
+  never duplicates, skips, or resets anything. After a pause, the journey
+  resumes at the next unfinished reading in the same rotation — complete
+  plan coverage is preserved even if calendar weekdays have drifted.
+- Every email's readings are saved as a batch with a secure token
+  (7 readings for Weekly, 1 for Daily). Weekly's button opens
+  `/explorebible?batch=TOKEN` — the exact emailed board. Daily's button
+  opens the exact plan cell:
+  `/bible-reading-plan?week=N&day=slug&bingoBatch=TOKEN#week-N-slug` — the
+  plan page syncs that batch's completion server-side and shows a small
+  manage-email note. Reading ids are the plan's own checklist ids.
 - Manage page: `/bible-bingo/manage?token=MANAGE_TOKEN` (from every email's
   footer). Weekly↔Daily, pause, resume, unsubscribe, fresh journey.
-  Cadence changes never reshuffle or reset progress.
 - Delivery: one Vercel cron (`/api/bingo-email/send`, daily 13:00 UTC,
   `Authorization: Bearer $CRON_SECRET` — same model as the Instagram
   publisher; SOCIAL_ADMIN_KEY also works for manual runs). Batches are
-  idempotency-keyed: duplicate runs can't double-send, and a failed send
-  retries the SAME batch next run.
+  keyed by journey position: duplicate runs can't double-send, and a failed
+  send retries the SAME saved batch — it never advances the journey or
+  picks a different reading.
 
 ## Email identity (official)
 
@@ -80,7 +90,9 @@ cron reports `not-configured` — nothing breaks.
 ## Preview without sending
 
 `/api/bingo-email/preview?key=$SOCIAL_ADMIN_KEY` renders the exact email
-HTML (`&format=text` for the plain-text part, `&set=N` for a later set).
+HTML (`&format=text` for the plain-text part, `&set=N` for a later weekly
+set, `&cadence=daily&day=N` for the one-card daily email, `&start=wednesday`
+to preview a different start weekday).
 In local dev it needs no key, and a demo batch is seeded:
 `/explorebible?batch=demo-batch-token-000000` and
 `/bible-bingo/manage?token=demo-manage-token-000000`.

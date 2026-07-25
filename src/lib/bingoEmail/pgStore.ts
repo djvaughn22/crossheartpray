@@ -35,6 +35,9 @@ function rowToSubscriber(row: Row): BingoEmailSubscriber {
     manageToken: String(row.manage_token),
     journeySeed: String(row.journey_seed),
     journeyNumber: Number(row.journey_number),
+    startDaySlug: row.start_day_slug === null || row.start_day_slug === undefined
+      ? null
+      : String(row.start_day_slug),
     journeyPosition: Number(row.journey_position),
     journeyCompletedAt: isoOrNull(row.journey_completed_at),
     consentAt: iso(row.consent_at),
@@ -99,6 +102,10 @@ export async function createPostgresBingoEmailStore(
       last_sent_at timestamptz,
       next_send_at timestamptz NOT NULL
     )`;
+  // Additive upgrade for tables created before the weekday-rotation model.
+  await sql`
+    ALTER TABLE bingo_email_subscribers
+    ADD COLUMN IF NOT EXISTS start_day_slug text`;
   await sql`
     CREATE TABLE IF NOT EXISTS bingo_email_batches (
       id text PRIMARY KEY,
@@ -131,6 +138,7 @@ export async function createPostgresBingoEmailStore(
     manageToken: "manage_token",
     journeySeed: "journey_seed",
     journeyNumber: "journey_number",
+    startDaySlug: "start_day_slug",
     journeyPosition: "journey_position",
     journeyCompletedAt: "journey_completed_at",
     consentAt: "consent_at",
@@ -167,13 +175,15 @@ export async function createPostgresBingoEmailStore(
       await sql`
         INSERT INTO bingo_email_subscribers (
           id, email, status, cadence, manage_token, journey_seed,
-          journey_number, journey_position, journey_completed_at, consent_at,
-          created_at, paused_at, unsubscribed_at, last_sent_at, next_send_at
+          journey_number, start_day_slug, journey_position,
+          journey_completed_at, consent_at, created_at, paused_at,
+          unsubscribed_at, last_sent_at, next_send_at
         ) VALUES (
           ${s.id}, ${s.email}, ${s.status}, ${s.cadence}, ${s.manageToken},
-          ${s.journeySeed}, ${s.journeyNumber}, ${s.journeyPosition},
-          ${s.journeyCompletedAt}, ${s.consentAt}, ${s.createdAt},
-          ${s.pausedAt}, ${s.unsubscribedAt}, ${s.lastSentAt}, ${s.nextSendAt}
+          ${s.journeySeed}, ${s.journeyNumber}, ${s.startDaySlug},
+          ${s.journeyPosition}, ${s.journeyCompletedAt}, ${s.consentAt},
+          ${s.createdAt}, ${s.pausedAt}, ${s.unsubscribedAt}, ${s.lastSentAt},
+          ${s.nextSendAt}
         )`;
       return s;
     },

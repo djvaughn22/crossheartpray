@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 type ManageView = {
   status: "active" | "paused" | "unsubscribed";
   cadence: "weekly" | "daily";
+  readingsSent: number;
   setsSent: number;
   totalSets: number;
   planCompletedCount: number;
@@ -154,8 +155,10 @@ export default function BibleBingoEmailManage({
           Your progress
         </p>
         <p className="mt-2 text-sm font-semibold leading-6 text-slate-200">
-          {view.setsSent} of {view.totalSets} sets of seven delivered ·{" "}
-          {view.planCompletedCount} of {view.planTotal} readings completed
+          {view.cadence === "daily"
+            ? `${view.readingsSent} of ${view.planTotal} readings delivered`
+            : `${view.setsSent} of ${view.totalSets} sets of seven delivered`}{" "}
+          · {view.planCompletedCount} of {view.planTotal} readings completed
         </p>
         {view.planFullyCompleted ? (
           <p className="mt-3 text-sm font-bold text-emerald-50">
@@ -192,7 +195,7 @@ export default function BibleBingoEmailManage({
                     { action: "cadence", cadence: option },
                     option === "weekly"
                       ? "You'll now receive seven readings once per week."
-                      : "You'll now receive seven readings every day.",
+                      : "You'll now receive one reading each day.",
                   )
                 }
                 className={`${buttonClass} ${
@@ -201,7 +204,9 @@ export default function BibleBingoEmailManage({
                     : "border-white/15 bg-black/20 text-slate-200 hover:bg-black/30"
                 }`}
               >
-                {option === "weekly" ? "Weekly" : "Daily"}
+                {option === "weekly"
+                  ? "Weekly — seven readings each week"
+                  : "Daily — one reading each day"}
                 {view.cadence === option ? " · current" : ""}
               </button>
             ))}

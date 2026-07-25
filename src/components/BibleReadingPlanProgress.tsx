@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   bibleReadingPlanAssignmentForReading,
@@ -392,6 +393,14 @@ function parseReadingId(readingId: string) {
 export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProgressProps) {
   const readings = useMemo(() => flattenPlan(weeks), [weeks]);
   const [progress, setProgress] = useState<ChecklistProgress>({});
+  // Bible Bingo email arrival (?bingoBatch=TOKEN from a daily email):
+  // server completions merge into the local checklist, and checking a
+  // reading from that batch writes back to the subscriber's journey so
+  // progress stays cross-device. Normal browsing is untouched.
+  const [emailBatch, setEmailBatch] = useState<{
+    token: string;
+    readingIds: string[];
+  } | null>(null);
   const [highlightedReadingId, setHighlightedReadingId] = useState("");
   const [activeVideo, setActiveVideo] = useState<LifeEssentialsPrinciple | null>(null);
   // Modal reader state
@@ -511,6 +520,55 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe hydration: saved progress lives in localStorage, readable only after mount
     setProgress(loadChecklistProgress(STORAGE_KEY));
+  }, []);
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search)
+      .get("bingoBatch")
+      ?.trim();
+    if (!token || !/^[A-Za-z0-9_-]{16,64}$/.test(token)) return;
+
+    let cancelled = false;
+
+    async function loadEmailBatch(batchToken: string) {
+      try {
+        const response = await fetch(
+          `/api/bingo-email/batch/${encodeURIComponent(batchToken)}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok || cancelled) return;
+        const view = (await response.json()) as {
+          cards?: { id?: unknown; completed?: unknown }[];
+        };
+        const cards = Array.isArray(view.cards) ? view.cards : [];
+        const readingIds = cards
+          .map((card) => (typeof card.id === "string" ? card.id : ""))
+          .filter(Boolean);
+        if (!readingIds.length) return;
+
+        setEmailBatch({ token: batchToken, readingIds });
+        // Server-side completions flow into the local checklist so this
+        // device matches the subscriber's journey.
+        const serverDone = cards.filter(
+          (card) => card.completed === true && typeof card.id === "string",
+        );
+        if (serverDone.length) {
+          setProgress((current) => {
+            const next = { ...current };
+            for (const card of serverDone) next[card.id as string] = true;
+            saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
+            return next;
+          });
+        }
+      } catch {
+        // Offline or expired link — the plan page still works locally.
+      }
+    }
+
+    loadEmailBatch(token);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -635,12 +693,37 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     setProgress((current) => {
       const next = toggleChecklistItem(current, id);
       saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
+      // Emailed readings also update the subscriber's server-side journey.
+      // Computed from `next` (not the render closure) so rapid toggles
+      // always send the state that actually committed; the POST is
+      // idempotent, so a duplicate updater run is harmless.
+      if (emailBatch && emailBatch.readingIds.includes(id)) {
+        fetch(`/api/bingo-email/batch/${encodeURIComponent(emailBatch.token)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ readingId: id, completed: !!next[id] }),
+        }).catch(() => {
+          // Local checkmark stands; the server catches up next visit.
+        });
+      }
       return next;
     });
   }
 
   return (
     <section className="chp-reading-sheet overflow-visible rounded-2xl border border-white/10 bg-slate-950/35">
+      {emailBatch ? (
+        <p className="border-b border-emerald-200/20 bg-emerald-300/10 px-4 py-2 text-center text-xs font-semibold text-emerald-100 print:hidden">
+          You&apos;re reading from your Bible Bingo email. Checking it here
+          saves to your journey.{" "}
+          <Link
+            href="/bible-bingo/manage"
+            className="font-bold underline decoration-emerald-200/40 underline-offset-4"
+          >
+            Manage email settings
+          </Link>
+        </p>
+      ) : null}
       <div className="chp-plan-progress-summary border-b border-white/10 bg-slate-950/45 p-3 print:hidden">
         <div className="grid gap-3 md:grid-cols-[auto,1fr,auto] md:items-center">
 

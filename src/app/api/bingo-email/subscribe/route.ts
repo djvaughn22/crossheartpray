@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     return respond(
       {
         message:
-          "You're already subscribed. Your next seven readings will arrive on schedule — the manage link in any email can change your settings.",
+          "You're already subscribed. Your readings will arrive on schedule — the manage link in any email can change your settings.",
       },
       200,
     );
@@ -100,12 +100,17 @@ export async function POST(request: Request) {
     // Subscription succeeded; delivery will be retried by the scheduler.
   }
 
+  const firstDelivery =
+    payload.cadence === "daily"
+      ? "Today's reading is on the way to your inbox."
+      : "Your first seven readings are on the way to your inbox.";
+
   return respond(
     {
       message:
         result.outcome === "subscribed"
-          ? "You're subscribed. Your first seven readings are on the way to your inbox."
-          : "Welcome back. Your next seven readings are on the way to your inbox.",
+          ? `You're subscribed. ${firstDelivery}`
+          : `Welcome back. ${firstDelivery}`,
     },
     200,
   );

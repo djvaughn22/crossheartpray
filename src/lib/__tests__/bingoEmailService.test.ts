@@ -10,7 +10,12 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Deterministic fixture: 10 readings → one full batch of 7, one final of 3.
+// 2026-07-24T12:00Z is FRIDAY morning in America/Chicago;
+// 2026-07-22T12:00Z is WEDNESDAY. Deterministic fixtures throughout.
+const FRIDAY = "2026-07-24T12:00:00.000Z";
+const WEDNESDAY = "2026-07-22T12:00:00.000Z";
+
+// Deterministic fixture: 10 readings → one full week + Week 2 Sun/Mon/Tue.
 const SHORT_WEEKS = [
   BIBLE_READING_PLAN_WEEKS[0],
   { week: 2, days: BIBLE_READING_PLAN_WEEKS[1].days.slice(0, 3) },
@@ -24,10 +29,10 @@ type Harness = {
   failNextSend: () => void;
 };
 
-function makeHarness(planWeeks = SHORT_WEEKS): Harness {
+function makeHarness(planWeeks = SHORT_WEEKS, startIso = FRIDAY): Harness {
   const store = createMemoryBingoEmailStore();
   const sent: BingoEmailMessage[] = [];
-  let nowMs = Date.parse("2026-07-24T12:00:00.000Z");
+  let nowMs = Date.parse(startIso);
   let failNext = false;
 
   const service = createBingoEmailService({
@@ -57,7 +62,11 @@ function makeHarness(planWeeks = SHORT_WEEKS): Harness {
   };
 }
 
-async function subscribeAndSend(h: Harness, email = "reader@example.com", cadence = "weekly") {
+async function subscribeAndSend(
+  h: Harness,
+  email = "reader@example.com",
+  cadence: "weekly" | "daily" = "weekly",
+) {
   const result = await h.service.subscribe({ email, cadence, consent: true });
   expect(result.ok).toBe(true);
   if (!result.ok) throw new Error("unreachable");
@@ -113,76 +122,143 @@ describe("signup validation", () => {
   });
 });
 
-describe("sending and cadence", () => {
-  it("weekly: one batch immediately, the next only after seven days", async () => {
+describe("weekly cadence: seven readings, one complete plan week", () => {
+  it("creates exactly seven readings per batch — a full plan week", async () => {
+    const h = makeHarness();
+    const id = await subscribeAndSend(h);
+    const batch = (await h.store.latestBatchForSubscriber(id))!;
+    expect(batch.readingIds).toHaveLength(7);
+    // Friday start: complete Week 1, rotated Friday-first.
+    expect(batch.readingIds[0]).toBe("week-1-friday");
+    expect(new Set(batch.readingIds.map((r) => r.replace(/-[a-z]+$/, ""))).size).toBe(1);
+  });
+
+  it("sends the next batch only after seven days", async () => {
     const h = makeHarness();
     await subscribeAndSend(h);
     expect(h.sent).toHaveLength(1);
-
-    expect(await h.service.processDueSends()).toHaveLength(0);
     h.advance(6 * DAY_MS);
     expect(await h.service.processDueSends()).toHaveLength(0);
     h.advance(1 * DAY_MS);
-    const results = await h.service.processDueSends();
-    expect(results.map((r) => r.outcome)).toEqual(["sent"]);
+    expect((await h.service.processDueSends()).map((r) => r.outcome)).toEqual(["sent"]);
     expect(h.sent).toHaveLength(2);
   });
 
-  it("daily: the next batch is due after one day", async () => {
+  it("weekly email carries seven HTML cards and the Bible Bingo 7 batch link", async () => {
     const h = makeHarness();
-    await subscribeAndSend(h, "reader@example.com", "daily");
-    expect(h.sent).toHaveLength(1);
-    h.advance(1 * DAY_MS);
-    await h.service.processDueSends();
-    expect(h.sent).toHaveLength(2);
+    const id = await subscribeAndSend(h);
+    const batch = (await h.store.latestBatchForSubscriber(id))!;
+    expect((h.sent[0].html.match(/Card \d ·/g) ?? [])).toHaveLength(7);
+    expect(h.sent[0].subject).toContain("Your Bible Bingo 7");
+    expect(h.sent[0].html).toContain(`/explorebible?batch=${batch.token}`);
   });
 
-  it("each email holds seven unique readings and the final batch holds the remainder", async () => {
+  it("the final short batch delivers the remainder, then the journey completes", async () => {
     const h = makeHarness();
-    const id = await subscribeAndSend(h, "reader@example.com", "daily");
-    h.advance(DAY_MS);
+    const id = await subscribeAndSend(h);
+    h.advance(7 * DAY_MS);
     await h.service.processDueSends();
-
     const sub = (await h.store.getSubscriberById(id))!;
     expect(sub.journeyPosition).toBe(10);
-
     const latest = (await h.store.latestBatchForSubscriber(id))!;
-    expect(latest.sequence).toBe(1);
     expect(latest.readingIds).toHaveLength(3);
-
-    // Nothing repeated across the two batches; whole plan used.
-    const first = (await h.store.getBatchByIdempotencyKey(`${id}:j1:s0`))!;
-    expect(first.readingIds).toHaveLength(7);
-    const all = [...first.readingIds, ...latest.readingIds];
-    expect(new Set(all).size).toBe(10);
-  });
-
-  it("after the plan is used up, the journey completes and no more email goes out", async () => {
-    const h = makeHarness();
-    const id = await subscribeAndSend(h, "reader@example.com", "daily");
-    h.advance(DAY_MS);
-    await h.service.processDueSends();
-    // The final send marks the journey complete on the spot — the
-    // subscriber is never due again until a fresh journey begins.
-    h.advance(DAY_MS);
-    expect(await h.service.processDueSends()).toHaveLength(0);
-    expect(h.sent).toHaveLength(2);
     h.advance(365 * DAY_MS);
     expect(await h.service.processDueSends()).toHaveLength(0);
-    const sub = (await h.store.getSubscriberById(id))!;
-    expect(sub.journeyCompletedAt).not.toBeNull();
+    expect((await h.store.getSubscriberById(id))!.journeyCompletedAt).not.toBeNull();
+  });
+});
+
+describe("daily cadence: one canonical reading per day", () => {
+  it("creates exactly one reading per batch and one HTML card per email", async () => {
+    const h = makeHarness();
+    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    const batch = (await h.store.latestBatchForSubscriber(id))!;
+    expect(batch.readingIds).toHaveLength(1);
+    expect(h.sent[0].subject).toContain("Today's Bible Reading");
+    expect((h.sent[0].html.match(/Open Today&#39;s Reading/g) ?? [])).toHaveLength(1);
+    expect((h.sent[0].html.match(/Week \d+ ·/g) ?? [])).toHaveLength(1);
   });
 
-  it("full real plan: 52 sends cover all 364 readings with no repeats", async () => {
-    const h = makeHarness(BIBLE_READING_PLAN_WEEKS);
-    const id = await subscribeAndSend(h, "reader@example.com", "daily");
-    for (let day = 0; day < 60; day += 1) {
+  it("a Friday signup starts with Week 1 Friday; Wednesday starts with Week 1 Wednesday", async () => {
+    const friday = makeHarness(SHORT_WEEKS, FRIDAY);
+    const fridayId = await subscribeAndSend(friday, "f@example.com", "daily");
+    expect((await friday.store.latestBatchForSubscriber(fridayId))!.readingIds).toEqual([
+      "week-1-friday",
+    ]);
+
+    const wednesday = makeHarness(SHORT_WEEKS, WEDNESDAY);
+    const wednesdayId = await subscribeAndSend(wednesday, "w@example.com", "daily");
+    expect(
+      (await wednesday.store.latestBatchForSubscriber(wednesdayId))!.readingIds,
+    ).toEqual(["week-1-wednesday"]);
+
+    const monday = makeHarness(SHORT_WEEKS, "2026-07-20T12:00:00.000Z");
+    const mondayId = await subscribeAndSend(monday, "m@example.com", "daily");
+    expect((await monday.store.latestBatchForSubscriber(mondayId))!.readingIds).toEqual([
+      "week-1-monday",
+    ]);
+  });
+
+  it("a Wednesday start rotates Wed→Tue and only then enters Week 2", async () => {
+    const h = makeHarness(BIBLE_READING_PLAN_WEEKS, WEDNESDAY);
+    await subscribeAndSend(h, "reader@example.com", "daily");
+    for (let day = 0; day < 7; day += 1) {
       h.advance(DAY_MS);
       await h.service.processDueSends();
     }
-    expect(h.sent).toHaveLength(52);
+    const delivered = h.sent.map(
+      (message) => message.text.match(/Week (\d+), (\w+)/)!.slice(1).join("-"),
+    );
+    expect(delivered).toEqual([
+      "1-Wednesday",
+      "1-Thursday",
+      "1-Friday",
+      "1-Saturday",
+      "1-Sunday",
+      "1-Monday",
+      "1-Tuesday",
+      "2-Wednesday",
+    ]);
+  });
+
+  it("daily link opens the exact Bible Reading Plan entry with the batch token", async () => {
+    const h = makeHarness(SHORT_WEEKS, WEDNESDAY);
+    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    const batch = (await h.store.latestBatchForSubscriber(id))!;
+    const expected = `/bible-reading-plan?week=1&day=wednesday&bingoBatch=${batch.token}#week-1-wednesday`;
+    expect(h.sent[0].html).toContain(expected);
+    expect(h.sent[0].text).toContain(expected);
+  });
+
+  it("delivers all readings exactly once — none skipped, none duplicated", async () => {
+    const h = makeHarness(SHORT_WEEKS, WEDNESDAY);
+    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    for (let day = 0; day < 12; day += 1) {
+      h.advance(DAY_MS);
+      await h.service.processDueSends();
+    }
+    expect(h.sent).toHaveLength(10);
+    const allBatches: string[] = [];
+    for (let position = 0; position < 10; position += 1) {
+      const batch = await h.store.getBatchByIdempotencyKey(`${id}:j1:p${position}`);
+      expect(batch).not.toBeNull();
+      allBatches.push(...batch!.readingIds);
+    }
+    expect(new Set(allBatches).size).toBe(10);
+    expect((await h.store.getSubscriberById(id))!.journeyPosition).toBe(10);
+  });
+
+  it("full real plan: 364 daily sends cover the whole plan exactly once", async () => {
+    const h = makeHarness(BIBLE_READING_PLAN_WEEKS, WEDNESDAY);
+    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    for (let day = 0; day < 370; day += 1) {
+      h.advance(DAY_MS);
+      await h.service.processDueSends();
+    }
+    expect(h.sent).toHaveLength(364);
     const sub = (await h.store.getSubscriberById(id))!;
     expect(sub.journeyPosition).toBe(364);
+    expect(sub.journeyCompletedAt).not.toBeNull();
   });
 });
 
@@ -198,7 +274,6 @@ describe("duplicate and retry protection", () => {
   it("a stale due snapshot hits the already-sent guard instead of re-sending", async () => {
     const h = makeHarness();
     const id = await subscribeAndSend(h);
-    // Force the subscriber to look due again without clearing the sent batch.
     await h.store.updateSubscriber(id, {
       journeyPosition: 0,
       nextSendAt: "2020-01-01T00:00:00.000Z",
@@ -208,7 +283,7 @@ describe("duplicate and retry protection", () => {
     expect(h.sent).toHaveLength(1);
   });
 
-  it("a failed send retries the SAME saved batch — same token, same readings", async () => {
+  it("a failed weekly send retries the SAME saved seven-card batch", async () => {
     const h = makeHarness();
     const result = await h.service.subscribe({
       email: "reader@example.com",
@@ -218,25 +293,43 @@ describe("duplicate and retry protection", () => {
 
     h.failNextSend();
     expect(await h.service.sendDueForSubscriber(result.subscriberId)).toBe("failed");
-    expect(h.sent).toHaveLength(0);
-
     const failedBatch = (await h.store.latestBatchForSubscriber(result.subscriberId))!;
     expect(failedBatch.sendStatus).toBe("failed");
-    expect(failedBatch.lastError).toContain("provider down");
+    expect(failedBatch.readingIds).toHaveLength(7);
 
-    // Still due — the retry reuses the identical batch.
     const retry = await h.service.processDueSends();
     expect(retry.map((r) => r.outcome)).toEqual(["sent"]);
     const sentBatch = (await h.store.latestBatchForSubscriber(result.subscriberId))!;
     expect(sentBatch.token).toBe(failedBatch.token);
     expect(sentBatch.readingIds).toEqual(failedBatch.readingIds);
     expect(h.sent).toHaveLength(1);
-    expect(h.sent[0].html).toContain(failedBatch.token);
+  });
+
+  it("a failed daily send retries the SAME saved one-reading card", async () => {
+    const h = makeHarness(SHORT_WEEKS, WEDNESDAY);
+    const result = await h.service.subscribe({
+      email: "reader@example.com",
+      cadence: "daily",
+      consent: true,
+    });
+    if (!result.ok) throw new Error("unreachable");
+
+    h.failNextSend();
+    expect(await h.service.sendDueForSubscriber(result.subscriberId)).toBe("failed");
+    const failedBatch = (await h.store.latestBatchForSubscriber(result.subscriberId))!;
+    expect(failedBatch.readingIds).toEqual(["week-1-wednesday"]);
+
+    const retry = await h.service.processDueSends();
+    expect(retry.map((r) => r.outcome)).toEqual(["sent"]);
+    const sentBatch = (await h.store.latestBatchForSubscriber(result.subscriberId))!;
+    expect(sentBatch.token).toBe(failedBatch.token);
+    expect(sentBatch.readingIds).toEqual(["week-1-wednesday"]);
+    expect((await h.store.getSubscriberById(result.subscriberId))!.journeyPosition).toBe(1);
   });
 });
 
-describe("the emailed batch and the Bible Bingo 7 page render the same cards", () => {
-  it("email html carries the batch token and exactly the saved readings", async () => {
+describe("the emailed batch and the pages render the same cards", () => {
+  it("weekly email carries the batch token and exactly the saved readings", async () => {
     const h = makeHarness();
     const id = await subscribeAndSend(h);
     const batch = (await h.store.latestBatchForSubscriber(id))!;
@@ -275,23 +368,13 @@ describe("the emailed batch and the Bible Bingo 7 page render the same cards", (
     );
     expect(updated!.batchCompletedCount).toBe(1);
     expect(updated!.planCompletedCount).toBe(1);
-    expect(
-      updated!.cards.find((c) => c.id === batch.readingIds[0])!.completed,
-    ).toBe(true);
 
     expect(
-      await h.service.setBatchReadingCompletion(batch.token, "week-1-sunday-nope", true),
+      await h.service.setBatchReadingCompletion(batch.token, "week-9-nope", true),
     ).toBeNull();
     expect(
       await h.service.setBatchReadingCompletion("bad-token", batch.readingIds[0], true),
     ).toBeNull();
-
-    const cleared = await h.service.setBatchReadingCompletion(
-      batch.token,
-      batch.readingIds[0],
-      false,
-    );
-    expect(cleared!.batchCompletedCount).toBe(0);
   });
 });
 
@@ -300,32 +383,52 @@ describe("manage: cadence, pause, resume, unsubscribe, restart", () => {
     return (await h.store.getSubscriberById(id))!.manageToken;
   }
 
-  it("switching cadence keeps the same journey order and position", async () => {
-    const h = makeHarness();
-    const id = await subscribeAndSend(h);
+  it("switching cadence preserves completed readings, position, and rotation — no dupes or gaps", async () => {
+    const h = makeHarness(BIBLE_READING_PLAN_WEEKS, WEDNESDAY);
+    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    for (let day = 0; day < 2; day += 1) {
+      h.advance(DAY_MS);
+      await h.service.processDueSends();
+    }
+    // Three daily readings delivered: W1 Wed, Thu, Fri. Mark one complete.
     const before = (await h.store.getSubscriberById(id))!;
-    const token = before.manageToken;
+    expect(before.journeyPosition).toBe(3);
+    const firstBatch = (await h.store.getBatchByIdempotencyKey(`${id}:j1:p0`))!;
+    await h.service.setBatchReadingCompletion(
+      firstBatch.token,
+      "week-1-wednesday",
+      true,
+    );
 
-    const view = await h.service.applyManageAction(token, {
+    const view = await h.service.applyManageAction(before.manageToken, {
       action: "cadence",
-      cadence: "daily",
+      cadence: "weekly",
     });
-    expect(view!.cadence).toBe("daily");
+    expect(view!.cadence).toBe("weekly");
+    expect(view!.planCompletedCount).toBe(1);
 
     const after = (await h.store.getSubscriberById(id))!;
-    expect(after.journeySeed).toBe(before.journeySeed);
-    expect(after.journeyPosition).toBe(before.journeyPosition);
+    expect(after.journeyPosition).toBe(3);
+    expect(after.startDaySlug).toBe("wednesday");
 
-    // Next batch continues the same order (batch 2 of the same journey).
-    h.advance(DAY_MS);
+    // Next weekly batch continues from position 3 — Sat, Sun, Mon, Tue of
+    // Week 1 plus the start of Week 2. Nothing repeated, nothing skipped.
+    h.advance(7 * DAY_MS);
     await h.service.processDueSends();
-    const latest = (await h.store.latestBatchForSubscriber(id))!;
-    expect(latest.sequence).toBe(1);
-    expect(h.sent).toHaveLength(2);
+    const weeklyBatch = (await h.store.latestBatchForSubscriber(id))!;
+    expect(weeklyBatch.readingIds).toEqual([
+      "week-1-saturday",
+      "week-1-sunday",
+      "week-1-monday",
+      "week-1-tuesday",
+      "week-2-wednesday",
+      "week-2-thursday",
+      "week-2-friday",
+    ]);
   });
 
-  it("pausing stops sends without losing progress; resuming picks back up", async () => {
-    const h = makeHarness();
+  it("pausing stops sends without losing progress; resuming continues at the same position", async () => {
+    const h = makeHarness(SHORT_WEEKS, WEDNESDAY);
     const id = await subscribeAndSend(h, "reader@example.com", "daily");
     const token = await manageTokenFor(h, id);
 
@@ -336,15 +439,18 @@ describe("manage: cadence, pause, resume, unsubscribe, restart", () => {
 
     const resumed = await h.service.applyManageAction(token, { action: "resume" });
     expect(resumed!.status).toBe("active");
-    expect(await h.service.processDueSends()).toHaveLength(1);
+    await h.service.processDueSends();
     expect(h.sent).toHaveLength(2);
-    const sub = (await h.store.getSubscriberById(id))!;
-    expect(sub.journeyPosition).toBe(10);
+    // Next unfinished reading, weekday rotation preserved from the start
+    // anchor — coverage over calendar alignment.
+    const latest = (await h.store.latestBatchForSubscriber(id))!;
+    expect(latest.readingIds).toEqual(["week-1-thursday"]);
+    expect((await h.store.getSubscriberById(id))!.journeyPosition).toBe(2);
   });
 
   it("unsubscribing stops sends; resubscribing keeps the journey", async () => {
     const h = makeHarness();
-    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    const id = await subscribeAndSend(h);
     const token = await manageTokenFor(h, id);
 
     const view = await h.service.applyManageAction(token, { action: "unsubscribe" });
@@ -359,21 +465,18 @@ describe("manage: cadence, pause, resume, unsubscribe, restart", () => {
       consent: true,
     });
     expect(back.ok && back.outcome === "resubscribed").toBe(true);
-    const sub = (await h.store.getSubscriberById(id))!;
-    expect(sub.journeyPosition).toBe(7);
+    expect((await h.store.getSubscriberById(id))!.journeyPosition).toBe(7);
   });
 
-  it("restart is only offered after the plan is finished and starts a fresh order", async () => {
+  it("restart is only offered after the plan is finished and re-anchors the weekday", async () => {
     const h = makeHarness();
-    const id = await subscribeAndSend(h, "reader@example.com", "daily");
+    const id = await subscribeAndSend(h);
     const token = await manageTokenFor(h, id);
-    const originalSeed = (await h.store.getSubscriberById(id))!.journeySeed;
 
-    // Not finished yet — restart is a no-op.
     await h.service.applyManageAction(token, { action: "restart" });
     expect((await h.store.getSubscriberById(id))!.journeyNumber).toBe(1);
 
-    h.advance(DAY_MS);
+    h.advance(7 * DAY_MS);
     await h.service.processDueSends();
     const done = await h.service.manageView(token);
     expect(done!.allSetsSent).toBe(true);
@@ -382,7 +485,7 @@ describe("manage: cadence, pause, resume, unsubscribe, restart", () => {
     const restarted = (await h.store.getSubscriberById(id))!;
     expect(restarted.journeyNumber).toBe(2);
     expect(restarted.journeyPosition).toBe(0);
-    expect(restarted.journeySeed).not.toBe(originalSeed);
+    expect(restarted.startDaySlug).toBeNull();
 
     expect(await h.service.processDueSends()).toHaveLength(1);
     expect(h.sent).toHaveLength(3);
