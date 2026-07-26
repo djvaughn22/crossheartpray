@@ -15,10 +15,18 @@ import BibleBingoEmailSignup from "../../components/BibleBingoEmailSignup";
 import {
   bibleBingoBoardIdFromPassages,
   bibleBingoOddsForSection,
-  randomReferenceForSection,
+  bibleBingoPassageForBoardReference,
+  bibleBingoPlanEntryIdForPassage,
+  randomReferenceForSectionExcluding,
+  seededReferenceForSectionExcluding,
   seededReferenceForSection,
 } from "../../lib/bibleRandom";
-import { bibleReadingPlanDayForReference } from "../../lib/bibleReadingPlan";
+import {
+  completedReadingPlanEntryIds,
+  setReadingPlanEntryCompleted,
+  subscribeToReadingPlanProgress,
+} from "../../lib/readingPlanProgress";
+import { loadStoredBingoBoard, saveStoredBingoBoard } from "../../lib/bingoBoard";
 import CardInfoLegend from "../../components/CardInfoLegend";
 import CardReadMenu from "../../components/CardReadMenu";
 import LazyBibleVerseLookup from "../../components/LazyBibleVerseLookup";
@@ -437,17 +445,71 @@ function bibleBingoBookLinksForSection(sectionTitle: string): BibleBookLink[] {
 }
 /* END BIBLE BINGO READING PLAN BOOK LINKS */
 
-function randomPassage(section: Section, avoidLabel?: string) {
-  return randomReferenceForSection(section.title, avoidLabel);
-}
+type PathItem = { section: Section; passage: Passage | null };
 
-function buildPath(currentPath?: { section: Section; passage: Passage }[]) {
+// Deal only readings the person has NOT completed in this plan year.
+// A null passage means every reading in that lane is already finished —
+// the lane shows a completion face instead of recycling old readings.
+function buildPath(currentPath?: PathItem[]): PathItem[] {
+  const completed = completedReadingPlanEntryIds();
+
   return sections.map((section) => {
     const currentItem = currentPath?.find((item) => item.section.title === section.title);
 
     return {
       section,
-      passage: randomPassage(section, currentItem?.passage.label),
+      passage: randomReferenceForSectionExcluding(
+        section.title,
+        completed,
+        currentItem?.passage?.label,
+      ),
+    };
+  });
+}
+
+function buildFilteredDailyPath(): PathItem[] {
+  const completed = completedReadingPlanEntryIds();
+  const seed = centralDateSeed();
+
+  return sections.map((section) => ({
+    section,
+    passage: seededReferenceForSectionExcluding(section.title, seed, completed),
+  }));
+}
+
+function boardCardReference(passage: Passage | null): string | null {
+  if (!passage) return null;
+  return `${passage.code}.${Number(passage.chapter)}.${Number(passage.verse)}`;
+}
+
+function persistBoard(nextPath: PathItem[]) {
+  saveStoredBingoBoard(nextPath.map((item) => boardCardReference(item.passage)));
+}
+
+// Restore the person's saved board (same seven cards after refresh) or deal
+// today's progress-filtered board. Saved cards keep their original selection
+// even when since-completed; a card that can no longer be matched re-deals
+// from the unfinished pool for its lane.
+function restoreOrDealBoard(): PathItem[] {
+  const completed = completedReadingPlanEntryIds();
+  const saved = loadStoredBingoBoard(sections.length);
+
+  if (!saved) return buildFilteredDailyPath();
+
+  return sections.map((section, index) => {
+    const reference = saved.cards[index];
+
+    if (reference) {
+      const [code, chapter, verse] = reference.split(".");
+      const passage = bibleBingoPassageForBoardReference(section.title, code, chapter, verse);
+      if (passage) return { section, passage };
+    }
+
+    // Lane was complete at deal time, or the saved card no longer matches:
+    // offer an unfinished reading if any remain, else the lane stays done.
+    return {
+      section,
+      passage: randomReferenceForSectionExcluding(section.title, completed),
     };
   });
 }
@@ -472,35 +534,14 @@ function splitBibleBingoSectionTitle(title: string) {
   };
 }
 
-const BINGO_READING_PLAN_STORAGE_KEY = "crossheartpray:bible-reading-plan:v1";
-
-function loadBingoReadingPlanDone(): Record<string, boolean> {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(BINGO_READING_PLAN_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as { done?: Record<string, boolean> };
-    return parsed.done ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function bingoReadingPlanDoneKeyForPassage(code: string, chapter: string | number) {
-  const day = bibleReadingPlanDayForReference(code, chapter);
-
-  if (!day) {
-    return "";
-  }
-
-  return `week-${day.week}-${day.daySlug}`;
-}
-
+// Completion state comes from the canonical annual Reading Plan progress
+// service (src/lib/readingPlanProgress.ts) — the same source the plan board
+// and email flows write. Card identity is the plan entry id, never the
+// verse text or translation.
 function isBingoReadingPlanDone(done: Record<string, boolean>, code: string, chapter: string | number) {
-  const key = bingoReadingPlanDoneKeyForPassage(code, chapter);
+  const entryId = bibleBingoPlanEntryIdForPassage({ code, chapter });
 
-  return Boolean(key && done[key]);
+  return Boolean(entryId && done[entryId]);
 }
 
 const centralDayIndex = chicagoTodayWeekdayIndex;
@@ -571,7 +612,7 @@ function languageButtonClass(language: OriginalLanguage, activeLanguage: Origina
 }
 
 function BibleExplorerExperience() {
-  const [path, setPath] = useState(() => buildDailyPath());
+  const [path, setPath] = useState<PathItem[]>(() => buildDailyPath());
   const [spinVersions, setSpinVersions] = useState(() => sections.map(() => 0));
   const [spinningCards, setSpinningCards] = useState(() => sections.map(() => false));
   const [spinDelays, setSpinDelays] = useState(() => sections.map(() => 0));
@@ -596,9 +637,14 @@ function BibleExplorerExperience() {
     return `https://www.bible.com/verse-of-the-day`;
   }, []);
 
-  const boardId = useMemo(
-    () => bibleBingoBoardIdFromPassages(path.map(({ passage }) => passage)),
+  const dealtPassages = useMemo(
+    () => path.flatMap((item) => (item.passage ? [item.passage] : [])),
     [path],
+  );
+  const boardShareReady = dealtPassages.length === sections.length;
+  const boardId = useMemo(
+    () => (boardShareReady ? bibleBingoBoardIdFromPassages(dealtPassages) : ""),
+    [boardShareReady, dealtPassages],
   );
   const boardPath = `/bible-bingo/${boardId}`;
   const boardUrl = `https://crossheartpray.com${boardPath}`;
@@ -619,7 +665,7 @@ function BibleExplorerExperience() {
         <p style="text-align: center; color: #475569; font-size: 16px; line-height: 1.6; max-width: 560px; margin-left: auto; margin-right: auto;">
           Same 7 cards. Explore and share.
         </p>
-        ${path.map(({ section, passage }, index) => `
+        ${path.flatMap(({ section, passage }, index) => (passage ? [{ section, passage, index }] : [])).map(({ section, passage, index }) => `
           <div style="border: 1px solid #dbe3ee; border-radius: 18px; padding: 22px; margin: 16px 0; background: #ffffff;">
             <p style="font-size: 30px; text-align: center; margin: 0 0 8px;">${section.emoji}</p>
             <h2 style="font-family: Arial, Helvetica, sans-serif; text-align: center; margin: 8px 0 6px; font-size: 13px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase; color: #047857;">${section.title}</h2>
@@ -672,7 +718,9 @@ function BibleExplorerExperience() {
 
     async function loadWordStudies() {
       const uniquePassages = new Map(
-        path.map(({ passage }) => [wordStudyLookupKey(passage), passage]),
+        path.flatMap(({ passage }) =>
+          passage ? [[wordStudyLookupKey(passage), passage] as const] : [],
+        ),
       );
 
       const entries = await Promise.all(
@@ -748,31 +796,36 @@ function BibleExplorerExperience() {
   }
 
   function spinAll() {
+    const nextPath = buildPath();
+    persistBoard(nextPath);
     revealBibleBingoCards(
-      buildPath(),
+      nextPath,
       sections.map((_, index) => index),
     );
   }
 
 
   function revealDailyBoardOnOpen() {
+    const nextPath = restoreOrDealBoard();
+    persistBoard(nextPath);
     revealBibleBingoCards(
-      path,
+      nextPath,
       sections.map((_, index) => index),
     );
   }
 
   function spinOne(index: number) {
-    const freshPath = buildPath();
+    const freshPath = buildPath(path);
     const nextPath = path.map((item, itemIndex) =>
       itemIndex === index
         ? {
             ...item,
-            passage: freshPath[itemIndex]?.passage ?? item.passage,
+            passage: freshPath[itemIndex]?.passage ?? null,
           }
         : item,
     );
 
+    persistBoard(nextPath);
     revealBibleBingoCards(nextPath, [index]);
   }
 
@@ -822,20 +875,12 @@ function BibleExplorerExperience() {
   }
 
   useEffect(() => {
-    function refreshBingoReadingPlanDone() {
-      setBingoReadingPlanDone(loadBingoReadingPlanDone());
-    }
-
-    refreshBingoReadingPlanDone();
-    window.addEventListener("focus", refreshBingoReadingPlanDone);
-    window.addEventListener("storage", refreshBingoReadingPlanDone);
-    document.addEventListener("visibilitychange", refreshBingoReadingPlanDone);
-
-    return () => {
-      window.removeEventListener("focus", refreshBingoReadingPlanDone);
-      window.removeEventListener("storage", refreshBingoReadingPlanDone);
-      document.removeEventListener("visibilitychange", refreshBingoReadingPlanDone);
-    };
+    // Canonical progress subscription: fires on this tab's own completions,
+    // other tabs (storage), and on focus/visibility so an already-open board
+    // reconciles with Reading Plan progress made elsewhere.
+    return subscribeToReadingPlanProgress((progress) => {
+      setBingoReadingPlanDone(progress);
+    });
   }, []);
 
   useEffect(() => {
@@ -844,24 +889,31 @@ function BibleExplorerExperience() {
     }, 250);
 
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time board restore on mount
   }, []);
 
   const focusedIndex = path[focusedCardIndex] ? focusedCardIndex : 0;
   const focusedCard = path[focusedIndex] ?? path[0];
+  const focusedPassage = focusedCard?.passage ?? null;
   const focusedTitle = focusedCard ? splitBibleBingoSectionTitle(focusedCard.section.title) : null;
-  const focusedReadInPlan = focusedCard
-    ? isBingoReadingPlanDone(bingoReadingPlanDone, focusedCard.passage.code, focusedCard.passage.chapter)
-    : false;
-  const focusedPrinciples = focusedCard
+  const focusedPlanEntryId = focusedPassage
+    ? bibleBingoPlanEntryIdForPassage(focusedPassage)
+    : null;
+  const focusedReadInPlan = Boolean(
+    focusedPlanEntryId && bingoReadingPlanDone[focusedPlanEntryId],
+  );
+  const focusedPrinciples = focusedPassage
     ? getGeneGetzPrinciplesForVerse(
-        focusedCard.passage.code,
-        focusedCard.passage.chapter,
-        focusedCard.passage.verse,
+        focusedPassage.code,
+        focusedPassage.chapter,
+        focusedPassage.verse,
       )
     : [];
   const focusedBookLinks = focusedCard
     ? bibleBingoBookLinksForSection(focusedCard.section.title)
     : [];
+  const remainingLaneCount = path.filter((item) => item.passage).length;
+  const allLanesComplete = remainingLaneCount === 0;
 
   useEffect(() => {
     if (!focusedCardRef.current) return;
@@ -899,15 +951,17 @@ function BibleExplorerExperience() {
               className="text-center justify-center items-center inline-flex rounded-full border border-white/15 bg-white/10 px-7 py-3 font-semibold text-slate-100 transition hover:bg-white/15"
             >Deal 7</button>
 
-            <BibleBingoShareMenu
-              boardHref={boardPath}
-              boardUrl={boardUrl}
-              shareText={boardShareText}
-              emailSubject={boardShareSubject}
-              htmlEmail={boardHtmlEmail}
-              buttonLabel="Share"
-              enableSignature
-            />
+            {boardShareReady ? (
+              <BibleBingoShareMenu
+                boardHref={boardPath}
+                boardUrl={boardUrl}
+                shareText={boardShareText}
+                emailSubject={boardShareSubject}
+                htmlEmail={boardHtmlEmail}
+                buttonLabel="Share"
+                enableSignature
+              />
+            ) : null}
 
             <a
               href="/bible-reading-plan"
@@ -925,6 +979,20 @@ function BibleExplorerExperience() {
               Choose a day card
             </p>
 
+            {allLanesComplete ? (
+              <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-emerald-200/30 bg-emerald-300/10 px-4 py-3 text-center text-sm font-bold leading-6 text-emerald-100">
+                🎉 You finished every reading in this year&apos;s 52-week Bible
+                Reading Plan. Bible Bingo deals fresh cards when the new plan
+                year begins.
+              </p>
+            ) : remainingLaneCount < sections.length ? (
+              <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-emerald-200/20 bg-emerald-300/[0.06] px-4 py-2 text-center text-xs font-semibold leading-5 text-emerald-100/90">
+                {remainingLaneCount} of {sections.length} day lanes still have
+                unread readings this year — completed lanes show a ✓ instead of
+                a new card.
+              </p>
+            ) : null}
+
             <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-7">
               {displayIndexes.map((cardIndex) => {
                 const item = path[cardIndex];
@@ -937,14 +1005,17 @@ function BibleExplorerExperience() {
                 const index = cardIndex;
                 const isFocused = index === focusedIndex;
                 const cardTitle = splitBibleBingoSectionTitle(section.title);
-                const readInPlan = isBingoReadingPlanDone(bingoReadingPlanDone, passage.code, passage.chapter);
-                const hasLifeEssentials =
-                  getGeneGetzPrinciplesForVerse(passage.code, passage.chapter, passage.verse).length > 0;
+                const readInPlan = passage
+                  ? isBingoReadingPlanDone(bingoReadingPlanDone, passage.code, passage.chapter)
+                  : false;
+                const hasLifeEssentials = passage
+                  ? getGeneGetzPrinciplesForVerse(passage.code, passage.chapter, passage.verse).length > 0
+                  : false;
 
                 return (
                   <button
                     type="button"
-                    key={`${section.title}-${passage.label}-${index}`}
+                    key={`${section.title}-${passage?.label ?? "lane-complete"}-${index}`}
                     onClick={() => focusDayCard(index)}
                     aria-pressed={isFocused}
                     aria-busy={spinningCards[index]}
@@ -983,21 +1054,33 @@ function BibleExplorerExperience() {
                       {cardTitle.title}
                     </h2>
 
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-left">
-                      <p className="text-xs font-black leading-5 text-white">
-                        {chpBingoVerseOnlyLabel(passage.label)}
-                      </p>
-                      {readInPlan ? (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-emerald-50">
-                            Read
-                          </span>
-                        </div>
-                      ) : null}
-                      <p className="hidden sm:block bible-card-verse-preview mt-2 text-[0.72rem] font-semibold leading-5 text-slate-100/90">
-                        {passage.text}
-                      </p>
-                    </div>
+                    {passage ? (
+                      <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-left">
+                        <p className="text-xs font-black leading-5 text-white">
+                          {chpBingoVerseOnlyLabel(passage.label)}
+                        </p>
+                        {readInPlan ? (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300/12 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-[0.03em] text-emerald-50">
+                              Read
+                            </span>
+                          </div>
+                        ) : null}
+                        <p className="hidden sm:block bible-card-verse-preview mt-2 text-[0.72rem] font-semibold leading-5 text-slate-100/90">
+                          {passage.text}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-3 rounded-2xl border border-emerald-200/25 bg-emerald-300/10 px-3 py-4 text-center">
+                        <p className="text-lg" aria-hidden="true">✓</p>
+                        <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-emerald-50">
+                          Every {cardTitle.dayLabel} reading is done
+                        </p>
+                        <p className="mt-1.5 text-[0.68rem] font-semibold leading-4 text-emerald-100/80">
+                          This lane of the 52-week plan is complete for this year.
+                        </p>
+                      </div>
+                    )}
 
                   </button>
                 );
@@ -1021,41 +1104,43 @@ function BibleExplorerExperience() {
             >
               <div className="mb-4 flex w-full items-center justify-center gap-2 sm:justify-end">
                 <CardInfoLegend />
-                <BibleBingoShareMenu
-                  boardHref={`${boardPath}?card=${focusedIndex + 1}`}
-                  boardUrl={`${boardUrl}?card=${focusedIndex + 1}`}
-                  shareText={[
-                    `I dealt this ${focusedCard.section.title} Bible Bingo card on Cross Heart Pray.`,
-                    "",
-                    focusedCard.passage.label,
-                    focusedCard.passage.text,
-                    "",
-                    "Open this card:",
-                    `${boardUrl}?card=${focusedIndex + 1}`,
-                    "",
-                    "Open in the Holy Bible app:",
-                    verseUrl(focusedCard.passage),
-                    "",
-                    "Read the chapter:",
-                    chapterUrl(focusedCard.passage),
-                  ].join("\n")}
-                  emailSubject={`${focusedCard.passage.label} Bible Bingo card`}
-                  htmlEmail={cardHtmlEmail(focusedCard.section, focusedCard.passage, focusedIndex)}
-                  align="right"
-                  itemLabel="card"
-                  buttonLabel="Share"
-                  enableSignature
-                  iconOnly
-                  instagramContent={{
-                    eyebrow: "Bible Bingo 7",
-                    title: focusedCard.passage.label,
-                    body: focusedCard.passage.text,
-                    tagline:
-                      "Context matters. One verse is the doorway. Read the chapter.",
-                    footer: "crossheartpray.com",
-                    fileBase: `bible-bingo-${focusedCard.passage.label}`,
-                  }}
-                />
+                {focusedPassage && boardShareReady ? (
+                  <BibleBingoShareMenu
+                    boardHref={`${boardPath}?card=${focusedIndex + 1}`}
+                    boardUrl={`${boardUrl}?card=${focusedIndex + 1}`}
+                    shareText={[
+                      `I dealt this ${focusedCard.section.title} Bible Bingo card on Cross Heart Pray.`,
+                      "",
+                      focusedPassage.label,
+                      focusedPassage.text,
+                      "",
+                      "Open this card:",
+                      `${boardUrl}?card=${focusedIndex + 1}`,
+                      "",
+                      "Open in the Holy Bible app:",
+                      verseUrl(focusedPassage),
+                      "",
+                      "Read the chapter:",
+                      chapterUrl(focusedPassage),
+                    ].join("\n")}
+                    emailSubject={`${focusedPassage.label} Bible Bingo card`}
+                    htmlEmail={cardHtmlEmail(focusedCard.section, focusedPassage, focusedIndex)}
+                    align="right"
+                    itemLabel="card"
+                    buttonLabel="Share"
+                    enableSignature
+                    iconOnly
+                    instagramContent={{
+                      eyebrow: "Bible Bingo 7",
+                      title: focusedPassage.label,
+                      body: focusedPassage.text,
+                      tagline:
+                        "Context matters. One verse is the doorway. Read the chapter.",
+                      footer: "crossheartpray.com",
+                      fileBase: `bible-bingo-${focusedPassage.label}`,
+                    }}
+                  />
+                ) : null}
               </div>
 
               <div className="flex justify-center gap-4 text-3xl" aria-hidden="true">
@@ -1080,39 +1165,77 @@ function BibleExplorerExperience() {
                 {focusedTitle?.title ?? focusedCard.section.title}
               </h2>
 
-              <p className="mt-4 text-2xl font-black text-white">
-                {chpBingoVerseOnlyLabel(focusedCard.passage.label)}
-              </p>
+              {focusedPassage ? (
+                <>
+                  <p className="mt-4 text-2xl font-black text-white">
+                    {chpBingoVerseOnlyLabel(focusedPassage.label)}
+                  </p>
 
-              <div className="mt-5 w-full rounded-[1.5rem] border border-white/10 bg-black/25 px-5 py-5 text-lg font-bold leading-8 text-slate-100 sm:text-xl sm:leading-9">
-                <VerifiedVerseText
-                  passage={focusedCard.passage}
-                  wordStudies={wordStudiesForPassage(focusedCard.passage)}
-                  onWordClick={(wordStudy) => openWordStudy(focusedCard.section, focusedCard.passage, wordStudy)}
-                />
-              </div>
+                  <div className="mt-5 w-full rounded-[1.5rem] border border-white/10 bg-black/25 px-5 py-5 text-lg font-bold leading-8 text-slate-100 sm:text-xl sm:leading-9">
+                    <VerifiedVerseText
+                      passage={focusedPassage}
+                      wordStudies={wordStudiesForPassage(focusedPassage)}
+                      onWordClick={(wordStudy) => openWordStudy(focusedCard.section, focusedPassage, wordStudy)}
+                    />
+                  </div>
 
-              <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row sm:flex-wrap sm:justify-center">
-                {(() => {
-                  const readReference = referenceForPassage(focusedCard.passage);
-                  return readReference ? <CardReadMenu reference={readReference} /> : null;
-                })()}
+                  <div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row sm:flex-wrap sm:justify-center">
+                    {(() => {
+                      const readReference = referenceForPassage(focusedPassage);
+                      return readReference ? <CardReadMenu reference={readReference} /> : null;
+                    })()}
 
-                <button
-                  type="button"
-                  onClick={() => openWordStudy(focusedCard.section, focusedCard.passage)}
-                  title={
-                    hasVerifiedWordLinks(wordStudiesForPassage(focusedCard.passage))
-                      ? "Open verified original-language word study"
-                      : "Deep Dive opens when this verse has verified underlined word links."
-                  }
-                  className="text-center justify-center items-center inline-flex rounded-full border border-emerald-200/20 bg-emerald-300/10 px-5 py-2 text-sm font-semibold text-emerald-100 shadow-sm transition hover:bg-emerald-300/15 disabled:cursor-not-allowed disabled:border-zinc-700/70 disabled:bg-zinc-800/70 disabled:text-zinc-500 disabled:shadow-none disabled:hover:bg-zinc-800/70"
-                >
-                  {loadingStudyKey === wordStudyLookupKey(focusedCard.passage)
-                    ? "Deep Dive…"
-                    : "Deep Dive"}
-                </button>
-              </div>
+                    {focusedPlanEntryId ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setReadingPlanEntryCompleted(focusedPlanEntryId, !focusedReadInPlan)
+                        }
+                        aria-pressed={focusedReadInPlan}
+                        title={
+                          focusedReadInPlan
+                            ? "Marks this reading unread on the 52-week Bible Reading Plan"
+                            : "Marks this reading complete on the 52-week Bible Reading Plan"
+                        }
+                        className={`text-center justify-center items-center inline-flex rounded-full border px-5 py-2 text-sm font-semibold shadow-sm transition ${
+                          focusedReadInPlan
+                            ? "border-emerald-200/40 bg-emerald-300/20 text-emerald-50 hover:bg-emerald-300/25"
+                            : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+                        }`}
+                      >
+                        {focusedReadInPlan ? "Read ✓" : "Mark reading done"}
+                      </button>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={() => openWordStudy(focusedCard.section, focusedPassage)}
+                      title={
+                        hasVerifiedWordLinks(wordStudiesForPassage(focusedPassage))
+                          ? "Open verified original-language word study"
+                          : "Deep Dive opens when this verse has verified underlined word links."
+                      }
+                      className="text-center justify-center items-center inline-flex rounded-full border border-emerald-200/20 bg-emerald-300/10 px-5 py-2 text-sm font-semibold text-emerald-100 shadow-sm transition hover:bg-emerald-300/15 disabled:cursor-not-allowed disabled:border-zinc-700/70 disabled:bg-zinc-800/70 disabled:text-zinc-500 disabled:shadow-none disabled:hover:bg-zinc-800/70"
+                    >
+                      {loadingStudyKey === wordStudyLookupKey(focusedPassage)
+                        ? "Deep Dive…"
+                        : "Deep Dive"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="mt-6 w-full rounded-[1.5rem] border border-emerald-200/25 bg-emerald-300/10 px-5 py-8 text-center">
+                  <p className="text-3xl" aria-hidden="true">✓</p>
+                  <p className="mt-3 text-lg font-black text-emerald-50">
+                    Every {focusedTitle?.dayLabel} reading is complete
+                  </p>
+                  <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-emerald-100/85">
+                    You finished all 52 {focusedTitle?.dayLabel} readings on this
+                    year&apos;s Bible Reading Plan. This lane deals cards again
+                    when the new plan year begins.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row sm:flex-wrap">
                 {focusedPrinciples.length ? (
@@ -1155,15 +1278,17 @@ function BibleExplorerExperience() {
               </div>
 
               {/* Dealing again is the fun last resort — easy to find, never the hero. */}
-              <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => spinOne(focusedIndex)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-slate-400 transition hover:border-yellow-200/40 hover:bg-yellow-200/10 hover:text-yellow-100"
-                >
-                  🎲 Deal a new card
-                </button>
-              </div>
+              {focusedPassage ? (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => spinOne(focusedIndex)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-slate-400 transition hover:border-yellow-200/40 hover:bg-yellow-200/10 hover:text-yellow-100"
+                  >
+                    🎲 Deal a new card
+                  </button>
+                </div>
+              ) : null}
 
               {focusedMoreSection === "life" ? (
                 <div className="w-full text-left">

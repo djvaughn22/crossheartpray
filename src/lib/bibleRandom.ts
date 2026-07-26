@@ -1,4 +1,5 @@
 import { LOCAL_BIBLE_VERSES, type LocalBibleVerse } from "./localBibleVerses";
+import { bibleReadingPlanAssignmentForReference } from "./bibleReadingPlan";
 
 export type BibleBingoPassage = {
   label: string;
@@ -211,6 +212,7 @@ function toLanePositionPassage(
 
 const versesByBook = new Map<string, LocalBibleVerse[]>();
 const versesByBoardReference = new Map<string, LocalBibleVerse>();
+const bookNameByCode = new Map<string, string>();
 
 function boardReferenceKey(code: string, chapter: string, verse: string) {
   return [
@@ -229,6 +231,10 @@ for (const verse of LOCAL_BIBLE_VERSES) {
     boardReferenceKey(verse.code, verse.chapter, verse.verse),
     verse,
   );
+
+  if (!bookNameByCode.has(verse.code)) {
+    bookNameByCode.set(verse.code, verse.book);
+  }
 }
 
 const gospelVerses = LOCAL_BIBLE_VERSES.filter((verse) =>
@@ -1393,11 +1399,26 @@ export function passagesForBibleBingoBoardId(boardId: string) {
       boardReferenceKey(code, String(chapterNumber), String(verseNumber)),
     );
 
-    if (!match) {
-      return null;
+    if (match) {
+      passages.push(toPassage(match));
+      continue;
     }
 
-    passages.push(toPassage(match));
+    // Old saved boards can reference a verse the active translation leaves
+    // unnumbered (e.g. a WEB-era board holding Matthew 17:21 under BSB).
+    // Keep the board alive: preserve the card's reference with empty text —
+    // the UI links out instead of quoting — rather than 404ing the board.
+    const bookName = bookNameByCode.get(code.trim().toUpperCase());
+    if (!bookName) {
+      return null;
+    }
+    passages.push({
+      label: `${bookName} ${chapterNumber}:${verseNumber}`,
+      code: code.trim().toUpperCase(),
+      chapter: String(chapterNumber),
+      verse: String(verseNumber),
+      text: "",
+    });
   }
 
   return passages;
@@ -1448,4 +1469,103 @@ export function seededReferenceForSection(sectionTitle: string, seed: string) {
   const index = hashSeed(`${seed}|${sectionTitle}`) % pool.length;
 
   return toLanePositionPassage(toPassage(pool[index]), pool[index], sectionTitle);
+}
+
+// ── Annual-progress-aware selection ───────────────────────────────────────
+//
+// Bible Bingo issues readings, and a reading's identity is its canonical
+// Reading Plan entry id (week-N-daySlug) — never its verse text, label, or
+// translation. Cards for entries the person already completed this plan
+// year are excluded from newly generated boards; a lane whose 52 entries
+// are all complete returns null so the UI can show a lane-complete state.
+
+// chapter → canonical plan entry id, memoized (≤1,189 chapters).
+const planEntryIdByChapter = new Map<string, string | null>();
+
+/** Canonical Reading Plan entry id containing a passage; null when outside the plan. */
+export function bibleBingoPlanEntryIdForPassage(passage: {
+  code: string;
+  chapter: string | number;
+}): string | null {
+  const key = `${passage.code.trim().toUpperCase()}.${Number(passage.chapter)}`;
+  const cached = planEntryIdByChapter.get(key);
+  if (cached !== undefined) return cached;
+
+  const assignment = bibleReadingPlanAssignmentForReference(passage.code, passage.chapter);
+  const id = assignment ? `week-${assignment.day.week}-${assignment.day.daySlug}` : null;
+  planEntryIdByChapter.set(key, id);
+  return id;
+}
+
+function unfinishedCandidatesForSection(
+  sectionTitle: string,
+  completedEntryIds: ReadonlySet<string>,
+) {
+  // Verses outside the plan can't be "completed" — they stay eligible.
+  return candidatesForSection(sectionTitle).filter((verse) => {
+    const entryId = bibleBingoPlanEntryIdForPassage(verse);
+    return !entryId || !completedEntryIds.has(entryId);
+  });
+}
+
+/** Distinct unfinished plan entries this lane can still issue. */
+export function remainingPlanEntriesForSection(
+  sectionTitle: string,
+  completedEntryIds: ReadonlySet<string>,
+): number {
+  const remaining = new Set<string>();
+  for (const verse of unfinishedCandidatesForSection(sectionTitle, completedEntryIds)) {
+    const entryId = bibleBingoPlanEntryIdForPassage(verse);
+    if (entryId) remaining.add(entryId);
+  }
+  return remaining.size;
+}
+
+/**
+ * Seeded pick that skips completed plan entries. Deterministic for a given
+ * (seed, completed set). Null = every reading in this lane is finished.
+ */
+export function seededReferenceForSectionExcluding(
+  sectionTitle: string,
+  seed: string,
+  completedEntryIds: ReadonlySet<string>,
+) {
+  const pool = unfinishedCandidatesForSection(sectionTitle, completedEntryIds);
+  if (!pool.length) return null;
+  const index = hashSeed(`${seed}|${sectionTitle}`) % pool.length;
+  return toLanePositionPassage(toPassage(pool[index]), pool[index], sectionTitle);
+}
+
+/**
+ * Random pick that skips completed plan entries (deal/spin). Null = every
+ * reading in this lane is finished; a spin never lands on a completed
+ * reading and never refills from them.
+ */
+export function randomReferenceForSectionExcluding(
+  sectionTitle: string,
+  completedEntryIds: ReadonlySet<string>,
+  avoidLabel?: string,
+) {
+  const pool = unfinishedCandidatesForSection(sectionTitle, completedEntryIds);
+  if (!pool.length) return null;
+  const usable =
+    avoidLabel && pool.length > 1
+      ? pool.filter((verse) => verse.label !== avoidLabel)
+      : pool;
+  const finalPool = usable.length ? usable : pool;
+  const index = Math.floor(Math.random() * finalPool.length);
+  return toLanePositionPassage(toPassage(finalPool[index]), finalPool[index], sectionTitle);
+}
+
+/** Passage for one saved board reference; null when it can't be matched. */
+export function bibleBingoPassageForBoardReference(
+  sectionTitle: string,
+  code: string,
+  chapter: string | number,
+  verse: string | number,
+): BibleBingoPassage | null {
+  const match = versesByBoardReference.get(
+    boardReferenceKey(code, String(Number(chapter)), String(Number(verse))),
+  );
+  return match ? toLanePositionPassage(toPassage(match), match, sectionTitle) : null;
 }

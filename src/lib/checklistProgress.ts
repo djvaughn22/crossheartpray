@@ -4,9 +4,10 @@
 //
 // Rules for reuse:
 // - Every product passes its OWN namespaced, versioned storage key
-//   (e.g. "crossheartpray:bible-reading-plan:v1"). Never share keys across
+//   (e.g. "someproduct:some-checklist:v1"). Never share keys across
 //   products — a CrossHeartPray checklist and any other product's checklist
-//   must never read each other's state.
+//   must never read each other's state. (The Bible Reading Plan's key now
+//   lives in src/lib/readingPlanProgress.ts — the canonical service.)
 // - Corrupt or legacy stored data must never throw: unknown shapes parse to
 //   the closest sensible progress map, garbage parses to {}.
 

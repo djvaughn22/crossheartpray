@@ -17,11 +17,14 @@ import KindleReaderModal from "./scripture/KindleReaderModal";
 import { track } from "../lib/analytics";
 import {
   checklistStats,
-  loadChecklistProgress,
-  saveChecklistProgress,
   toggleChecklistItem,
   type ChecklistProgress,
 } from "../lib/checklistProgress";
+import {
+  saveReadingPlanProgress,
+  setReadingPlanEntriesCompleted,
+  subscribeToReadingPlanProgress,
+} from "../lib/readingPlanProgress";
 import {
   BIBLE_COM_DEFAULT_VERSION,
   BIBLE_COM_LINK_VERSIONS,
@@ -40,12 +43,12 @@ type BibleReadingPlanProgressProps = {
 
 type AnyRecord = Record<string, unknown>;
 
-export const BIBLE_READING_PLAN_STORAGE_KEY = "crossheartpray:bible-reading-plan:v1";
-export const BIBLE_READING_PLAN_PROGRESS_EVENT =
-  "crossheartpray:bible-reading-plan-progress";
-
-const STORAGE_KEY = BIBLE_READING_PLAN_STORAGE_KEY;
-const PROGRESS_EVENT = BIBLE_READING_PLAN_PROGRESS_EVENT;
+// Legacy re-exports: the canonical definitions live in
+// src/lib/readingPlanProgress.ts (v1 stays mirrored for compatibility).
+export {
+  READING_PLAN_PROGRESS_KEY_V1 as BIBLE_READING_PLAN_STORAGE_KEY,
+  READING_PLAN_PROGRESS_EVENT as BIBLE_READING_PLAN_PROGRESS_EVENT,
+} from "../lib/readingPlanProgress";
 
 const LANES = [
   {
@@ -518,8 +521,11 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   }, [activeReadingId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe hydration: saved progress lives in localStorage, readable only after mount
-    setProgress(loadChecklistProgress(STORAGE_KEY));
+    // Canonical annual progress subscription: hydrates after mount and
+    // follows completions made on Bible Bingo, emails, or other tabs.
+    return subscribeToReadingPlanProgress((next) => {
+      setProgress(next);
+    });
   }, []);
 
   useEffect(() => {
@@ -553,12 +559,11 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
           (card) => card.completed === true && typeof card.id === "string",
         );
         if (serverDone.length) {
-          setProgress((current) => {
-            const next = { ...current };
-            for (const card of serverDone) next[card.id as string] = true;
-            saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
-            return next;
-          });
+          const next = setReadingPlanEntriesCompleted(
+            serverDone.map((card) => card.id as string),
+            true,
+          );
+          setProgress(next);
         }
       } catch {
         // Offline or expired link — the plan page still works locally.
@@ -692,7 +697,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     if (!progress[id]) track("reading_check", { reading_id: id });
     setProgress((current) => {
       const next = toggleChecklistItem(current, id);
-      saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
+      saveReadingPlanProgress(next);
       // Emailed readings also update the subscriber's server-side journey.
       // Computed from `next` (not the render closure) so rapid toggles
       // always send the state that actually committed; the POST is
@@ -991,7 +996,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         onMarkComplete={(id) => {
           setProgress((current) => {
             const next = toggleChecklistItem(current, id);
-            saveChecklistProgress(STORAGE_KEY, next, PROGRESS_EVENT);
+            saveReadingPlanProgress(next);
             return next;
           });
           setReturnFocusToId(id);

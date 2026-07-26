@@ -12,6 +12,8 @@ import CardReadMenu from "./CardReadMenu";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import VerifiedVerseText from "./VerifiedVerseText";
 import { bibleComUrlForPassage, referenceForPassage } from "../lib/scripture";
+import { bibleBingoPlanEntryIdForPassage } from "../lib/bibleRandom";
+import { subscribeToReadingPlanProgress } from "../lib/readingPlanProgress";
 
 type ShareSection = {
   title: string;
@@ -49,6 +51,16 @@ export default function BibleBingoShareBoard({
   cardTones,
 }: BibleBingoShareBoardProps) {
   const [activeWordStudy, setActiveWordStudy] = useState<ActiveWordStudy | null>(null);
+  const [planProgress, setPlanProgress] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    // Saved boards keep their original cards forever; completion state is
+    // reconciled live from the canonical annual Reading Plan progress
+    // (including completions made on the plan board or another tab).
+    return subscribeToReadingPlanProgress((progress) => {
+      setPlanProgress(progress);
+    });
+  }, []);
   const [wordStudiesByPassage, setWordStudiesByPassage] = useState<
     Record<string, VerifiedWordStudy[]>
   >({});
@@ -125,6 +137,8 @@ export default function BibleBingoShareBoard({
           {passages.map((passage, index) => {
             const section = shareSections[index];
             const wordStudies = wordStudiesForPassage(passage);
+            const planEntryId = bibleBingoPlanEntryIdForPassage(passage);
+            const readInPlan = Boolean(planEntryId && planProgress[planEntryId]);
 
             return (
               <article
@@ -144,13 +158,26 @@ export default function BibleBingoShareBoard({
                   {passage.label}
                 </p>
 
-                <p className="mx-auto mt-4 max-w-sm text-sm leading-7 text-slate-200">
-                  <VerifiedVerseText
-                    passage={passage}
-                    wordStudies={wordStudies}
-                    onWordClick={(wordStudy) => openWordStudy(passage, wordStudy)}
-                  />
-                </p>
+                {readInPlan ? (
+                  <p className="mx-auto mt-3 inline-flex rounded-full border border-emerald-200/30 bg-emerald-300/15 px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.14em] text-emerald-50">
+                    Read in Plan
+                  </p>
+                ) : null}
+
+                {passage.text ? (
+                  <p className="mx-auto mt-4 max-w-sm text-sm leading-7 text-slate-200">
+                    <VerifiedVerseText
+                      passage={passage}
+                      wordStudies={wordStudies}
+                      onWordClick={(wordStudy) => openWordStudy(passage, wordStudy)}
+                    />
+                  </p>
+                ) : (
+                  <p className="mx-auto mt-4 max-w-sm text-sm leading-7 text-slate-300">
+                    This verse is carried in a footnote in the current
+                    translation — open it on Bible.com to read it in full.
+                  </p>
+                )}
 
                 <p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-slate-300">
                   Shuffled from: <span className="text-white">{section.odds ?? section.title}</span>

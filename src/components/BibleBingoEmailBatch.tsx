@@ -10,14 +10,7 @@ import Link from "next/link";
 // the local Bible Reading Plan checklist so the plan page lines up too.
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  BIBLE_READING_PLAN_PROGRESS_EVENT,
-  BIBLE_READING_PLAN_STORAGE_KEY,
-} from "./BibleReadingPlanProgress";
-import {
-  loadChecklistProgress,
-  saveChecklistProgress,
-} from "../lib/checklistProgress";
+import { setReadingPlanEntryCompleted } from "../lib/readingPlanProgress";
 
 type BatchCard = {
   id: string;
@@ -59,17 +52,9 @@ function cardGridClass(index: number) {
 }
 
 function mirrorToLocalPlanProgress(readingId: string, completed: boolean) {
-  const progress = loadChecklistProgress(BIBLE_READING_PLAN_STORAGE_KEY);
-  if (completed) {
-    progress[readingId] = true;
-  } else {
-    delete progress[readingId];
-  }
-  saveChecklistProgress(
-    BIBLE_READING_PLAN_STORAGE_KEY,
-    progress,
-    BIBLE_READING_PLAN_PROGRESS_EVENT,
-  );
+  // Canonical annual progress — the same source the plan board and Bible
+  // Bingo read, so email completions appear everywhere immediately.
+  setReadingPlanEntryCompleted(readingId, completed);
 }
 
 type BibleBingoEmailBatchProps = {
