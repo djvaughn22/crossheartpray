@@ -1,8 +1,9 @@
 // Human-facing names for Bible translations.
 //
 // The picker never asks anyone to decode an abbreviation: every translation
-// the Scripture system can surface (local WEB, the YouVersion-licensed set,
-// Bible.com links) shows its full name first and the short code second.
+// the Scripture system can surface (the local active translation, the
+// YouVersion-licensed set, Bible.com links) shows its full name first and
+// the short code second.
 // Unknown codes fall back to the platform label — never blank, never wrong.
 //
 // Presentation-only: nothing here touches licensing, providers, or API logic.
@@ -12,6 +13,7 @@ import type { ScriptureTranslation } from "./provider";
 const TRANSLATION_FULL_NAMES: Record<string, string> = {
   WEB: "World English Bible",
   WEBUS: "World English Bible",
+  engWEBUS: "World English Bible",
   CSB: "Christian Standard Bible",
   KJV: "King James Version",
   NIV: "New International Version",
@@ -42,11 +44,11 @@ export function translationDisplayName(translation: NamedTranslation): string {
 }
 
 // The calm default view: the famous names people look for, plus the Bible
-// that always reads here. CSB joins Recommended only when genuinely licensed
-// (readHere) — an unlicensed CSB card would put a link where first-time
-// readers expect reading.
-const RECOMMENDED_ALWAYS = new Set(["WEB", "WEBUS", "KJV", "NIV"]);
-const RECOMMENDED_ORDER = ["CSB", "WEBUS", "WEB", "KJV", "NIV"];
+// that always reads here (the active site-wide translation first). CSB joins
+// Recommended only when genuinely licensed (readHere) — an unlicensed CSB
+// card would put a link where first-time readers expect reading.
+const RECOMMENDED_ALWAYS = new Set(["BSB", "WEB", "WEBUS", "engWEBUS", "KJV", "NIV"]);
+const RECOMMENDED_ORDER = ["BSB", "CSB", "WEBUS", "WEB", "engWEBUS", "KJV", "NIV"];
 
 export function isRecommendedTranslation(translation: ScriptureTranslation): boolean {
   if (translation.abbreviation === "CSB") return translation.access === "readHere";

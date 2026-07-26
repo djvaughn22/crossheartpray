@@ -4,6 +4,7 @@ import SiteFooter from "../components/SiteFooter";
 import BibleBingoKingCard from "../components/BibleBingoKingCard";
 import CrossHeartPrayHero from "../components/CrossHeartPrayHero";
 import LazyBibleVerseLookup from "../components/LazyBibleVerseLookup";
+import { bibleComUrl } from "../lib/scripture";
 
 export const metadata = {
   description: "Start with Bible Bingo 7, the Bible Reading Plan, Daily Hope, and source-backed Deep Dive in one simple Bible routine.",
@@ -56,7 +57,7 @@ const deepDiveLinks = [
   },
   {
     label: "Study the verse in the Bible app",
-    href: "https://www.bible.com/bible/206/JHN.1.1.WEBUS",
+    href: bibleComUrl({ book: "JHN", chapter: 1, verse: 1 }),
   },
   {
     label: "Original word example",
@@ -182,7 +183,7 @@ export default function WelcomePage() {
                     1 verse
                   </p>
                   <a
-                    href="https://www.bible.com/bible/206/JHN.1.1.WEBUS"
+                    href={bibleComUrl({ book: "JHN", chapter: 1, verse: 1 })}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"

@@ -23,10 +23,10 @@ describe("resolveScriptureSelection — one canonical resolved reference", () =>
     expect(resolved?.reference).toEqual({ book: "MAL", chapter: 4, verse: 6 });
     expect(resolved?.chapterReference).toEqual({ book: "MAL", chapter: 4 });
     expect(resolved?.bibleComUrl).toBe(
-      "https://www.bible.com/bible/206/MAL.4.6.WEBUS",
+      "https://www.bible.com/bible/3034/MAL.4.6.BSB",
     );
     expect(resolved?.bibleComChapterUrl).toBe(
-      "https://www.bible.com/bible/206/MAL.4.WEBUS",
+      "https://www.bible.com/bible/3034/MAL.4.BSB",
     );
 
     // The real Reading Plan destination, from the actual dataset — the
@@ -75,7 +75,7 @@ describe("resolveScriptureSelection — one canonical resolved reference", () =>
     expect(resolved?.label).toBe("John 3:16-18");
     expect(resolved?.endVerse).toBe(18);
     expect(resolved?.bibleComUrl).toBe(
-      "https://www.bible.com/bible/206/JHN.3.16-18.WEBUS",
+      "https://www.bible.com/bible/3034/JHN.3.16-18.BSB",
     );
   });
 
@@ -163,16 +163,16 @@ describe("bibleComUrlForTranslation", () => {
     ).toBe("https://www.bible.com/bible/1/MAL.4.6.KJV");
   });
 
-  it("falls back safely to WEB when the translation lacks a usable code", () => {
+  it("falls back safely to the active default when the translation lacks a usable code", () => {
     expect(
       bibleComUrlForTranslation(
         { book: "MAL", chapter: 4, verse: 6 },
         { id: 0, abbreviation: "" },
       ),
-    ).toBe("https://www.bible.com/bible/206/MAL.4.6.WEBUS");
+    ).toBe("https://www.bible.com/bible/3034/MAL.4.6.BSB");
 
     expect(bibleComUrlForTranslation({ book: "MAL", chapter: 4, verse: 6 })).toBe(
-      "https://www.bible.com/bible/206/MAL.4.6.WEBUS",
+      "https://www.bible.com/bible/3034/MAL.4.6.BSB",
     );
   });
 });

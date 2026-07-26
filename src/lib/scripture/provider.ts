@@ -6,13 +6,14 @@
 //   1. YouVersion Platform — licensed translations proxied through
 //      /api/scripture/chapter?version=<id>. The App Key stays on the server
 //      (the platform client under src/lib); this client code never sees it.
-//   2. Local public-domain World English Bible via the same endpoint.
+//   2. The local public-domain dataset in the active site-wide translation
+//      (src/lib/scripture/translationConfig.ts) via the same endpoint.
 //   3. Bible.com deep links when chapter loading fails. No dead ends.
 //
 // Translation truthfulness: /api/scripture/translations returns only the
 // versions the YouVersion application is genuinely licensed for, marked
-// "readHere"; everything else is labeled as opening on Bible.com. WEB text is
-// never labeled as any other translation.
+// "readHere"; everything else is labeled as opening on Bible.com. Local text
+// is never labeled as any other translation.
 
 import {
   BIBLE_COM_DEFAULT_VERSION,
@@ -21,6 +22,7 @@ import {
   parseScriptureReference,
   type ScriptureReference,
 } from "./reference";
+import { ACTIVE_BIBLE_TRANSLATION } from "./translationConfig";
 import { suggestScriptureReferences, type ScriptureSuggestion } from "./search";
 
 export type ScriptureProviderId = "localWeb" | "youVersion" | "externalLinkFallback";
@@ -51,7 +53,7 @@ export type ScriptureChapter = {
   previous: ScriptureReference | null;
   next: ScriptureReference | null;
   attribution: string;
-  /** The translation actually rendered (absent = local WEB). */
+  /** The translation actually rendered (absent = the active local text). */
   translation?: { id: number; abbreviation: string; label: string };
 };
 
@@ -74,7 +76,7 @@ export interface ScriptureProvider {
 
 // Chapters already fetched this session — instant back/forward everywhere,
 // shared by every component that reads through the provider. Keyed by
-// translation so WEB text is never shown under another translation's name.
+// translation so local text is never shown under another translation's name.
 const chapterCache = new Map<string, ScriptureChapter>();
 
 const sharedReferenceOperations = {
@@ -86,7 +88,7 @@ const sharedReferenceOperations = {
   ) => bibleComUrl(reference, version),
 };
 
-/** The static translation list: WEB readable locally, the rest external. */
+/** The static list: the active translation readable locally, the rest external. */
 function translationsWithLocalWeb(): ScriptureTranslation[] {
   return BIBLE_COM_LINK_VERSIONS.map((version) => ({
     ...version,
@@ -108,12 +110,17 @@ export const localWebProvider: ScriptureProvider = {
     const useYouVersion = translation?.source === "youVersion";
     const key = useYouVersion
       ? `${translation.id}:${reference.book}.${chapter}`
-      : `web:${reference.book}.${chapter}`;
+      : `${ACTIVE_BIBLE_TRANSLATION.id}:${reference.book}.${chapter}`;
 
     const cached = chapterCache.get(key);
     if (cached) return cached;
 
-    const versionParam = useYouVersion ? `&version=${translation.id}` : "";
+    // Local requests also carry the version id so the browser's HTTP cache
+    // is keyed by translation — a deployment switched to the other
+    // translation can never serve stale text under a generic URL.
+    const versionParam = useYouVersion
+      ? `&version=${translation.id}`
+      : `&version=${ACTIVE_BIBLE_TRANSLATION.bibleComId}`;
     const response = await fetch(
       `/api/scripture/chapter?book=${reference.book}&chapter=${chapter}${versionParam}`,
       { signal: options?.signal },
@@ -164,10 +171,11 @@ export function getScriptureProvider(): ScriptureProvider {
 let translationsPromise: Promise<ScriptureTranslation[]> | null = null;
 
 /**
- * The truthful translation list from /api/scripture/translations: local WEB,
- * plus every YouVersion translation this application is licensed to render,
- * plus external Bible.com links. Falls back to the static local list if the
- * endpoint is unreachable, so the reader always has WEB. Cached per session.
+ * The truthful translation list from /api/scripture/translations: the local
+ * active translation, plus every YouVersion translation this application is
+ * licensed to render, plus external Bible.com links. Falls back to the
+ * static local list if the endpoint is unreachable, so the reader always has
+ * the local text. Cached per session.
  */
 export function fetchAvailableTranslations(): Promise<ScriptureTranslation[]> {
   if (!translationsPromise) {
@@ -217,9 +225,8 @@ export function saveTranslationPreference(id: number): void {
 /**
  * Truthful default-translation priority:
  *   1. the user's saved choice, when still genuinely readable here;
- *   2. CSB through YouVersion, when the application is licensed for it;
- *   3. local WEB;
- *   4. the first readable translation.
+ *   2. the local active site-wide translation (BSB by default);
+ *   3. the first readable translation.
  * Never picks a translation the platform did not actually return.
  */
 export function pickDefaultTranslation(
@@ -230,11 +237,8 @@ export function pickDefaultTranslation(
   const saved = readable.find((translation) => translation.id === savedId);
   if (saved) return saved;
 
-  const csb = readable.find((translation) => translation.abbreviation === "CSB");
-  if (csb) return csb;
-
-  const webLocal = readable.find((translation) => translation.source === "local");
-  if (webLocal) return webLocal;
+  const activeLocal = readable.find((translation) => translation.source === "local");
+  if (activeLocal) return activeLocal;
 
   return readable[0] ?? translations[0];
 }

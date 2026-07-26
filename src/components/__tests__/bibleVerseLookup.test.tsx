@@ -160,7 +160,7 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
       name: /^Open Malachi 4:6 on Bible.com/,
     }) as HTMLAnchorElement;
     expect(verseLink.getAttribute("href")).toBe(
-      "https://www.bible.com/bible/206/MAL.4.6.WEBUS",
+      "https://www.bible.com/bible/3034/MAL.4.6.BSB",
     );
     expect(verseLink.getAttribute("target")).toBe("_blank");
 
@@ -168,7 +168,7 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
     const chapterLink = within(menu).getByRole("menuitem", {
       name: /Open MAL 4 on Bible.com/,
     }) as HTMLAnchorElement;
-    expect(chapterLink.getAttribute("href")).toContain("/bible/206/MAL.4");
+    expect(chapterLink.getAttribute("href")).toContain("/bible/3034/MAL.4");
     expect(chapterLink.getAttribute("target")).toBe("_blank");
   });
 

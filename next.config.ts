@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
+import {
+  FALLBACK_BIBLE_TRANSLATION,
+  parseConfiguredTranslation,
+} from "./src/lib/scripture/translationConfig";
 
 const nextConfig: NextConfig = {
+  env: {
+    // Site-wide Bible translation, normalized against the supported registry
+    // (invalid/missing values fall back to BSB) and inlined into both server
+    // and client bundles so every surface agrees. Changing it requires a
+    // redeploy — which is also what lets the bundler drop the inactive
+    // dataset from src/lib/localBibleVerses.ts.
+    BIBLE_TRANSLATION:
+      parseConfiguredTranslation(process.env.BIBLE_TRANSLATION) ??
+      FALLBACK_BIBLE_TRANSLATION,
+  },
   async redirects() {
     return [
       {

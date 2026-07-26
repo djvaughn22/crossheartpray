@@ -12,6 +12,6 @@ Scripture-first daily faith site: Bible verses, prayer, Daily Hope, Bible Bingo,
 - **Persistence (localStorage):** `crossheartpray:bible-reading-plan:v1` (Reading Plan progress).
 - **Reusable checklist mechanics:** `src/lib/checklistProgress.ts` — generic load/save/toggle/stats extracted from the Reading Plan; covered by tests. Other products copy this file and use their own `product:feature:vN` key. See hub `docs/OPEN_MIRROR_PATTERNS.md`.
 - **Env vars (names only):** `SITE_BASE_URL`, `SOCIAL_ADMIN_KEY`, `SOCIAL_HASHTAGS`, `CRON_SECRET`.
-- **External services:** bible.com (WEBUS links), YouTube (Gene Getz Life Essentials), GA4.
+- **External services:** bible.com (deep links in the active translation — BSB by default, see `src/lib/scripture/translationConfig.ts`), YouTube (Gene Getz Life Essentials), GA4.
 - **Protected:** all Scripture content, doctrine, memorial content, approved wording, page order, routes, the Reading Plan's public behavior and visuals. Code quality may improve around the product; the product itself is locked.
 - **Content sources of truth:** `src/lib/dailyBibleBingo.ts`, `src/lib/bibleReadingPlan.ts`, `src/lib/geneGetzLifeEssentials.ts`.

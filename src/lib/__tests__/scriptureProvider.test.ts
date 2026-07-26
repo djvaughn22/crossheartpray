@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import {
+  ACTIVE_BIBLE_TRANSLATION,
   externalLinkFallbackProvider,
   getScriptureProvider,
   localWebProvider,
@@ -37,16 +38,26 @@ describe("provider selection and capability", () => {
 });
 
 describe("translation truthfulness", () => {
-  it("only WEB is readable in the static list; everything else links to Bible.com", () => {
+  it("only the active translation is readable in the static list; everything else links to Bible.com", () => {
     const translations = localWebProvider.listAvailableTranslations();
-    const web = translations.find((translation) => translation.abbreviation === "WEBUS");
-    expect(web?.access).toBe("readHere");
-    expect(web?.source).toBe("local");
+    const active = translations.find(
+      (translation) =>
+        translation.abbreviation === ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
+    );
+    expect(active?.access).toBe("readHere");
+    expect(active?.source).toBe("local");
     for (const translation of translations) {
-      if (translation.abbreviation !== "WEBUS") {
+      if (translation.abbreviation !== ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation) {
         expect(translation.access).toBe("bibleComLink");
       }
     }
+  });
+
+  it("the supported fallback translation (WEBUS) stays available as a Bible.com link", () => {
+    const web = localWebProvider
+      .listAvailableTranslations()
+      .find((translation) => translation.abbreviation === "WEBUS");
+    expect(web?.access).toBe("bibleComLink");
   });
 
   it("offers CSB, KJV, and NIV as external links in the static list", () => {
@@ -77,7 +88,7 @@ describe("localWeb chapter loading", () => {
     verses: [{ verse: 1, text: "..." }],
     previous: { book: "TIT", chapter: 1 },
     next: { book: "TIT", chapter: 3 },
-    attribution: "World English Bible (WEB), public domain.",
+    attribution: ACTIVE_BIBLE_TRANSLATION.attribution,
   };
 
   it("loads a chapter and caches repeat reads", async () => {
@@ -100,7 +111,7 @@ describe("localWeb chapter loading", () => {
     );
     // The fallback URL still works without any network.
     expect(localWebProvider.buildExternalUrl({ book: "PHM", chapter: 1 })).toBe(
-      "https://www.bible.com/bible/206/PHM.1.WEBUS",
+      "https://www.bible.com/bible/3034/PHM.1.BSB",
     );
   });
 });
@@ -162,7 +173,11 @@ describe("no server-only secrets in client Scripture code", () => {
     for (const file of roots.flatMap(sourceFiles)) {
       const source = fs.readFileSync(file, "utf8");
       for (const match of source.matchAll(/process\.env\.([A-Z0-9_]+)/g)) {
-        expect(match[1], `${file} references process.env.${match[1]}`).toMatch(/^NEXT_PUBLIC_/);
+        // BIBLE_TRANSLATION is not a secret: next.config.ts inlines its
+        // normalized value into both bundles at build time on purpose.
+        expect(match[1], `${file} references process.env.${match[1]}`).toMatch(
+          /^(NEXT_PUBLIC_|BIBLE_TRANSLATION$)/,
+        );
       }
       // The YouVersion App Key is server-side only: client Scripture code may
       // neither read the env var nor import the server module that holds it.
@@ -209,15 +224,15 @@ describe("truthful default-translation priority", () => {
     source: "bibleCom",
   };
 
-  it("defaults to local WEB while CSB is only an external link", () => {
+  it("defaults to the local active translation while CSB is only an external link", () => {
     expect(pickDefaultTranslation([webLocal, bsb, csbExternal], null)).toBe(webLocal);
   });
 
-  it("prefers CSB the moment it is genuinely readable here", () => {
-    expect(pickDefaultTranslation([webLocal, csbReadable, bsb], null)).toBe(csbReadable);
+  it("the local active translation outranks licensed YouVersion translations", () => {
+    expect(pickDefaultTranslation([webLocal, csbReadable, bsb], null)).toBe(webLocal);
   });
 
-  it("a saved readable preference beats the CSB default", () => {
+  it("a saved readable preference beats the site default", () => {
     expect(pickDefaultTranslation([webLocal, csbReadable, bsb], bsb.id)).toBe(bsb);
   });
 

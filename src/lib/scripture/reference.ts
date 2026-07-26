@@ -6,6 +6,10 @@
 // consume these references unchanged.
 
 import { getScriptureBook, matchScriptureBooks, SCRIPTURE_BOOKS, scriptureBookIndex } from "./books";
+import {
+  ACTIVE_BIBLE_TRANSLATION,
+  SUPPORTED_BIBLE_TRANSLATIONS,
+} from "./translationConfig";
 
 export type ScriptureReference = {
   /** USFM book code, e.g. "JHN". */
@@ -18,25 +22,43 @@ export type ScriptureReference = {
   endVerse?: number;
 };
 
-// Bible.com's id/abbreviation for the World English Bible — the same
-// translation CrossHeartPray has always deep-linked to. `abbreviation` is
-// Bible.com's URL code; `label` is what people see.
-export const BIBLE_COM_DEFAULT_VERSION = { id: 206, abbreviation: "WEBUS", label: "WEB" };
+// Bible.com's id/abbreviation for the active site-wide translation — every
+// deep link CrossHeartPray emits uses this version unless a caller asks for
+// another. Derived from the central translation registry, so switching
+// BIBLE_TRANSLATION retargets every link. `abbreviation` is Bible.com's URL
+// code; `label` is what people see.
+export const BIBLE_COM_DEFAULT_VERSION: BibleComLinkVersion = {
+  id: ACTIVE_BIBLE_TRANSLATION.bibleComId,
+  abbreviation: ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
+  label: ACTIVE_BIBLE_TRANSLATION.shortName,
+};
 
-// Deep-link translations offered by TranslationPicker. These only change
-// which Bible.com page opens; text rendered inside CrossHeartPray comes from
-// local WEB or a genuinely licensed YouVersion translation, never from these
-// links.
-export const BIBLE_COM_LINK_VERSIONS = [
+export type BibleComLinkVersion = {
+  id: number;
+  abbreviation: string;
+  label: string;
+};
+
+// Deep-link translations offered by TranslationPicker — the active default
+// first, then the supported fallback, then well-known licensed translations.
+// These only change which Bible.com page opens; text rendered inside
+// CrossHeartPray comes from the local active translation or a genuinely
+// licensed YouVersion translation, never from these links.
+export const BIBLE_COM_LINK_VERSIONS: BibleComLinkVersion[] = [
   BIBLE_COM_DEFAULT_VERSION,
+  ...Object.values(SUPPORTED_BIBLE_TRANSLATIONS)
+    .filter((translation) => translation.bibleComId !== BIBLE_COM_DEFAULT_VERSION.id)
+    .map((translation) => ({
+      id: translation.bibleComId,
+      abbreviation: translation.bibleComAbbreviation,
+      label: translation.shortName,
+    })),
   { id: 1713, abbreviation: "CSB", label: "CSB" },
   { id: 1, abbreviation: "KJV", label: "KJV" },
   { id: 111, abbreviation: "NIV", label: "NIV" },
   { id: 59, abbreviation: "ESV", label: "ESV" },
   { id: 116, abbreviation: "NLT", label: "NLT" },
-] as const;
-
-export type BibleComLinkVersion = (typeof BIBLE_COM_LINK_VERSIONS)[number];
+];
 
 /**
  * Parse free text into a structured reference. Returns null when no book
@@ -119,7 +141,7 @@ export function toUsfmString(reference: ScriptureReference): string {
 
 /**
  * Bible.com deep link. Book-only references open chapter 1; the version
- * defaults to WEB, matching every existing CrossHeartPray link.
+ * defaults to the active site-wide translation.
  */
 export function bibleComUrl(
   reference: ScriptureReference,

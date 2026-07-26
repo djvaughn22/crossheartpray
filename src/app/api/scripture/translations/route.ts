@@ -3,7 +3,8 @@
 // GET /api/scripture/translations
 //
 // Returns the translations CrossHeartPray can genuinely offer right now:
-//   - local WEB (always readable here, no network needed),
+//   - the local active translation (always readable here, no network needed;
+//     BSB by default — see src/lib/scripture/translationConfig.ts),
 //   - every YouVersion Platform translation this application is actually
 //     licensed for (marked "readHere"),
 //   - well-known translations that open on Bible.com (marked "bibleComLink").
@@ -21,6 +22,7 @@ import {
   BIBLE_COM_LINK_VERSIONS,
   type ScriptureTranslation,
 } from "../../../../lib/scripture";
+import { ACTIVE_BIBLE_TRANSLATION } from "../../../../lib/scripture/translationConfig";
 import {
   fetchEnabledYouVersionBibles,
   youVersionServerKey,
@@ -51,12 +53,17 @@ function readHereRank(abbreviation: string): number {
   return index === -1 ? READ_HERE_PRIORITY.length : index;
 }
 
+// Platform codes people shouldn't have to decode ("enggnv" → "GNV").
+const YOUVERSION_LABEL_OVERRIDES: Record<string, string> = {
+  enggnv: "GNV",
+  engWEBUS: "WEB",
+};
+
 function youVersionTranslation(bible: YouVersionBible): ScriptureTranslation {
   return {
     id: bible.id,
     abbreviation: bible.abbreviation,
-    // Geneva Bible's platform abbreviation is "enggnv" — show people "GNV".
-    label: bible.abbreviation === "enggnv" ? "GNV" : bible.abbreviation,
+    label: YOUVERSION_LABEL_OVERRIDES[bible.abbreviation] ?? bible.abbreviation,
     access: "readHere",
     source: "youVersion",
     books: bible.books,
@@ -64,7 +71,7 @@ function youVersionTranslation(bible: YouVersionBible): ScriptureTranslation {
 }
 
 export async function GET() {
-  const webLocal: ScriptureTranslation = {
+  const activeLocal: ScriptureTranslation = {
     ...BIBLE_COM_DEFAULT_VERSION,
     access: "readHere",
     source: "local",
@@ -74,7 +81,7 @@ export async function GET() {
   if (youVersionServerKey()) {
     try {
       youVersion = (await fetchEnabledYouVersionBibles())
-        // Local WEB already covers the World English Bible, faster.
+        // The local dataset already covers the active translation, faster.
         .filter((bible) => bible.id !== BIBLE_COM_DEFAULT_VERSION.id)
         .map(youVersionTranslation)
         .sort(
@@ -88,16 +95,23 @@ export async function GET() {
   }
 
   const readHereAbbreviations = new Set([
-    "WEBUS",
+    ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
     ...youVersion.map((translation) => translation.abbreviation),
+  ]);
+  // Ids too: the platform's WEB entry is "engWEBUS" while the deep-link list
+  // says "WEBUS" — same Bible.com id, one picker entry.
+  const readHereIds = new Set([
+    BIBLE_COM_DEFAULT_VERSION.id,
+    ...youVersion.map((translation) => translation.id),
   ]);
 
   const external: ScriptureTranslation[] = BIBLE_COM_LINK_VERSIONS.filter(
-    (version) => !readHereAbbreviations.has(version.abbreviation),
+    (version) =>
+      !readHereAbbreviations.has(version.abbreviation) && !readHereIds.has(version.id),
   ).map((version) => ({ ...version, access: "bibleComLink", source: "bibleCom" }));
 
   return NextResponse.json(
-    { translations: [webLocal, ...youVersion, ...external] },
+    { translations: [activeLocal, ...youVersion, ...external] },
     {
       headers: {
         "Cache-Control": "public, max-age=300, s-maxage=3600",

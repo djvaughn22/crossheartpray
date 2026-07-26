@@ -70,20 +70,24 @@ async function translationsPayload() {
 }
 
 describe("/api/scripture/translations", () => {
-  it("lists local WEB first, licensed versions as readHere, CSB/KJV/NIV as external", async () => {
+  it("lists the local active translation (BSB) first, licensed versions as readHere, CSB/KJV/NIV as external", async () => {
     const translations = await translationsPayload();
 
     expect(translations[0]).toMatchObject({
-      abbreviation: "WEBUS",
+      abbreviation: "BSB",
       access: "readHere",
       source: "local",
     });
 
-    const bsb = translations.find((entry) => entry.abbreviation === "BSB");
-    expect(bsb).toMatchObject({ access: "readHere", source: "youVersion" });
+    // The platform's own BSB entry is not duplicated — local BSB covers it.
+    expect(translations.filter((entry) => entry.id === 3034)).toHaveLength(1);
 
-    // The platform's WEB entry is not duplicated — local WEB covers it.
+    // WEB stays genuinely available: the platform's licensed entry reads
+    // here, and the deep-link duplicate is dropped by id.
     expect(translations.filter((entry) => entry.id === 206)).toHaveLength(1);
+    expect(
+      translations.find((entry) => entry.id === 206),
+    ).toMatchObject({ access: "readHere", source: "youVersion" });
 
     for (const abbreviation of ["CSB", "KJV", "NIV", "ESV", "NLT"]) {
       const entry = translations.find((item) => item.abbreviation === abbreviation);
@@ -97,7 +101,7 @@ describe("/api/scripture/translations", () => {
     const translations = await translationsPayload();
     const readHere = translations.filter((entry) => entry.access === "readHere");
     expect(readHere).toHaveLength(1);
-    expect(readHere[0].abbreviation).toBe("WEBUS");
+    expect(readHere[0].abbreviation).toBe("BSB");
     expect(biblesMock).not.toHaveBeenCalled();
   });
 
@@ -117,18 +121,18 @@ function chapterRequest(query: string) {
 
 describe("/api/scripture/chapter with a version parameter", () => {
   it("serves a licensed YouVersion chapter with honest attribution", async () => {
-    chapterMock.mockResolvedValue([{ verse: 1, text: "In the beginning..." }]);
+    chapterMock.mockResolvedValue([{ verse: 1, text: "In the beginning was the Word..." }]);
 
-    const response = await getChapter(chapterRequest("book=JHN&chapter=1&version=3034"));
+    const response = await getChapter(chapterRequest("book=JHN&chapter=1&version=3427"));
     expect(response.status).toBe(200);
     const data = await response.json();
 
-    expect(data.translation).toEqual({ id: 3034, abbreviation: "BSB", label: "BSB" });
-    expect(data.attribution).toContain("Berean Standard Bible");
+    expect(data.translation).toEqual({ id: 3427, abbreviation: "TCENT", label: "TCENT" });
+    expect(data.attribution).toContain("Text-Critical English New Testament");
     expect(data.attribution).not.toContain("World English Bible");
-    expect(data.verses).toEqual([{ verse: 1, text: "In the beginning..." }]);
+    expect(data.verses).toEqual([{ verse: 1, text: "In the beginning was the Word..." }]);
     expect(data.next).toEqual({ book: "JHN", chapter: 2 });
-    expect(chapterMock).toHaveBeenCalledWith(3034, "JHN", 1);
+    expect(chapterMock).toHaveBeenCalledWith(3427, "JHN", 1);
   });
 
   it("refuses versions the application is not licensed for", async () => {
@@ -143,24 +147,35 @@ describe("/api/scripture/chapter with a version parameter", () => {
     expect(chapterMock).not.toHaveBeenCalled();
   });
 
-  it("returns 502 on upstream failure so the reader falls back to WEB", async () => {
+  it("returns 502 on upstream failure so the reader falls back to the local text", async () => {
     chapterMock.mockRejectedValue(new Error("timeout"));
-    const response = await getChapter(chapterRequest("book=JHN&chapter=3&version=3034"));
+    const response = await getChapter(chapterRequest("book=JHN&chapter=3&version=3427"));
     expect(response.status).toBe(502);
   });
 
   it("returns 503 when no key is configured", async () => {
     keyMock.mockReturnValue(null);
-    const response = await getChapter(chapterRequest("book=JHN&chapter=3&version=3034"));
+    const response = await getChapter(chapterRequest("book=JHN&chapter=3&version=3427"));
     expect(response.status).toBe(503);
   });
 
-  it("version=206 (WEB) serves the local text with WEB attribution", async () => {
-    const response = await getChapter(chapterRequest("book=JHN&chapter=1&version=206"));
+  it("version=3034 (the active default) serves the local BSB text, never a proxy", async () => {
+    const response = await getChapter(chapterRequest("book=JHN&chapter=1&version=3034"));
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.attribution).toBe("World English Bible (WEB), public domain.");
+    expect(data.attribution).toBe("Berean Standard Bible (BSB), public domain.");
+    expect(data.translation).toEqual({ id: 3034, abbreviation: "BSB", label: "BSB" });
     expect(data.verses.length).toBeGreaterThan(0);
     expect(chapterMock).not.toHaveBeenCalled();
+  });
+
+  it("the default (no version) serves BSB with BSB attribution", async () => {
+    const response = await getChapter(chapterRequest("book=PSA&chapter=23"));
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.attribution).toBe("Berean Standard Bible (BSB), public domain.");
+    expect(data.verses[0].text).toBe(
+      "A Psalm of David. The LORD is my shepherd; I shall not want.",
+    );
   });
 });

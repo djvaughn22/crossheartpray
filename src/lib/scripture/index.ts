@@ -3,10 +3,23 @@
 // Core rules:
 // - Pass ScriptureReference objects, never re-parse raw strings.
 // - Build every Bible.com link through bibleComUrl().
-// - Text rendered inside CrossHeartPray comes from the local World English
-//   Bible (public domain) or a YouVersion translation this application is
-//   genuinely licensed for; everything else deep-links to Bible.com.
+// - Text rendered inside CrossHeartPray comes from the local public-domain
+//   dataset in the active site-wide translation (translationConfig.ts — BSB
+//   by default, WEBUS as the supported fallback) or a YouVersion translation
+//   this application is genuinely licensed for; everything else deep-links
+//   to Bible.com.
 // - Text is never labeled as a translation it is not.
+// - The active translation is decided ONLY in translationConfig.ts.
+
+export {
+  ACTIVE_BIBLE_TRANSLATION,
+  DEFAULT_BIBLE_TRANSLATION,
+  FALLBACK_BIBLE_TRANSLATION,
+  SUPPORTED_BIBLE_TRANSLATIONS,
+  parseConfiguredTranslation,
+  type BibleTranslationDefinition,
+  type BibleTranslationId,
+} from "./translationConfig";
 
 export {
   SCRIPTURE_BOOKS,

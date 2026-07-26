@@ -1,20 +1,23 @@
 // Whole-chapter Scripture endpoint for the in-app reader.
 //
-// GET /api/scripture/chapter?book=JHN&chapter=3            → local WEB text
-// GET /api/scripture/chapter?book=JHN&chapter=3&version=3034
+// GET /api/scripture/chapter?book=JHN&chapter=3            → local text in
+//                                            the active default translation
+// GET /api/scripture/chapter?book=JHN&chapter=3&version=1713
 //                                                          → YouVersion text
 //
-// Local WEB (public domain) is the always-available foundation: one chapter
-// is a few KB and immutable-cacheable. The optional `version` parameter
-// proxies a YouVersion Platform translation instead — but ONLY a version the
-// application is genuinely licensed for (the enabled-versions list is the
-// gate); the App Key never leaves the server. YouVersion failures return an
-// error status and the client reader falls back to local WEB, so there is
-// never a dead end.
+// The local public-domain dataset (BSB by default; see
+// src/lib/scripture/translationConfig.ts) is the always-available
+// foundation: one chapter is a few KB and immutable-cacheable. The optional
+// `version` parameter proxies a YouVersion Platform translation instead —
+// but ONLY a version the application is genuinely licensed for (the
+// enabled-versions list is the gate); the App Key never leaves the server.
+// YouVersion failures return an error status and the client reader falls
+// back to the local text, so there is never a dead end.
 
 import { NextResponse } from "next/server";
 import { LOCAL_BIBLE_VERSES } from "../../../../lib/localBibleVerses";
 import { adjacentChapter, getScriptureBook, type ScriptureBook } from "../../../../lib/scripture";
+import { ACTIVE_BIBLE_TRANSLATION } from "../../../../lib/scripture/translationConfig";
 import {
   fetchEnabledYouVersionBibles,
   fetchYouVersionChapter,
@@ -23,9 +26,9 @@ import {
 
 type ChapterVerse = { verse: number; text: string };
 
-// Bible.com's id for the World English Bible — requesting it explicitly is
-// the same as requesting no version: the local text serves it faster.
-const WEB_BIBLE_ID = 206;
+// Bible.com's id for the active local translation — requesting it explicitly
+// is the same as requesting no version: the local text serves it faster.
+const LOCAL_BIBLE_ID = ACTIVE_BIBLE_TRANSLATION.bibleComId;
 
 // code → chapter → verses, built once per server instance.
 let chapterIndex: Map<string, Map<number, ChapterVerse[]>> | null = null;
@@ -141,12 +144,12 @@ export async function GET(request: Request) {
     if (!Number.isInteger(versionId) || versionId < 1) {
       return NextResponse.json({ error: "Unknown translation." }, { status: 400 });
     }
-    if (versionId !== WEB_BIBLE_ID) {
+    if (versionId !== LOCAL_BIBLE_ID) {
       try {
         return await serveYouVersionChapter(book, chapter, versionId);
       } catch {
         // Timeouts and upstream failures land here; the reader falls back
-        // to local WEB and keeps the external Bible.com option.
+        // to the local text and keeps the external Bible.com option.
         return NextResponse.json(
           { error: "That translation could not be loaded right now." },
           { status: 502 },
@@ -167,7 +170,12 @@ export async function GET(request: Request) {
     {
       ...chapterEnvelope(book, chapter),
       verses: [...verses].sort((a, b) => a.verse - b.verse),
-      attribution: "World English Bible (WEB), public domain.",
+      attribution: ACTIVE_BIBLE_TRANSLATION.attribution,
+      translation: {
+        id: ACTIVE_BIBLE_TRANSLATION.bibleComId,
+        abbreviation: ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
+        label: ACTIVE_BIBLE_TRANSLATION.shortName,
+      },
     },
     {
       headers: {

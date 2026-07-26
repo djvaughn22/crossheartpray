@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { bibleComUrl } from "../lib/scripture";
 
 export default function SiteFooter() {
   return (
@@ -6,7 +7,7 @@ export default function SiteFooter() {
       <div className="mx-auto max-w-6xl px-6">
         <p>
           <a
-            href="https://www.bible.com/bible/206/MAT.22.35-40.WEBUS"
+            href={bibleComUrl({ book: "MAT", chapter: 22, verse: 35, endVerse: 40 })}
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold text-slate-300 underline decoration-white/20 underline-offset-4 transition hover:text-emerald-100 hover:decoration-emerald-100/60"

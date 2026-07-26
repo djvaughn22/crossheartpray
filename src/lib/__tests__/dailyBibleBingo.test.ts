@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BIBLE_COM_DEFAULT_VERSION } from "../scripture";
 import {
   addDaysToDateKey,
   buildDailyBibleBingoPost,
@@ -76,8 +77,12 @@ describe("deterministic daily board", () => {
     for (const lane of post.lanes) {
       expect(lane.reference.length).toBeGreaterThan(0);
       expect(lane.passage.text.trim().length).toBeGreaterThan(0);
-      expect(lane.verseUrl).toMatch(/^https:\/\/www\.bible\.com\/bible\/206\//);
-      expect(lane.chapterUrl).toMatch(/^https:\/\/www\.bible\.com\/bible\/206\//);
+      expect(lane.verseUrl).toMatch(
+        new RegExp(`^https://www\\.bible\\.com/bible/${BIBLE_COM_DEFAULT_VERSION.id}/`),
+      );
+      expect(lane.chapterUrl).toMatch(
+        new RegExp(`^https://www\\.bible\\.com/bible/${BIBLE_COM_DEFAULT_VERSION.id}/`),
+      );
     }
   });
 

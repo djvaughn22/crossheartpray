@@ -127,7 +127,7 @@ describe("every plan reading offers Read here", () => {
     );
     expect(external, "Malachi cell is missing the external 📖 link").toBeTruthy();
     expect(external?.getAttribute("href")).toBe(
-      "https://www.bible.com/bible/206/MAL.1.WEBUS",
+      "https://www.bible.com/bible/3034/MAL.1.BSB",
     );
     expect(external?.getAttribute("target")).toBe("_blank");
     expect(external?.getAttribute("rel")).toContain("noopener");

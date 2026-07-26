@@ -44,8 +44,8 @@ describe("referenceForPassage", () => {
 describe("reader truthfulness (source contract)", () => {
   const reader = read(path.join("scripture", "ScriptureReader.tsx"));
 
-  it("names WEB plainly when falling back from a licensed translation", () => {
-    expect(reader).toContain("showing the World English Bible (WEB) instead.");
+  it("names the local translation plainly when falling back from a licensed translation", () => {
+    expect(reader).toContain("showing the ${LOCAL_TRANSLATION_NOTICE_NAME} instead.");
   });
 
   it("attributes text to what is actually on screen", () => {

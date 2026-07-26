@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BIBLE_COM_DEFAULT_VERSION,
   SCRIPTURE_BOOKS,
   adjacentChapter,
   bibleComUrl,
@@ -80,26 +81,28 @@ describe("parseScriptureReference (every format from the brief)", () => {
 });
 
 describe("bibleComUrl", () => {
-  it("matches the legacy WEBUS deep-link format exactly", () => {
+  it("deep-links to the active site-wide translation (BSB by default)", () => {
     expect(bibleComUrl({ book: "JHN", chapter: 3, verse: 16 })).toBe(
-      "https://www.bible.com/bible/206/JHN.3.16.WEBUS",
+      "https://www.bible.com/bible/3034/JHN.3.16.BSB",
     );
     expect(bibleComUrl({ book: "PSA", chapter: 23 })).toBe(
-      "https://www.bible.com/bible/206/PSA.23.WEBUS",
+      "https://www.bible.com/bible/3034/PSA.23.BSB",
     );
   });
 
-  it("keeps dailyBibleBingo URL builders identical to their historical output", () => {
+  it("keeps dailyBibleBingo URL builders on the central default version", () => {
     expect(bibleVerseUrl({ code: "ROM", chapter: "15", verse: "7" })).toBe(
-      "https://www.bible.com/bible/206/ROM.15.7.WEBUS",
+      `https://www.bible.com/bible/${BIBLE_COM_DEFAULT_VERSION.id}/ROM.15.7.${BIBLE_COM_DEFAULT_VERSION.abbreviation}`,
     );
     expect(bibleChapterUrl({ code: "ROM", chapter: "15" })).toBe(
-      "https://www.bible.com/bible/206/ROM.15.WEBUS",
+      `https://www.bible.com/bible/${BIBLE_COM_DEFAULT_VERSION.id}/ROM.15.${BIBLE_COM_DEFAULT_VERSION.abbreviation}`,
     );
   });
 
   it("opens chapter 1 for book-only references", () => {
-    expect(bibleComUrl({ book: "JUD" })).toBe("https://www.bible.com/bible/206/JUD.1.WEBUS");
+    expect(bibleComUrl({ book: "JUD" })).toBe(
+      `https://www.bible.com/bible/${BIBLE_COM_DEFAULT_VERSION.id}/JUD.1.${BIBLE_COM_DEFAULT_VERSION.abbreviation}`,
+    );
   });
 
   it("supports other translations for outbound links only", () => {

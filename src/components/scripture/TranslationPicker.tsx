@@ -5,7 +5,7 @@
 // The trigger is a quiet pill in the reader top bar; tapping it opens a
 // portaled "Choose a Bible" dialog (bottom sheet on phones, centered card on
 // larger screens). Every translation renders as a card: full name first
-// ("World English Bible"), short code second, and one plain line saying what
+// ("Berean Standard Bible"), short code second, and one plain line saying what
 // happens — "Reads inside CrossHeartPray" or "Opens in YouVersion".
 //
 // The default view stays small (Recommended + a "More translations" reveal),
@@ -19,6 +19,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ACTIVE_BIBLE_TRANSLATION } from "../../lib/scripture/translationConfig";
 import {
   isRecommendedTranslation,
   matchesTranslationSearch,
@@ -183,7 +184,7 @@ export default function TranslationPicker({
       className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/15 focus:border-white/45 ${className}`}
     >
       <span aria-hidden="true">📖</span>
-      <span aria-hidden="true">{selected?.label ?? "WEB"}</span>
+      <span aria-hidden="true">{selected?.label ?? ACTIVE_BIBLE_TRANSLATION.shortName}</span>
       <span aria-hidden="true" className="text-[0.6rem] text-zinc-400">
         ▼
       </span>

@@ -54,7 +54,8 @@ describe("full names, never bare abbreviations", () => {
 });
 
 describe("the Recommended set stays calm", () => {
-  it("always recommends WEB, KJV, and NIV", () => {
+  it("always recommends BSB, WEB, KJV, and NIV", () => {
+    expect(isRecommendedTranslation(translation("BSB"))).toBe(true);
     expect(isRecommendedTranslation(translation("WEBUS", "WEB"))).toBe(true);
     expect(isRecommendedTranslation(translation("KJV", "KJV", "bibleComLink"))).toBe(true);
     expect(isRecommendedTranslation(translation("NIV", "NIV", "bibleComLink"))).toBe(true);
@@ -66,13 +67,13 @@ describe("the Recommended set stays calm", () => {
   });
 
   it("keeps the long tail out of the first screen", () => {
-    for (const abbreviation of ["BSB", "LSV", "FBV", "WMBBE", "TCENT", "TOJB2011"]) {
+    for (const abbreviation of ["LSV", "FBV", "WMBBE", "TCENT", "TOJB2011"]) {
       expect(isRecommendedTranslation(translation(abbreviation))).toBe(false);
     }
   });
 
-  it("orders licensed CSB first, then WEB, KJV, NIV", () => {
-    const ranks = ["CSB", "WEBUS", "KJV", "NIV"].map((abbreviation) =>
+  it("orders the active default BSB first, then CSB, WEB, KJV, NIV", () => {
+    const ranks = ["BSB", "CSB", "WEBUS", "KJV", "NIV"].map((abbreviation) =>
       recommendedRank(translation(abbreviation)),
     );
     expect([...ranks]).toEqual([...ranks].sort((a, b) => a - b));

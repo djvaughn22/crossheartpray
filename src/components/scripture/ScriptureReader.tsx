@@ -6,13 +6,14 @@
 // Reading priority — verified, never assumed:
 //   1. A YouVersion Platform translation this application is genuinely
 //      licensed for (server-proxied; the App Key never reaches the client).
-//   2. The local public-domain World English Bible.
+//   2. The local public-domain text in the active site-wide translation
+//      (src/lib/scripture/translationConfig.ts — BSB by default).
 //   3. A Bible.com deep link when both fail. No dead ends.
 //
 // Translation truthfulness: the picker is generated from the live
 // capability list (/api/scripture/translations). Text is always attributed
 // to the translation actually on screen — when a licensed translation cannot
-// load and WEB is shown instead, the reader says so plainly.
+// load and the local text is shown instead, the reader says so plainly.
 //
 // Layout: one calm Scripture card. Top bar (reference, translation, optional
 // close), quiet go-to search, the Scripture surface as the visual center, and
@@ -32,9 +33,13 @@ import {
   type ScriptureReference,
   type ScriptureTranslation,
 } from "../../lib/scripture";
+import { ACTIVE_BIBLE_TRANSLATION } from "../../lib/scripture/translationConfig";
 import ReadInContextButton from "./ReadInContextButton";
 import ScriptureReferenceInput from "./ScriptureReferenceInput";
 import TranslationPicker from "./TranslationPicker";
+
+// "Berean Standard Bible (BSB)" — how fallback notices name the local text.
+const LOCAL_TRANSLATION_NOTICE_NAME = `${ACTIVE_BIBLE_TRANSLATION.name} (${ACTIVE_BIBLE_TRANSLATION.shortName})`;
 
 type ScriptureReaderProps = {
   /** Where the reader opens. Book-only references open chapter 1. */
@@ -168,7 +173,7 @@ export default function ScriptureReader({
             !readTranslation.books.includes(current.book);
 
           if (missingBook) {
-            notice = `${readTranslation.label} doesn't include this book — showing the World English Bible (WEB) instead.`;
+            notice = `${readTranslation.label} doesn't include this book — showing the ${LOCAL_TRANSLATION_NOTICE_NAME} instead.`;
             data = await provider.loadChapter(current, { signal: controller.signal });
           } else {
             try {
@@ -178,7 +183,7 @@ export default function ScriptureReader({
               });
             } catch (caught) {
               if (isAbortError(caught)) throw caught;
-              notice = `Couldn't load ${readTranslation.label} right now — showing the World English Bible (WEB) instead.`;
+              notice = `Couldn't load ${readTranslation.label} right now — showing the ${LOCAL_TRANSLATION_NOTICE_NAME} instead.`;
               data = await provider.loadChapter(current, { signal: controller.signal });
             }
           }
@@ -225,10 +230,11 @@ export default function ScriptureReader({
       : formatScriptureReference({ book: current.book, chapter: current.chapter });
 
   // Truthful labeling when the picked translation is external-only: the text
-  // on screen is WEB, and the way to the picked translation stays clear.
+  // on screen is the local active translation, and the way to the picked
+  // translation stays clear.
   const unlicensedNotice =
     translation.access === "bibleComLink" && readTranslation.source === "local"
-      ? `${translation.label} can't be read inside CrossHeartPray yet — showing the World English Bible (WEB). The Bible.com button below opens ${translation.label}.`
+      ? `${translation.label} can't be read inside CrossHeartPray yet — showing the ${LOCAL_TRANSLATION_NOTICE_NAME}. The Bible.com button below opens ${translation.label}.`
       : null;
   const notice = fallbackNotice ?? unlicensedNotice;
 
@@ -411,7 +417,7 @@ export default function ScriptureReader({
             </div>
 
             <p className="mx-auto mt-7 max-w-md border-t border-white/10 pt-4 text-center text-xs font-semibold leading-5 text-zinc-400">
-              Reading here: {chapterData?.attribution ?? "World English Bible (WEB), public domain."}
+              Reading here: {chapterData?.attribution ?? ACTIVE_BIBLE_TRANSLATION.attribution}
             </p>
 
             {afterScripture}

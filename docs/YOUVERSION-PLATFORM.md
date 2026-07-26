@@ -2,8 +2,10 @@
 
 _Last verified against the live API: July 21, 2026_
 
-CrossHeartPray uses a hybrid Scripture architecture: the local public-domain
-World English Bible is the fast, always-available foundation; the YouVersion
+CrossHeartPray uses a hybrid Scripture architecture: a local public-domain
+translation is the fast, always-available foundation (the active site-wide
+translation — BSB by default, WEBUS as the switchable fallback; see
+`src/lib/scripture/translationConfig.ts`); the YouVersion
 Platform is the enhanced reading layer for translations the application is
 genuinely licensed for. Licensed text is never copied into the local dataset
 or persisted; every feature goes through the shared Scripture system
@@ -33,7 +35,7 @@ locally instead), BSB, ASV, LSV, FBV, Geneva (enggnv), WMB, WMBBE, TCENT
 **CSB (1713), KJV (1), and NIV (111) are NOT licensed to this application**
 — the API answers 403 for them (verified July 21, 2026). They are offered as
 external Bible.com links only and are never rendered in-app. The default
-in-app translation is therefore local WEB, not CSB.
+in-app translation is therefore the local active translation, not CSB.
 
 ### Endpoints used
 
@@ -46,13 +48,14 @@ in-app translation is therefore local WEB, not CSB.
 
 ### Server proxy routes
 
-- `GET /api/scripture/translations` — truthful capability list: local WEB
+- `GET /api/scripture/translations` — truthful capability list: the local
+  active translation
   (readHere), licensed YouVersion versions (readHere), well-known external
   translations (bibleComLink). Falls back to local + external when the key or
   platform is unavailable — the reader never breaks.
-- `GET /api/scripture/chapter?book=JHN&chapter=3[&version=3034]` — local WEB
+- `GET /api/scripture/chapter?book=JHN&chapter=3[&version=<id>]` — local text
   by default; a licensed YouVersion version when requested. Failures return
-  an error status and the client reader falls back to local WEB, keeping the
+  an error status and the client reader falls back to the local text, keeping the
   external Bible.com option. No dead ends.
 
 ## HOW CSB / KJV / NIV BECOME READABLE IN-APP (owner action)
@@ -71,8 +74,9 @@ in-app translation is therefore local WEB, not CSB.
 ## READER PRIORITY (implemented and test-locked)
 
 1. Licensed YouVersion translation, when selected and available.
-2. Local WEB (also the visible fallback when YouVersion fails — the reader
-   says so plainly and never mislabels WEB as another translation).
+2. The local active translation (also the visible fallback when YouVersion
+   fails — the reader says so plainly and never mislabels local text as
+   another translation).
 3. Bible.com deep link when both fail.
 
 User translation choice persists in localStorage
