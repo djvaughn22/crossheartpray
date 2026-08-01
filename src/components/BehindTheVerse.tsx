@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  bibleComUrlForPassage,
   getScriptureProvider,
   parseScriptureReference,
   resolveScriptureSelection,
+  type ScriptureReference,
 } from "../lib/scripture";
 import { getGeneGetzPrinciplesForVerse, type LifeEssentialsPrinciple } from "../lib/geneGetzLifeEssentials";
 import type { VerifiedWordStudy } from "../lib/originalLanguageWordStudy";
 import type { BibleBingoCardPassage } from "./BibleBingoVerseCard";
+import ScriptureReaderModal from "./scripture/ScriptureReaderModal";
 
 type BehindTheVerseProps = {
   verseReference: string;
@@ -28,6 +29,8 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
   const [data, setData] = useState<VerseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showReaderModal, setShowReaderModal] = useState(false);
+  const [readerReference, setReaderReference] = useState<ScriptureReference | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,9 +165,19 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
   }
 
   const { passage, principles, wordStudy } = data;
-  const verseUrl = bibleComUrlForPassage(passage);
+
+  const handleOpenVerse = () => {
+    setReaderReference({
+      book: passage.code as ScriptureReference["book"],
+      chapter: parseInt(passage.chapter),
+      verse: parseInt(passage.verse),
+      endVerse: passage.endVerse ? parseInt(passage.endVerse) : undefined,
+    });
+    setShowReaderModal(true);
+  };
 
   return (
+    <>
     <section className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-[2rem] border border-emerald-200/15 bg-slate-950/35 shadow-2xl shadow-emerald-950/15 sm:mt-14">
       <details className="group" open>
         <summary className="cursor-pointer select-none list-none p-6 [&::-webkit-details-marker]:hidden">
@@ -214,16 +227,14 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
                 <p className="text-[0.66rem] font-black uppercase tracking-[0.2em] text-emerald-100">
                   1 verse
                 </p>
-                <a
-                  href={verseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={handleOpenVerse}
                   className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
                 >
                   {passage.label}
-                </a>
+                </button>
                 <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
-                  Open the verse on Bible.com.
+                  Read {passage.label}.
                 </p>
               </div>
 
@@ -281,14 +292,12 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
             </div>
 
             <div className="mt-7 flex flex-wrap gap-2 border-t border-white/10 pt-4">
-              <a
-                href={verseUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleOpenVerse}
                 className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-slate-200 transition hover:border-emerald-200/30 hover:bg-emerald-300/10 hover:text-emerald-50"
               >
-                Open Bible.com →
-              </a>
+                Read Scripture →
+              </button>
               <Link
                 href="/life-essentials"
                 className="inline-flex rounded-full border border-emerald-200/25 bg-emerald-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-50 transition hover:bg-emerald-300/18"
@@ -377,5 +386,9 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
         )}
       </details>
     </section>
+    {showReaderModal && readerReference && (
+      <ScriptureReaderModal reference={readerReference} onClose={() => setShowReaderModal(false)} />
+    )}
+    </>
   );
 }

@@ -95,11 +95,9 @@ export default function ChpProductNav() {
           </span>
         </Link>
 
-        <a
-          href="https://www.bible.com/verse-of-the-day"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open YouVersion Bible App"
+        <Link
+          href="/bible-reading-plan"
+          aria-label="Open Bible Reading Plan"
           className="justify-self-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60"
         >
           <img
@@ -107,7 +105,7 @@ export default function ChpProductNav() {
             alt="Holy Bible"
             className="h-9 w-9 rounded-lg sm:h-10 sm:w-10"
           />
-        </a>
+        </Link>
 
         <div className="justify-self-end flex items-center gap-2">
           <OpenMirrorThemeToggle />

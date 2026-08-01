@@ -1,20 +1,28 @@
+"use client";
+
 import Link from "next/link";
-import { bibleComUrl } from "../lib/scripture";
+import { useState } from "react";
+import type { ScriptureReference } from "../lib/scripture";
+import ScriptureReaderModal from "./scripture/ScriptureReaderModal";
 
 export default function SiteFooter() {
+  const [showReaderModal, setShowReaderModal] = useState(false);
+
+  const handleOpenVerse = () => {
+    setShowReaderModal(true);
+  };
+
   return (
     <footer className="mt-14 border-t border-white/10 py-8 text-center text-xs text-slate-500 sm:text-sm">
       <div className="mx-auto max-w-6xl px-6">
         {/* Line 1: CrossHeartPray's spiritual mission and copyright */}
         <p className="leading-relaxed">
-          <a
-            href={bibleComUrl({ book: "MAT", chapter: 22, verse: 35, endVerse: 40 })}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={handleOpenVerse}
             className="font-semibold text-slate-300 underline decoration-white/20 underline-offset-4 transition hover:text-emerald-100 hover:decoration-emerald-100/60"
           >
             Love God, love your neighbor
-          </a>{" "}
+          </button>{" "}
           · © 2026 CrossHeartPray
         </p>
 
@@ -54,6 +62,12 @@ export default function SiteFooter() {
           </a>
         </p>
       </div>
+      {showReaderModal && (
+        <ScriptureReaderModal
+          reference={{ book: "MAT", chapter: 22, verse: 35, endVerse: 40 }}
+          onClose={() => setShowReaderModal(false)}
+        />
+      )}
     </footer>
   );
 }

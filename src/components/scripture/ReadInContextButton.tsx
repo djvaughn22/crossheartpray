@@ -1,13 +1,15 @@
-// The one way CrossHeartPray links out to Bible.com. Renders an external
-// link for a structured reference; the translation defaults to WEB like every
-// existing deep link on the site.
+"use client";
 
+// Opens Scripture internally in a modal reader instead of linking out.
+// The reader provides translation picking, navigation, and a secondary
+// "Open Bible.com" action at the bottom for those who want it.
+
+import { useState } from "react";
 import {
-  BIBLE_COM_DEFAULT_VERSION,
-  bibleComUrl,
   formatScriptureReference,
   type ScriptureReference,
 } from "../../lib/scripture";
+import ScriptureReaderModal from "./ScriptureReaderModal";
 
 type ReadInContextButtonProps = {
   reference: ScriptureReference;
@@ -18,19 +20,22 @@ type ReadInContextButtonProps = {
 
 export default function ReadInContextButton({
   reference,
-  version = BIBLE_COM_DEFAULT_VERSION,
+  version,
   label,
   className = "inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-sm font-black text-white transition hover:bg-white/15",
 }: ReadInContextButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <a
-      href={bibleComUrl(reference, version)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={className}
-      aria-label={`Open ${formatScriptureReference(reference)} on Bible.com in a new tab`}
-    >
-      {label ?? "Bible.com"} <span aria-hidden="true">↗</span>
-    </a>
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className={className}
+        aria-label={`Read ${formatScriptureReference(reference)}`}
+      >
+        {label ?? "Read"} <span aria-hidden="true">↗</span>
+      </button>
+      {isOpen && <ScriptureReaderModal reference={reference} onClose={() => setIsOpen(false)} />}
+    </>
   );
 }
