@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  bibleComUrlForPassage,
   getScriptureProvider,
   parseScriptureReference,
   resolveScriptureSelection,
@@ -12,6 +13,7 @@ import { getGeneGetzPrinciplesForVerse, type LifeEssentialsPrinciple } from "../
 import type { VerifiedWordStudy } from "../lib/originalLanguageWordStudy";
 import type { BibleBingoCardPassage } from "./BibleBingoVerseCard";
 import ScriptureReaderModal from "./scripture/ScriptureReaderModal";
+import OriginalWordStudyModal from "./OriginalWordStudyModal";
 
 type BehindTheVerseProps = {
   verseReference: string;
@@ -31,6 +33,7 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
   const [error, setError] = useState("");
   const [showReaderModal, setShowReaderModal] = useState(false);
   const [readerReference, setReaderReference] = useState<ScriptureReference | null>(null);
+  const [showWordStudyModal, setShowWordStudyModal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,6 +168,7 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
   }
 
   const { passage, principles, wordStudy } = data;
+  const verseUrl = bibleComUrlForPassage(passage);
 
   const handleOpenVerse = () => {
     setReaderReference({
@@ -245,15 +249,13 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
                 {principles.length > 0 ? (
                   <div className="mt-2 space-y-2">
                     {principles.slice(0, 1).map((p) => (
-                      <a
+                      <Link
                         key={p.principleNumber}
-                        href={p.officialVideoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href="/life-essentials"
                         className="inline-flex text-sm font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
                       >
                         Principle {p.principleNumber}
-                      </a>
+                      </Link>
                     ))}
                     <p className="text-xs font-semibold leading-5 text-slate-400">
                       {principles.length} principle{principles.length !== 1 ? "s" : ""} found.
@@ -273,14 +275,12 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
                   Original Word
                 </p>
                 {wordStudy ? (
-                  <a
-                    href={wordStudy.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setShowWordStudyModal(true)}
                     className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
                   >
                     {wordStudy.englishWord}
-                  </a>
+                  </button>
                 ) : (
                   <div className="mt-2">
                     <p className="text-xs font-semibold leading-5 text-slate-400">
@@ -388,6 +388,15 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
     </section>
     {showReaderModal && readerReference && (
       <ScriptureReaderModal reference={readerReference} onClose={() => setShowReaderModal(false)} />
+    )}
+    {showWordStudyModal && wordStudy && (
+      <OriginalWordStudyModal
+        passage={passage}
+        wordStudy={wordStudy}
+        wordStudies={[wordStudy]}
+        verseUrl={verseUrl}
+        onClose={() => setShowWordStudyModal(false)}
+      />
     )}
     </>
   );
