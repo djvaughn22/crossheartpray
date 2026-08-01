@@ -4,7 +4,8 @@ import SiteFooter from "../components/SiteFooter";
 import BibleBingoKingCard from "../components/BibleBingoKingCard";
 import CrossHeartPrayHero from "../components/CrossHeartPrayHero";
 import LazyBibleVerseLookup from "../components/LazyBibleVerseLookup";
-import { bibleComUrl } from "../lib/scripture";
+import BehindTheVerse from "../components/BehindTheVerse";
+import { HOMEPAGE_SELECTED_VERSE_REFERENCE } from "../lib/homepageSelectedVerse";
 
 export const metadata = {
   description: "Start with Bible Bingo 7, the Bible Reading Plan, Daily Hope, and source-backed Deep Dive in one simple Bible routine.",
@@ -47,21 +48,6 @@ const dailyWays = [
     body:
       "Deal seven Bible cards, open the verse or chapter, and connect the card to the reading plan.",
     cta: "Deal 7 Cards",
-  },
-];
-
-const deepDiveLinks = [
-  {
-    label: "Open Bible Bingo 7",
-    href: "/explorebible",
-  },
-  {
-    label: "Study the verse in the Bible app",
-    href: bibleComUrl({ book: "JHN", chapter: 1, verse: 1 }),
-  },
-  {
-    label: "Original word example",
-    href: "https://biblehub.com/greek/225.htm",
   },
 ];
 
@@ -131,214 +117,9 @@ export default function WelcomePage() {
           })}
         </section>
 
-        <LazyBibleVerseLookup className="mt-12" initialReference="Romans 15:7" />
+        <LazyBibleVerseLookup className="mt-12" initialReference={HOMEPAGE_SELECTED_VERSE_REFERENCE} />
 
-        <section className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-[2rem] border border-emerald-200/15 bg-slate-950/35 shadow-2xl shadow-emerald-950/15 sm:mt-14">
-          <details className="group">
-            <summary className="cursor-pointer select-none list-none p-6 [&::-webkit-details-marker]:hidden">
-              <p className="text-xs font-black uppercase tracking-[0.26em] text-emerald-100">
-                Open the Word
-              </p>
-              <div className="mt-2 flex items-center justify-between gap-4">
-                <h2 className="text-3xl font-black leading-tight text-white sm:text-4xl">
-                  Behind the Verse
-                </h2>
-                <span
-                  aria-hidden="true"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl font-black leading-none text-slate-200 transition-transform duration-200 group-open:rotate-45"
-                >
-                  +
-                </span>
-              </div>
-              <p className="mt-2 max-w-xl text-sm font-semibold leading-7 text-slate-300">
-                One verse opens the chapter — Life Essentials and the original words take you deeper.
-              </p>
-            </summary>
-
-          <div className="grid gap-0 border-t border-white/10 lg:grid-cols-[1fr_1.15fr]">
-            <div className="border-b border-white/10 bg-emerald-300/[0.08] p-6 lg:border-b-0 lg:border-r lg:border-white/10">
-              <p className="max-w-xl text-sm font-semibold leading-7 text-slate-200 sm:text-base">
-                Start with one verse and open the full chapter. Then go deeper — first with{" "}
-                <strong className="text-white">Life Essentials by Dr. Gene Getz</strong>:
-                1,500 Bible principles with official video teaching, matched to the verse.
-              </p>
-
-              <p className="mt-3 max-w-xl text-sm font-semibold leading-7 text-slate-300">
-                Next, open the meaning with the original word. When Deep Dive verifies a word it
-                shows the source language, pronunciation, Strong&apos;s number, and meaning.
-              </p>
-
-              <Link
-                href="/life-essentials"
-                className="mt-5 inline-flex rounded-full border border-emerald-200/30 bg-emerald-300/10 px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-50 transition hover:bg-emerald-300/18"
-              >
-                Explore Life Essentials · Gene Getz →
-              </Link>
-            </div>
-
-            <div className="flex flex-col justify-between p-6">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.2em] text-emerald-100">
-                    1 verse
-                  </p>
-                  <a
-                    href={bibleComUrl({ book: "JHN", chapter: 1, verse: 1 })}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
-                  >
-                    John 1:1
-                  </a>
-                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
-                    A perfect place to begin.
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.2em] text-emerald-100">
-                    Bible study
-                  </p>
-                  <Link
-                    href="/explorebible"
-                    className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
-                  >
-                    Explore Bible
-                  </Link>
-                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
-                    Deal a verse, open the chapter, keep moving.
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.2em] text-emerald-100">
-                    Strong’s
-                  </p>
-                  <a
-                    href="https://biblehub.com/greek/225.htm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex text-lg font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
-                  >
-                    Truth · G225
-                  </a>
-                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
-                    Greek source word for truth, reality, what is true.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-7 flex flex-wrap gap-2 border-t border-white/10 pt-4">
-                {deepDiveLinks.map((item) => {
-                  const external = item.href.startsWith("http");
-
-                  return external ? (
-                    <a
-                      key={item.href}
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-slate-200 transition hover:border-emerald-200/30 hover:bg-emerald-300/10 hover:text-emerald-50"
-                    >
-                      {item.label} →
-                    </a>
-                  ) : (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="inline-flex rounded-full border border-emerald-200/25 bg-emerald-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-50 transition hover:bg-emerald-300/18"
-                    >
-                      {item.label} →
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* CHP behind verse truth example start */}
-          <div className="border-t border-white/10 bg-slate-950/45 p-5 sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
-              <div className="lg:w-[15rem] lg:shrink-0">
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.18em] text-emerald-100">
-                  Next · Original word example
-                </p>
-                <h3 className="mt-1 text-3xl font-black leading-none text-white">
-                  Truth
-                </h3>
-                <p className="mt-3 text-xs font-bold leading-6 text-slate-300">
-                  One English word, shown with verified source language details.
-                </p>
-              </div>
-
-              <div className="grid flex-1 gap-3 md:grid-cols-2">
-                <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[0.55rem] font-black uppercase tracking-[0.14em] text-sky-100">
-                        Hebrew
-                      </p>
-                      <p className="mt-2 text-4xl font-black leading-none text-white" lang="he">
-                        אֱמֶת
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.55rem] font-black uppercase tracking-[0.12em] text-slate-300">
-                      H571
-                    </span>
-                  </div>
-
-                  <dl className="mt-4 grid gap-2 text-xs font-bold leading-relaxed text-slate-300">
-                    <div className="grid gap-1 sm:grid-cols-[7.5rem_1fr]">
-                      <dt className="text-slate-500">Transliteration</dt>
-                      <dd className="text-emerald-100">emet</dd>
-                    </div>
-                    <div className="grid gap-1 sm:grid-cols-[7.5rem_1fr]">
-                      <dt className="text-slate-500">Pronunciation</dt>
-                      <dd className="text-emerald-100">eh-MET</dd>
-                    </div>
-                    <div className="grid gap-1 sm:grid-cols-[7.5rem_1fr]">
-                      <dt className="text-slate-500">Meaning</dt>
-                      <dd>truth, faithfulness, reliability, firmness</dd>
-                    </div>
-                  </dl>
-                </article>
-
-                <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[0.55rem] font-black uppercase tracking-[0.14em] text-sky-100">
-                        Greek
-                      </p>
-                      <p className="mt-2 text-4xl font-black leading-none text-white" lang="grc">
-                        ἀλήθεια
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.55rem] font-black uppercase tracking-[0.12em] text-slate-300">
-                      G225
-                    </span>
-                  </div>
-
-                  <dl className="mt-4 grid gap-2 text-xs font-bold leading-relaxed text-slate-300">
-                    <div className="grid gap-1 sm:grid-cols-[7.5rem_1fr]">
-                      <dt className="text-slate-500">Transliteration</dt>
-                      <dd className="text-emerald-100">alētheia</dd>
-                    </div>
-                    <div className="grid gap-1 sm:grid-cols-[7.5rem_1fr]">
-                      <dt className="text-slate-500">Pronunciation</dt>
-                      <dd className="text-emerald-100">ah-LAY-thee-ah</dd>
-                    </div>
-                    <div className="grid gap-1 sm:grid-cols-[7.5rem_1fr]">
-                      <dt className="text-slate-500">Meaning</dt>
-                      <dd>truth, reality, what is true</dd>
-                    </div>
-                  </dl>
-                </article>
-              </div>
-            </div>
-          </div>
-          {/* CHP behind verse truth example end */}
-          </details>
-        </section>
+        <BehindTheVerse verseReference={HOMEPAGE_SELECTED_VERSE_REFERENCE} />
         <section className="mx-auto mt-12 max-w-5xl">
           <div className="flex flex-wrap items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.025] px-4 py-3 text-center">
             {crossHeartPrayCards.map((item) => (
