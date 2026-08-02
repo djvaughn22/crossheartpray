@@ -108,20 +108,12 @@ export default function YouTubeModal({
           ) : null}
         </div>
         <p className="mt-3 text-center text-xs text-slate-400">
-          Blocked or asked to sign in? Reload, or watch on YouTube — you stay right here.
+          Blocked or asked to sign in? Reload the player — you stay right here.
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           <button type="button" onClick={() => setReload((v) => v + 1)} className={pill}>
             ↻ Reload player
           </button>
-          <a
-            href={`https://www.youtube.com/watch?v=${videoId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold text-white no-underline transition hover:bg-red-500"
-          >
-            ▶ Watch on YouTube
-          </a>
         </div>
       </div>
     </div>,

@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { ScriptureReference } from "../lib/scripture";
-import ScriptureReaderModal from "./scripture/ScriptureReaderModal";
+import KindleReaderModal from "./scripture/KindleReaderModal";
 
 export default function SiteFooter() {
   const [showReaderModal, setShowReaderModal] = useState(false);
@@ -62,12 +61,11 @@ export default function SiteFooter() {
           </a>
         </p>
       </div>
-      {showReaderModal && (
-        <ScriptureReaderModal
-          reference={{ book: "MAT", chapter: 22, verse: 35, endVerse: 40 }}
-          onClose={() => setShowReaderModal(false)}
-        />
-      )}
+      <KindleReaderModal
+        isOpen={showReaderModal}
+        onClose={() => setShowReaderModal(false)}
+        initialReference={{ book: "MAT", chapter: 22, verse: 35, endVerse: 40 }}
+      />
     </footer>
   );
 }

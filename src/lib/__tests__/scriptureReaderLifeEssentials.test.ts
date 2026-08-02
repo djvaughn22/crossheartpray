@@ -80,12 +80,10 @@ describe("reader principle cards (source contract)", () => {
     expect(overlay).toContain("aria-expanded={playing}");
   });
 
-  it("always offers the official destination: embed fallback and no-embed fallback", () => {
-    expect(overlay).toContain("Watch on the official player");
-    // Principles without an embeddable video get the official player directly.
-    expect(overlay.match(/href=\{principle\.officialVideoUrl\}/g)?.length).toBeGreaterThanOrEqual(
-      3,
-    );
+  it("stays fully internal — no clickable external resource links", () => {
+    // Source credit is plain text; nothing links off-site with one click.
+    expect(overlay).not.toContain("href={principle.officialVideoUrl}");
+    expect(overlay).not.toContain('target="_blank"');
   });
 
   it("builds no fabricated URLs — only verified ids and official destinations", () => {
@@ -103,11 +101,11 @@ describe("reader principle cards (source contract)", () => {
 });
 
 describe("existing Life Essentials surfaces stay intact", () => {
-  it("the resource card keeps its own player behavior and official links", () => {
+  it("the resource card keeps its in-app player and stays internal", () => {
     const resourceCard = read("GeneGetzResourceCard.tsx");
     expect(resourceCard).toContain("YouTubeModal");
     expect(resourceCard).toContain("Watch Gene Getz video");
-    expect(resourceCard).toContain("principle.officialVideoUrl");
+    expect(resourceCard).not.toContain('target="_blank"');
   });
 
   it("the reader links back to the main Life Essentials page", () => {

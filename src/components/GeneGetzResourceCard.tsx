@@ -53,23 +53,11 @@ export default function GeneGetzResourceCard({
                 ▶ Watch Gene Getz video
               </button>
             ) : (
-              <a
-                href={principle.officialVideoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-amber-200/30 bg-amber-300/12 px-5 py-2 text-sm font-bold text-amber-50 shadow-sm transition hover:bg-amber-300/20"
-              >
-                Open official Principle Finder
-              </a>
+              <span className="text-xs font-semibold leading-5 text-slate-400">
+                Video not yet playable here — the full principle is in the Life
+                Essentials Study Bible.
+              </span>
             )}
-            <a
-              href={principle.officialVideoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-semibold text-amber-100/70 underline decoration-white/20 underline-offset-4 hover:text-amber-50"
-            >
-              Official page
-            </a>
           </div>
 
           <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">

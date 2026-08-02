@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  bibleComUrlForPassage,
   getScriptureProvider,
   parseScriptureReference,
   resolveScriptureSelection,
@@ -12,7 +11,8 @@ import {
 import { getGeneGetzPrinciplesForVerse, type LifeEssentialsPrinciple } from "../lib/geneGetzLifeEssentials";
 import type { VerifiedWordStudy } from "../lib/originalLanguageWordStudy";
 import type { BibleBingoCardPassage } from "./BibleBingoVerseCard";
-import ScriptureReaderModal from "./scripture/ScriptureReaderModal";
+import KindleReaderModal from "./scripture/KindleReaderModal";
+import ReaderLifeEssentials from "./scripture/ReaderLifeEssentials";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 
 type BehindTheVerseProps = {
@@ -33,6 +33,9 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
   const [error, setError] = useState("");
   const [showReaderModal, setShowReaderModal] = useState(false);
   const [readerReference, setReaderReference] = useState<ScriptureReference | null>(null);
+  // Tracks the chapter on screen inside the reader so the Life Essentials
+  // companion follows Previous/Next — same behavior as the Reading Plan reader.
+  const [readerCurrent, setReaderCurrent] = useState<ScriptureReference | null>(null);
   const [showWordStudyModal, setShowWordStudyModal] = useState(false);
 
   useEffect(() => {
@@ -168,15 +171,16 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
   }
 
   const { passage, principles, wordStudy } = data;
-  const verseUrl = bibleComUrlForPassage(passage);
 
   const handleOpenVerse = () => {
-    setReaderReference({
+    const reference: ScriptureReference = {
       book: passage.code as ScriptureReference["book"],
       chapter: parseInt(passage.chapter),
       verse: parseInt(passage.verse),
       endVerse: passage.endVerse ? parseInt(passage.endVerse) : undefined,
-    });
+    };
+    setReaderReference(reference);
+    setReaderCurrent(reference);
     setShowReaderModal(true);
   };
 
@@ -249,13 +253,14 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
                 {principles.length > 0 ? (
                   <div className="mt-2 space-y-2">
                     {principles.slice(0, 1).map((p) => (
-                      <Link
+                      <button
                         key={p.principleNumber}
-                        href="/life-essentials"
+                        type="button"
+                        onClick={handleOpenVerse}
                         className="inline-flex text-sm font-black text-white underline decoration-emerald-300/45 decoration-2 underline-offset-4 transition hover:text-emerald-100"
                       >
                         Principle {p.principleNumber}
-                      </Link>
+                      </button>
                     ))}
                     <p className="text-xs font-semibold leading-5 text-slate-400">
                       {principles.length} principle{principles.length !== 1 ? "s" : ""} found.
@@ -386,15 +391,25 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
         )}
       </details>
     </section>
-    {showReaderModal && readerReference && (
-      <ScriptureReaderModal reference={readerReference} onClose={() => setShowReaderModal(false)} />
+    {readerReference && (
+      <KindleReaderModal
+        isOpen={showReaderModal}
+        onClose={() => setShowReaderModal(false)}
+        initialReference={readerReference}
+        onReferenceChange={setReaderCurrent}
+        afterScripture={
+          <ReaderLifeEssentials
+            book={(readerCurrent ?? readerReference).book}
+            chapter={(readerCurrent ?? readerReference).chapter ?? 1}
+          />
+        }
+      />
     )}
     {showWordStudyModal && wordStudy && (
       <OriginalWordStudyModal
         passage={passage}
         wordStudy={wordStudy}
         wordStudies={[wordStudy]}
-        verseUrl={verseUrl}
         onClose={() => setShowWordStudyModal(false)}
       />
     )}

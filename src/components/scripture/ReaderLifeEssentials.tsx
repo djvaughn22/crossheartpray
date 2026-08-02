@@ -88,16 +88,7 @@ export default function ReaderLifeEssentials({ book, chapter }: ReaderLifeEssent
                     />
                   </div>
                   <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-400">
-                    Player not loading?{" "}
-                    <a
-                      href={principle.officialVideoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-emerald-100 underline decoration-white/25 underline-offset-2 hover:text-white"
-                    >
-                      Watch on the official player
-                    </a>
-                    .
+                    Player not loading? Close and reopen it, or try again in a moment.
                   </p>
                 </>
               ) : null}
@@ -121,23 +112,11 @@ export default function ReaderLifeEssentials({ book, chapter }: ReaderLifeEssent
                     {playing ? "Hide player" : "▶ Watch principle"}
                   </button>
                 ) : (
-                  <a
-                    href={principle.officialVideoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={watchPillClass}
-                  >
-                    ▶ Watch principle
-                  </a>
+                  <span className="text-xs font-semibold leading-5 text-slate-400">
+                    Video not yet playable here — the full principle is in the Life
+                    Essentials Study Bible.
+                  </span>
                 )}
-                <a
-                  href={principle.officialVideoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-emerald-100/70 underline decoration-white/20 underline-offset-4 hover:text-emerald-50"
-                >
-                  Official page
-                </a>
               </div>
 
               <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">

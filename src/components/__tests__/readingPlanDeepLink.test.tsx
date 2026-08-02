@@ -115,41 +115,26 @@ describe("every plan reading offers Read here", () => {
     ).toBeTruthy();
   });
 
-  it("the 📖 icon is the external YouVersion/Bible.com action for the assigned passage", () => {
+  it("no cell offers a one-click external link — reading stays on CrossHeartPray", () => {
     window.history.replaceState(null, "", "/bible-reading-plan");
     const { container } = render(
       <BibleReadingPlanProgress weeks={BIBLE_READING_PLAN_WEEKS} />,
     );
 
-    const cell = container.querySelector("#week-48-friday");
-    const external = cell?.querySelector(
-      'a[aria-label="Open Malachi in YouVersion/Bible.com in a new tab"]',
-    );
-    expect(external, "Malachi cell is missing the external 📖 link").toBeTruthy();
-    expect(external?.getAttribute("href")).toBe(
-      "https://www.bible.com/bible/3034/MAL.1.BSB",
-    );
-    expect(external?.getAttribute("target")).toBe("_blank");
-    expect(external?.getAttribute("rel")).toContain("noopener");
-    expect(external?.getAttribute("rel")).toContain("noreferrer");
-  });
+    // The plan grid renders no external anchors at all: no new-tab links,
+    // no bible.com hrefs anywhere in the table.
+    expect(container.querySelectorAll('a[target="_blank"]').length).toBe(0);
+    for (const anchor of Array.from(container.querySelectorAll("a[href]"))) {
+      expect(anchor.getAttribute("href")).not.toContain("bible.com");
+    }
 
-  it("the 📖 link honors the person's chosen translation when Bible.com supports it", async () => {
-    // KJV is Bible.com version 1.
-    window.localStorage.setItem("crossheartpray:scripture:translation:v1", "1");
-    window.history.replaceState(null, "", "/bible-reading-plan");
-    const { container } = render(
-      <BibleReadingPlanProgress weeks={BIBLE_READING_PLAN_WEEKS} />,
-    );
-
-    await waitFor(() => {
-      const external = container.querySelector(
-        '#week-48-friday a[aria-label*="YouVersion/Bible.com"]',
-      );
-      expect(external?.getAttribute("href")).toBe(
-        "https://www.bible.com/bible/1/MAL.1.KJV",
-      );
-    });
+    // The internal read action is still there for the Malachi cell.
+    const cell = container.querySelector("#week-48-friday") as HTMLElement;
+    expect(
+      within(cell).getByRole("button", {
+        name: "Read Malachi here on CrossHeartPray",
+      }),
+    ).toBeTruthy();
   });
 });
 

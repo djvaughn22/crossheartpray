@@ -21,7 +21,6 @@ type OriginalWordStudyModalProps = {
   passage: WordStudyPassage;
   wordStudy: VerifiedWordStudy;
   wordStudies: VerifiedWordStudy[];
-  verseUrl: string;
   onClose: () => void;
 };
 
@@ -44,22 +43,6 @@ function titleCase(value: string) {
   if (!cleaned) return "";
 
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-}
-
-function buildBibleHubStrongsUrl(strongs: string) {
-  const clean = strongs.trim().toUpperCase();
-  const match = clean.match(/^([HG])(\d+)$/);
-
-  if (!match) return "";
-
-  const [, language, number] = match;
-  const paddedNumber = number.padStart(4, "0");
-
-  if (language === "H") {
-    return `https://biblehub.com/hebrew/${paddedNumber}.htm`;
-  }
-
-  return `https://biblehub.com/greek/${paddedNumber}.htm`;
 }
 
 function normalizedOriginalLetters(value: string) {
@@ -254,7 +237,6 @@ export default function OriginalWordStudyModal({
   passage,
   wordStudy,
   wordStudies,
-  verseUrl,
   onClose,
 }: OriginalWordStudyModalProps) {
   const [selectedWordStudy, setSelectedWordStudy] = useState(wordStudy);
@@ -303,7 +285,6 @@ export default function OriginalWordStudyModal({
     selectedWordStudy.originalWord.trim();
   const transliterationGuide = buildTransliterationGuide(selectedWordStudy);
   const pronunciationGuide = buildPronunciationGuide(selectedWordStudy);
-  const strongsUrl = buildBibleHubStrongsUrl(selectedWordStudy.strongs);
   const strongsEntry = getStrongsDictionaryEntry(selectedWordStudy.strongs);
   const strongsShortDefinition =
     getStrongsShortDefinition(strongsEntry) || selectedWordStudy.lexiconMeaning.trim();
@@ -410,15 +391,10 @@ export default function OriginalWordStudyModal({
                     </p>
                   </div>
 
-                  {strongsUrl ? (
-                    <a
-                      href={strongsUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full border border-emerald-200/35 bg-emerald-300/15 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-50 underline decoration-emerald-100/40 underline-offset-4 transition hover:bg-emerald-300/25"
-                    >
-                      Open Strong&apos;s {selectedWordStudy.strongs}
-                    </a>
+                  {selectedWordStudy.strongs ? (
+                    <span className="rounded-full border border-emerald-200/35 bg-emerald-300/15 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-50">
+                      Strong&apos;s {selectedWordStudy.strongs}
+                    </span>
                   ) : null}
                 </div>
 

@@ -4,41 +4,31 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import KindleReaderModal from "./scripture/KindleReaderModal";
 import {
-  bibleComUrl,
-  bibleComUrlForTranslation,
   resolveScriptureSelection,
   type ScriptureReference,
-  type ScriptureTranslation,
 } from "../lib/scripture";
 
 type CardReadMenuProps = {
   /** The canonical selected verse or passage. Everything derives from it. */
   reference: ScriptureReference;
-  /** Optional translation for the Bible.com link (falls back to WEB). */
-  translation?: ScriptureTranslation;
   className?: string;
   /** Accessible name for the Read trigger. Defaults to "Read {label}". */
   triggerAriaLabel?: string;
 };
 
 // The one "Read" action menu for every verse surface. A "Read" button opens
-// a portaled panel with four clearly separated actions, ordered:
+// a portaled panel with the internal reading actions, ordered:
 //
-//   Internal (CrossHeartPray):
-//     1. Read here — opens the containing chapter in a modal reader
-//     2. Read in Bible Plan — navigates to the exact reading-plan week/day (if mapped)
+//   1. Read here — opens the containing chapter in a modal reader
+//   2. Read in Bible Plan — navigates to the exact reading-plan week/day (if mapped)
 //
-//   External (Bible.com in new tab):
-//     3. Open verse in Bible.com — the selected verse or range
-//     4. Open chapter in Bible.com — the full chapter
-//
+// Every action stays on CrossHeartPray — a first click never leaves the site.
 // Everything derives from ONE ResolvedScriptureReference — never from
 // separately passed hrefs — so the heading and the actions can never
 // disagree. Portaled to <body> like CrossHeartPrayShareMenu so it escapes
 // card transforms.
 export default function CardReadMenu({
   reference,
-  translation,
   className = "",
   triggerAriaLabel,
 }: CardReadMenuProps) {
@@ -53,9 +43,8 @@ export default function CardReadMenu({
     [reference],
   );
 
-  // Estimate menu height for positioning: internal actions + Bible.com actions
-  // (read here, reading plan if available, verse on Bible.com, chapter on Bible.com).
-  const itemCount = resolved ? (resolved.readingPlan ? 4 : 3) : 0;
+  // Estimate menu height for positioning: read here + reading plan if mapped.
+  const itemCount = resolved ? (resolved.readingPlan ? 2 : 1) : 0;
 
   function toggleOpen() {
     if (open) {
@@ -101,15 +90,6 @@ export default function CardReadMenu({
   }, [open]);
 
   if (!resolved) return null;
-
-  const bibleComHref = bibleComUrlForTranslation(resolved.reference, translation);
-
-  // Chapter-only link (no verse) for "Read Chapter on Bible.com".
-  const chapterOnlyRef: ScriptureReference = {
-    book: resolved.reference.book,
-    chapter: resolved.reference.chapter || 1,
-  };
-  const chapterHref = bibleComUrl(chapterOnlyRef, translation);
 
   const itemClass =
     "block w-full rounded-xl px-3 py-3 text-left text-sm font-black text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-300";
@@ -186,38 +166,6 @@ export default function CardReadMenu({
                   </a>
                 ) : null}
 
-                {/* External Bible.com actions section */}
-                <span className={groupLabelClass} aria-hidden="true">
-                  Open on Bible.com
-                </span>
-
-                {/* 3. Open verse in Bible.com */}
-                <a
-                  href={bibleComHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  role="menuitem"
-                  aria-label={`Open ${resolved.label} on Bible.com in a new tab`}
-                  onClick={() => setOpen(false)}
-                  className={itemClass}
-                >
-                  Open verse in Bible.com
-                  <span className={subClass}>View this verse in a new tab.</span>
-                </a>
-
-                {/* 4. Open chapter in Bible.com */}
-                <a
-                  href={chapterHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  role="menuitem"
-                  aria-label={`Open ${resolved.reference.book} ${resolved.reference.chapter} on Bible.com in a new tab`}
-                  onClick={() => setOpen(false)}
-                  className={itemClass}
-                >
-                  Open chapter in Bible.com
-                  <span className={subClass}>View the full chapter in a new tab.</span>
-                </a>
               </div>
             </>,
             document.body,

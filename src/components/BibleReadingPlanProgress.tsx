@@ -26,12 +26,8 @@ import {
   subscribeToReadingPlanProgress,
 } from "../lib/readingPlanProgress";
 import {
-  BIBLE_COM_DEFAULT_VERSION,
-  BIBLE_COM_LINK_VERSIONS,
-  bibleComUrl,
   bibleComUrlForPassage,
   getScriptureBook,
-  loadTranslationPreference,
   parseScriptureReference,
   toUsfmString,
   type ScriptureReference,
@@ -345,15 +341,6 @@ function referenceForReading(reading: unknown): ScriptureReference | null {
   return referenceFromWebHref(bibleUrl(reading));
 }
 
-// Every cell link goes to the reading's real first chapter on Bible.com —
-// whole-book readings included (never a search-results page).
-function hrefForReading(reading: unknown): string {
-  const reference = referenceForReading(reading);
-  return reference
-    ? bibleComUrlForPassage({ code: reference.book, chapter: reference.chapter ?? 1 })
-    : bibleUrl(reading);
-}
-
 // The Life Essentials principles that overlap a reading's first chapter —
 // powers the 1-click Gene Getz video icon per cell.
 function geneGetzForReading(reading: unknown): LifeEssentialsPrinciple[] {
@@ -379,7 +366,6 @@ function flattenPlan(weeks: BibleReadingPlanWeek[]) {
         short: lane.short,
         lane: laneForReading(reading, laneIndex),
         label,
-        href: hrefForReading(reading),
         readerReference: referenceForReading(reading),
       };
     });
@@ -424,21 +410,6 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   } | null>(null);
   // Persistent return focus tracking after reader closes
   const [returnFocusToId, setReturnFocusToId] = useState<string>("");
-  // External 📖 links honor the person's chosen translation when Bible.com
-  // supports it; WEB otherwise. Read after mount — localStorage is
-  // client-only.
-  const [linkVersion, setLinkVersion] = useState<{
-    id: number;
-    abbreviation: string;
-    label: string;
-  }>(BIBLE_COM_DEFAULT_VERSION);
-
-  useEffect(() => {
-    const savedId = loadTranslationPreference();
-    const saved = BIBLE_COM_LINK_VERSIONS.find((version) => version.id === savedId);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- preference lives in localStorage, readable only after mount
-    if (saved) setLinkVersion(saved);
-  }, []);
 
   // The expanded reader row fills the visible width of the scrolling table
   // (never the full 1360px row), so the reading sits centered with no dead
@@ -800,27 +771,6 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                 </button>
               ) : null}
 
-              <a
-                href={
-                  nextReading.readerReference
-                    ? bibleComUrl(
-                        {
-                          book: nextReading.readerReference.book,
-                          chapter: nextReading.readerReference.chapter ?? 1,
-                        },
-                        linkVersion,
-                      )
-                    : nextReading.href
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-black leading-tight text-white transition hover:border-white/30 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:w-auto sm:text-base"
-                aria-label={`Open ${nextReading.label} on Bible.com in a new tab`}
-                title={`${nextReading.label} on Bible.com`}
-              >
-                Bible.com <span aria-hidden="true">↗</span>
-              </a>
-
               <label className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-white/[0.06] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white transition hover:border-emerald-200/45 hover:bg-white/[0.1] sm:w-auto">
                 <input
                   type="checkbox"
@@ -881,15 +831,6 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     const reading = readingForLane(week, laneIndex);
                     const label = labelForReading(reading);
                     const id = idForReading(reading, weekNo, laneIndex);
-                    const readHereRef = referenceForReading(reading);
-                    // External 📖 destination: the exact canonical assigned
-                    // passage, in the chosen translation when supported.
-                    const externalHref = readHereRef
-                      ? bibleComUrl(
-                          { book: readHereRef.book, chapter: readHereRef.chapter ?? 1 },
-                          linkVersion,
-                        )
-                      : hrefForReading(reading);
                     const isRead = Boolean(progress[id]);
                     const getz = geneGetzForReading(reading).find((p) => p.youtubeId);
 
@@ -932,19 +873,6 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                           >
                             {label}
                           </button>
-
-                          {/* 📖 = the external YouVersion/Bible.com action. */}
-                          <a
-                            href={externalHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Open ${label} in YouVersion/Bible.com`}
-                            aria-label={`Open ${label} in YouVersion/Bible.com in a new tab`}
-                            className="chp-getz-icon ml-auto shrink-0 cursor-pointer text-base leading-none opacity-80 transition hover:scale-110 hover:opacity-100"
-                          >
-                            <span aria-hidden="true">📖</span>
-                            <span aria-hidden="true" className="align-super text-[0.5rem]">↗</span>
-                          </a>
 
                           {getz ? (
                             <span

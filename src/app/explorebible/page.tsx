@@ -1,6 +1,6 @@
 "use client";
 import * as CHPLocalBibleData from "../../lib/localBibleVerses";
-import { SCRIPTURE_BOOK_NAME_TO_CODE, bibleComUrl, bibleComUrlForPassage, referenceForPassage } from "../../lib/scripture";
+import { SCRIPTURE_BOOK_NAME_TO_CODE, referenceForPassage } from "../../lib/scripture";
 import SiteFooter from "../../components/SiteFooter";
 
 
@@ -31,6 +31,7 @@ import CardInfoLegend from "../../components/CardInfoLegend";
 import CardReadMenu from "../../components/CardReadMenu";
 import LazyBibleVerseLookup from "../../components/LazyBibleVerseLookup";
 import OriginalWordStudyModal from "../../components/OriginalWordStudyModal";
+import KindleReaderModal from "../../components/scripture/KindleReaderModal";
 import VerifiedVerseText from "../../components/VerifiedVerseText";
 import BibleBingoShareMenu from "../../components/BibleBingoShareMenu";
 import CentralTimeBadge from "../../components/CentralTimeBadge";
@@ -238,175 +239,91 @@ function cardTone(index: number) {
 
 type BibleBookLink = {
   label: string;
-  href: string;
-};
-
-function bibleBookHref(code: string) {
-  return bibleComUrlForPassage({ code, chapter: 1 });
-}
-
-const BIBLE_BINGO_BOOK_LINKS: Record<string, BibleBookLink[]> = {
-  epistles: [
-    { label: "Romans", href: bibleBookHref("ROM") },
-    { label: "1 Corinthians", href: bibleBookHref("1CO") },
-    { label: "2 Corinthians", href: bibleBookHref("2CO") },
-    { label: "Galatians", href: bibleBookHref("GAL") },
-    { label: "Ephesians", href: bibleBookHref("EPH") },
-    { label: "Philippians", href: bibleBookHref("PHP") },
-    { label: "Colossians", href: bibleBookHref("COL") },
-    { label: "1 Thessalonians", href: bibleBookHref("1TH") },
-    { label: "2 Thessalonians", href: bibleBookHref("2TH") },
-    { label: "1 Timothy", href: bibleBookHref("1TI") },
-    { label: "2 Timothy", href: bibleBookHref("2TI") },
-    { label: "Titus", href: bibleBookHref("TIT") },
-    { label: "Philemon", href: bibleBookHref("PHM") },
-    { label: "Hebrews", href: bibleBookHref("HEB") },
-    { label: "James", href: bibleBookHref("JAS") },
-    { label: "1 Peter", href: bibleBookHref("1PE") },
-    { label: "2 Peter", href: bibleBookHref("2PE") },
-    { label: "1 John", href: bibleBookHref("1JN") },
-    { label: "2 John", href: bibleBookHref("2JN") },
-    { label: "3 John", href: bibleBookHref("3JN") },
-    { label: "Jude", href: bibleBookHref("JUD") },
-  ],
-  law: [
-    { label: "The Law", href: bibleBookHref("GEN") },
-    { label: "Exodus", href: bibleBookHref("EXO") },
-    { label: "Leviticus", href: bibleBookHref("LEV") },
-    { label: "Numbers", href: bibleBookHref("NUM") },
-    { label: "Deuteronomy", href: bibleBookHref("DEU") },
-  ],
-  history: [
-    { label: "Joshua", href: bibleBookHref("JOS") },
-    { label: "Judges", href: bibleBookHref("JDG") },
-    { label: "Ruth", href: bibleBookHref("RUT") },
-    { label: "1 Samuel", href: bibleBookHref("1SA") },
-    { label: "2 Samuel", href: bibleBookHref("2SA") },
-    { label: "1 Kings", href: bibleBookHref("1KI") },
-    { label: "2 Kings", href: bibleBookHref("2KI") },
-    { label: "1 Chronicles", href: bibleBookHref("1CH") },
-    { label: "2 Chronicles", href: bibleBookHref("2CH") },
-    { label: "Ezra", href: bibleBookHref("EZR") },
-    { label: "Nehemiah", href: bibleBookHref("NEH") },
-    { label: "Esther", href: bibleBookHref("EST") },
-  ],
-  psalms: [
-    { label: "Psalms", href: bibleBookHref("PSA") },
-  ],
-  poetry: [
-    { label: "Job", href: bibleBookHref("JOB") },
-    { label: "Poetry", href: bibleBookHref("PRO") },
-    { label: "Ecclesiastes", href: bibleBookHref("ECC") },
-    { label: "Song of Solomon", href: bibleBookHref("SNG") },
-  ],
-  prophecy: [
-    { label: "Isaiah", href: bibleBookHref("ISA") },
-    { label: "Jeremiah", href: bibleBookHref("JER") },
-    { label: "Lamentations", href: bibleBookHref("LAM") },
-    { label: "Ezekiel", href: bibleBookHref("EZK") },
-    { label: "Daniel", href: bibleBookHref("DAN") },
-    { label: "Hosea", href: bibleBookHref("HOS") },
-    { label: "Joel", href: bibleBookHref("JOL") },
-    { label: "Amos", href: bibleBookHref("AMO") },
-    { label: "Obadiah", href: bibleBookHref("OBA") },
-    { label: "Jonah", href: bibleBookHref("JON") },
-    { label: "Micah", href: bibleBookHref("MIC") },
-    { label: "Nahum", href: bibleBookHref("NAM") },
-    { label: "Habakkuk", href: bibleBookHref("HAB") },
-    { label: "Zephaniah", href: bibleBookHref("ZEP") },
-    { label: "Haggai", href: bibleBookHref("HAG") },
-    { label: "Zechariah", href: bibleBookHref("ZEC") },
-    { label: "Malachi", href: bibleBookHref("MAL") },
-  ],
-  gospels: [
-    { label: "Matthew", href: bibleBookHref("MAT") },
-    { label: "Mark", href: bibleBookHref("MRK") },
-    { label: "Luke", href: bibleBookHref("LUK") },
-    { label: "John", href: bibleBookHref("JHN") },
-  ],
+  /** USFM book code — opens the book at chapter 1 in the internal reader. */
+  book: string;
 };
 
 /* BIBLE BINGO READING PLAN BOOK LINKS */
 const BIBLE_BINGO_READING_PLAN_BOOK_LINKS: Record<string, BibleBookLink[]> = {
   law: [
-    { label: "Genesis", href: bibleComUrl({ book: "GEN" }) },
-    { label: "Exodus", href: bibleComUrl({ book: "EXO" }) },
-    { label: "Leviticus", href: bibleComUrl({ book: "LEV" }) },
-    { label: "Numbers", href: bibleComUrl({ book: "NUM" }) },
-    { label: "Deuteronomy", href: bibleComUrl({ book: "DEU" }) },
+    { label: "Genesis", book: "GEN" },
+    { label: "Exodus", book: "EXO" },
+    { label: "Leviticus", book: "LEV" },
+    { label: "Numbers", book: "NUM" },
+    { label: "Deuteronomy", book: "DEU" },
   ],
   history: [
-    { label: "Joshua", href: bibleComUrl({ book: "JOS" }) },
-    { label: "Judges", href: bibleComUrl({ book: "JDG" }) },
-    { label: "Ruth", href: bibleComUrl({ book: "RUT" }) },
-    { label: "1 Samuel", href: bibleComUrl({ book: "1SA" }) },
-    { label: "2 Samuel", href: bibleComUrl({ book: "2SA" }) },
-    { label: "1 Kings", href: bibleComUrl({ book: "1KI" }) },
-    { label: "2 Kings", href: bibleComUrl({ book: "2KI" }) },
-    { label: "1 Chronicles", href: bibleComUrl({ book: "1CH" }) },
-    { label: "2 Chronicles", href: bibleComUrl({ book: "2CH" }) },
-    { label: "Ezra", href: bibleComUrl({ book: "EZR" }) },
-    { label: "Nehemiah", href: bibleComUrl({ book: "NEH" }) },
-    { label: "Esther", href: bibleComUrl({ book: "EST" }) },
-    { label: "Acts", href: bibleComUrl({ book: "ACT" }) },
+    { label: "Joshua", book: "JOS" },
+    { label: "Judges", book: "JDG" },
+    { label: "Ruth", book: "RUT" },
+    { label: "1 Samuel", book: "1SA" },
+    { label: "2 Samuel", book: "2SA" },
+    { label: "1 Kings", book: "1KI" },
+    { label: "2 Kings", book: "2KI" },
+    { label: "1 Chronicles", book: "1CH" },
+    { label: "2 Chronicles", book: "2CH" },
+    { label: "Ezra", book: "EZR" },
+    { label: "Nehemiah", book: "NEH" },
+    { label: "Esther", book: "EST" },
+    { label: "Acts", book: "ACT" },
   ],
   psalms: [
-    { label: "Psalms", href: bibleComUrl({ book: "PSA" }) },
+    { label: "Psalms", book: "PSA" },
   ],
   poetry: [
-    { label: "Job", href: bibleComUrl({ book: "JOB" }) },
-    { label: "Proverbs", href: bibleComUrl({ book: "PRO" }) },
-    { label: "Ecclesiastes", href: bibleComUrl({ book: "ECC" }) },
-    { label: "Song of Solomon", href: bibleComUrl({ book: "SNG" }) },
+    { label: "Job", book: "JOB" },
+    { label: "Proverbs", book: "PRO" },
+    { label: "Ecclesiastes", book: "ECC" },
+    { label: "Song of Solomon", book: "SNG" },
   ],
   prophecy: [
-    { label: "Isaiah", href: bibleComUrl({ book: "ISA" }) },
-    { label: "Jeremiah", href: bibleComUrl({ book: "JER" }) },
-    { label: "Lamentations", href: bibleComUrl({ book: "LAM" }) },
-    { label: "Ezekiel", href: bibleComUrl({ book: "EZK" }) },
-    { label: "Daniel", href: bibleComUrl({ book: "DAN" }) },
-    { label: "Hosea", href: bibleComUrl({ book: "HOS" }) },
-    { label: "Joel", href: bibleComUrl({ book: "JOL" }) },
-    { label: "Amos", href: bibleComUrl({ book: "AMO" }) },
-    { label: "Obadiah", href: bibleComUrl({ book: "OBA" }) },
-    { label: "Jonah", href: bibleComUrl({ book: "JON" }) },
-    { label: "Micah", href: bibleComUrl({ book: "MIC" }) },
-    { label: "Nahum", href: bibleComUrl({ book: "NAM" }) },
-    { label: "Habakkuk", href: bibleComUrl({ book: "HAB" }) },
-    { label: "Zephaniah", href: bibleComUrl({ book: "ZEP" }) },
-    { label: "Haggai", href: bibleComUrl({ book: "HAG" }) },
-    { label: "Zechariah", href: bibleComUrl({ book: "ZEC" }) },
-    { label: "Malachi", href: bibleComUrl({ book: "MAL" }) },
-    { label: "Revelation", href: bibleComUrl({ book: "REV" }) },
+    { label: "Isaiah", book: "ISA" },
+    { label: "Jeremiah", book: "JER" },
+    { label: "Lamentations", book: "LAM" },
+    { label: "Ezekiel", book: "EZK" },
+    { label: "Daniel", book: "DAN" },
+    { label: "Hosea", book: "HOS" },
+    { label: "Joel", book: "JOL" },
+    { label: "Amos", book: "AMO" },
+    { label: "Obadiah", book: "OBA" },
+    { label: "Jonah", book: "JON" },
+    { label: "Micah", book: "MIC" },
+    { label: "Nahum", book: "NAM" },
+    { label: "Habakkuk", book: "HAB" },
+    { label: "Zephaniah", book: "ZEP" },
+    { label: "Haggai", book: "HAG" },
+    { label: "Zechariah", book: "ZEC" },
+    { label: "Malachi", book: "MAL" },
+    { label: "Revelation", book: "REV" },
   ],
   gospels: [
-    { label: "Matthew", href: bibleComUrl({ book: "MAT" }) },
-    { label: "Mark", href: bibleComUrl({ book: "MRK" }) },
-    { label: "Luke", href: bibleComUrl({ book: "LUK" }) },
-    { label: "John", href: bibleComUrl({ book: "JHN" }) },
+    { label: "Matthew", book: "MAT" },
+    { label: "Mark", book: "MRK" },
+    { label: "Luke", book: "LUK" },
+    { label: "John", book: "JHN" },
   ],
   epistles: [
-    { label: "Romans", href: bibleComUrl({ book: "ROM" }) },
-    { label: "1 Corinthians", href: bibleComUrl({ book: "1CO" }) },
-    { label: "2 Corinthians", href: bibleComUrl({ book: "2CO" }) },
-    { label: "Galatians", href: bibleComUrl({ book: "GAL" }) },
-    { label: "Ephesians", href: bibleComUrl({ book: "EPH" }) },
-    { label: "Philippians", href: bibleComUrl({ book: "PHP" }) },
-    { label: "Colossians", href: bibleComUrl({ book: "COL" }) },
-    { label: "1 Thessalonians", href: bibleComUrl({ book: "1TH" }) },
-    { label: "2 Thessalonians", href: bibleComUrl({ book: "2TH" }) },
-    { label: "1 Timothy", href: bibleComUrl({ book: "1TI" }) },
-    { label: "2 Timothy", href: bibleComUrl({ book: "2TI" }) },
-    { label: "Titus", href: bibleComUrl({ book: "TIT" }) },
-    { label: "Philemon", href: bibleComUrl({ book: "PHM" }) },
-    { label: "Hebrews", href: bibleComUrl({ book: "HEB" }) },
-    { label: "James", href: bibleComUrl({ book: "JAS" }) },
-    { label: "1 Peter", href: bibleComUrl({ book: "1PE" }) },
-    { label: "2 Peter", href: bibleComUrl({ book: "2PE" }) },
-    { label: "1 John", href: bibleComUrl({ book: "1JN" }) },
-    { label: "2 John", href: bibleComUrl({ book: "2JN" }) },
-    { label: "3 John", href: bibleComUrl({ book: "3JN" }) },
-    { label: "Jude", href: bibleComUrl({ book: "JUD" }) },
+    { label: "Romans", book: "ROM" },
+    { label: "1 Corinthians", book: "1CO" },
+    { label: "2 Corinthians", book: "2CO" },
+    { label: "Galatians", book: "GAL" },
+    { label: "Ephesians", book: "EPH" },
+    { label: "Philippians", book: "PHP" },
+    { label: "Colossians", book: "COL" },
+    { label: "1 Thessalonians", book: "1TH" },
+    { label: "2 Thessalonians", book: "2TH" },
+    { label: "1 Timothy", book: "1TI" },
+    { label: "2 Timothy", book: "2TI" },
+    { label: "Titus", book: "TIT" },
+    { label: "Philemon", book: "PHM" },
+    { label: "Hebrews", book: "HEB" },
+    { label: "James", book: "JAS" },
+    { label: "1 Peter", book: "1PE" },
+    { label: "2 Peter", book: "2PE" },
+    { label: "1 John", book: "1JN" },
+    { label: "2 John", book: "2JN" },
+    { label: "3 John", book: "3JN" },
+    { label: "Jude", book: "JUD" },
   ],
 };
 
@@ -567,14 +484,6 @@ function buildDailyPath() {
   }));
 }
 
-function verseUrl(passage: Passage) {
-  return bibleComUrlForPassage(passage);
-}
-
-function chapterUrl(passage: Passage) {
-  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
-}
-
 function hasVerifiedWordLinks(wordStudies: VerifiedWordStudy[]) {
   return hasVerifiedWordStudies(wordStudies);
 }
@@ -623,19 +532,12 @@ function BibleExplorerExperience() {
   const focusedCardRef = useRef<HTMLElement | null>(null);
   const hasFocusedCardMountedRef = useRef(false);
   const [activeWordStudy, setActiveWordStudy] = useState<ActiveWordStudy | null>(null);
+  // "Books in this Lane" chip → the internal reader at that book's chapter 1.
+  const [activeBookReader, setActiveBookReader] = useState<string | null>(null);
   const [loadingStudyKey, setLoadingStudyKey] = useState<string | null>(null);
   const [wordStudiesByPassage, setWordStudiesByPassage] = useState<
     Record<string, VerifiedWordStudy[]>
   >({});
-
-  const verseOfTheDayUrl = useMemo(() => {
-    const today = new Date();
-    const todayDate = `${today.getFullYear()}-${String(
-      today.getMonth() + 1,
-    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-    return `https://www.bible.com/verse-of-the-day`;
-  }, []);
 
   const dealtPassages = useMemo(
     () => path.flatMap((item) => (item.passage ? [item.passage] : [])),
@@ -672,11 +574,7 @@ function BibleExplorerExperience() {
             <p style="font-family: Georgia, 'Times New Roman', serif; text-align: center; color: #0f172a; font-weight: bold; font-size: 24px; line-height: 1.25; margin: 10px 0 14px;">${passage.label}</p>
             <p style="font-family: Georgia, 'Times New Roman', serif; color: #334155; line-height: 1.7; font-size: 17px;">${passage.text}</p>
             <p style="text-align: center;">
-              <a href="${verseUrl(passage)}" style="color: #065f46; font-weight: bold; text-decoration: none;">Verse</a>
-              &nbsp; | &nbsp;
-              <a href="${chapterUrl(passage)}" style="color: #065f46; font-weight: bold; text-decoration: none;">Chapter</a>
-              &nbsp; | &nbsp;
-              <a href="${boardUrl}?card=${index + 1}" style="color: #065f46; font-weight: bold; text-decoration: none;">Card</a>
+              <a href="${boardUrl}?card=${index + 1}" style="color: #065f46; font-weight: bold; text-decoration: none;">Read this card on CrossHeartPray</a>
             </p>
           </div>
         `).join("")}
@@ -695,10 +593,6 @@ function BibleExplorerExperience() {
             <p style="font-family: Georgia, 'Times New Roman', serif; color: #334155; line-height: 1.7; font-size: 17px;">${passage.text}</p>
             <p style="text-align: center; margin: 22px 0 0;">
               <a href="${boardUrl}?card=${index + 1}" style="color: #065f46; font-weight: bold; text-decoration: none;">Open Live Card</a>
-              &nbsp; | &nbsp;
-              <a href="${verseUrl(passage)}" style="color: #065f46; font-weight: bold; text-decoration: none;">Verse</a>
-              &nbsp; | &nbsp;
-              <a href="${chapterUrl(passage)}" style="color: #065f46; font-weight: bold; text-decoration: none;">Chapter</a>
             </p>
           </div>
           <p style="text-align: center; color: #64748b; font-size: 13px; line-height: 1.6;">
@@ -1116,12 +1010,6 @@ function BibleExplorerExperience() {
                       "",
                       "Open this card:",
                       `${boardUrl}?card=${focusedIndex + 1}`,
-                      "",
-                      "Open in the Holy Bible app:",
-                      verseUrl(focusedPassage),
-                      "",
-                      "Read the chapter:",
-                      chapterUrl(focusedPassage),
                     ].join("\n")}
                     emailSubject={`${focusedPassage.label} Bible Bingo card`}
                     htmlEmail={cardHtmlEmail(focusedCard.section, focusedPassage, focusedIndex)}
@@ -1306,15 +1194,14 @@ function BibleExplorerExperience() {
                   </p>
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
                     {focusedBookLinks.map((book) => (
-                      <a
+                      <button
                         key={book.label}
-                        href={book.href}
-                        target="_blank"
-                        rel="noreferrer"
+                        type="button"
+                        onClick={() => setActiveBookReader(book.book)}
                         className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-slate-100 transition hover:border-emerald-200/60 hover:bg-emerald-200/10"
                       >
                         {book.label}
-                      </a>
+                      </button>
                     ))}
                   </div>
                   <p className="bible-bingo-focused-lane-position-footnote mt-3 text-xs font-semibold leading-5 text-slate-400">
@@ -1332,10 +1219,17 @@ function BibleExplorerExperience() {
             passage={activeWordStudy.passage}
             wordStudy={activeWordStudy.wordStudy}
             wordStudies={wordStudiesForPassage(activeWordStudy.passage)}
-            verseUrl={verseUrl(activeWordStudy.passage)}
             onClose={() => setActiveWordStudy(null)}
           />
         )}
+
+        <KindleReaderModal
+          isOpen={Boolean(activeBookReader)}
+          onClose={() => setActiveBookReader(null)}
+          initialReference={
+            activeBookReader ? { book: activeBookReader, chapter: 1 } : undefined
+          }
+        />
 
         <LazyBibleVerseLookup className="mt-8" initialReference="Romans 15:7" />
 

@@ -1032,7 +1032,6 @@ export default function DailyHopeRoutine({
           passage={activeWordStudy.passage}
           wordStudy={activeWordStudy.wordStudy}
           wordStudies={wordStudiesForPassage(activeWordStudy.passage)}
-          verseUrl={verseUrl(activeWordStudy.passage)}
           onClose={() => setActiveWordStudy(null)}
         />
       ) : null}

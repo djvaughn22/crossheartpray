@@ -469,7 +469,6 @@ export default function BibleVerseLookup({
           passage={activeWordStudy.passage}
           wordStudy={activeWordStudy.wordStudy}
           wordStudies={wordStudies}
-          verseUrl={verseUrl(activeWordStudy.passage)}
           onClose={() => setActiveWordStudy(null)}
         />
       )}

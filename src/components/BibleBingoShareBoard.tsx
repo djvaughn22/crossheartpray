@@ -215,7 +215,6 @@ export default function BibleBingoShareBoard({
           passage={activeWordStudy.passage}
           wordStudy={activeWordStudy.wordStudy}
           wordStudies={wordStudiesForPassage(activeWordStudy.passage)}
-          verseUrl={verseUrl(activeWordStudy.passage)}
           onClose={() => setActiveWordStudy(null)}
         />
       )}

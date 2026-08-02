@@ -155,21 +155,11 @@ describe("BibleVerseLookup — one canonical reference drives everything", () =>
       expect(readInPlan.getAttribute("href")).toContain("/bible-reading-plan");
     }
 
-    // External: Open verse in Bible.com for the exact verse.
-    const verseLink = within(menu).getByRole("menuitem", {
-      name: /^Open Malachi 4:6 on Bible.com/,
-    }) as HTMLAnchorElement;
-    expect(verseLink.getAttribute("href")).toBe(
-      "https://www.bible.com/bible/3034/MAL.4.6.BSB",
-    );
-    expect(verseLink.getAttribute("target")).toBe("_blank");
-
-    // External: Open chapter in Bible.com shows the full chapter.
-    const chapterLink = within(menu).getByRole("menuitem", {
-      name: /Open MAL 4 on Bible.com/,
-    }) as HTMLAnchorElement;
-    expect(chapterLink.getAttribute("href")).toContain("/bible/3034/MAL.4");
-    expect(chapterLink.getAttribute("target")).toBe("_blank");
+    // No external actions at all — every menu item stays on CrossHeartPray.
+    for (const item of within(menu).getAllByRole("menuitem")) {
+      expect(item.getAttribute("target")).toBeNull();
+      expect(item.getAttribute("href") ?? "").not.toContain("bible.com");
+    }
   });
 
   it("an invalid search clears the previous verse card and its actions", async () => {

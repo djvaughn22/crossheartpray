@@ -21,6 +21,7 @@ type KindleReaderModalProps = {
   readingId?: string;
   isCompleted?: boolean;
   onMarkComplete?: (readingId: string) => void;
+  onReferenceChange?: (reference: ScriptureReference) => void;
 };
 
 export default function KindleReaderModal({
@@ -33,11 +34,13 @@ export default function KindleReaderModal({
   readingId,
   isCompleted,
   onMarkComplete,
+  onReferenceChange,
 }: KindleReaderModalProps) {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- portal target exists only after mount
     setMounted(true);
   }, []);
 
@@ -91,6 +94,7 @@ export default function KindleReaderModal({
             readingId={readingId}
             isCompleted={isCompleted}
             onMarkComplete={onMarkComplete}
+            onReferenceChange={onReferenceChange}
           />
         </div>
       </div>

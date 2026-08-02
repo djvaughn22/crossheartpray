@@ -103,14 +103,7 @@ export default function AboutPage() {
 
               <div className="mt-4 space-y-4 text-base leading-8 text-slate-300">
                 <p>
-                  <a
-                    href="https://en.wikipedia.org/wiki/Gene_Getz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
-                  >
-                    Dr. Gene Getz
-                  </a>
+                  <span className="font-bold text-emerald-200">Dr. Gene Getz</span>
                   &apos;s <span className="font-semibold text-white">Life Essentials</span> has shaped a
                   big part of this project. It is his life&apos;s work — more than{" "}
                   <span className="font-semibold text-white">1,500 Bible principles</span> drawn straight
@@ -120,14 +113,7 @@ export default function AboutPage() {
                   I was blessed to meet Dr. Getz in person and to hold his own{" "}
                   <span className="font-semibold text-white">personally signed Life Essentials Study Bible</span>.
                   We sat together with his men&apos;s ski group — which included Apollo 16 moonwalker{" "}
-                  <a
-                    href="https://en.wikipedia.org/wiki/Charlie_Duke"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-emerald-200 underline decoration-emerald-300/40 underline-offset-4 hover:text-emerald-100"
-                  >
-                    astronaut Charlie Duke
-                  </a>
+                  <span className="font-bold text-emerald-200">astronaut Charlie Duke</span>
                   . It is a night I will never forget, and a big reason Life Essentials runs all
                   through CrossHeartPray.
                 </p>
@@ -263,26 +249,16 @@ export default function AboutPage() {
                   Gene Getz · Life Essentials
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-white/75">
-                  Gene Getz / Bible Principles resources are linked as external study helps.
-                  CrossHeartPray opens Scripture first and points to official resources when
-                  available.
+                  Gene Getz / Bible Principles content comes from these official
+                  sources. CrossHeartPray opens Scripture first, and the study
+                  helps play right here on the site.
                 </p>
-                <ul className="mt-3 space-y-1 text-sm leading-6">
-                  <li>
-                    <a href="https://bibleprinciples.org" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-200 underline decoration-white/20 underline-offset-4 hover:text-emerald-100">Bible Principles</a>
-                  </li>
-                  <li>
-                    <a href="https://bibleprinciples.org/pf-search-book/" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-200 underline decoration-white/20 underline-offset-4 hover:text-emerald-100">Principle Finder</a>
-                  </li>
-                  <li>
-                    <a href="https://bibleprinciples.org/life-essentials-app/" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-200 underline decoration-white/20 underline-offset-4 hover:text-emerald-100">Life Essentials App</a>
-                  </li>
-                  <li>
-                    <a href="https://bibleprinciples.org/the-life-essentials-study-bible/" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-200 underline decoration-white/20 underline-offset-4 hover:text-emerald-100">Life Essentials Study Bible</a>
-                  </li>
-                  <li>
-                    <a href="https://www.youtube.com/user/LifeEssentialsVideos" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-200 underline decoration-white/20 underline-offset-4 hover:text-emerald-100">Official YouTube Channel</a>
-                  </li>
+                <ul className="mt-3 space-y-1 text-sm leading-6 text-emerald-200/90 font-semibold">
+                  <li>Bible Principles — bibleprinciples.org</li>
+                  <li>Principle Finder by Book — bibleprinciples.org</li>
+                  <li>Life Essentials App — bibleprinciples.org</li>
+                  <li>Life Essentials Study Bible — B&amp;H Publishing</li>
+                  <li>Official Life Essentials video library — Dr. Gene Getz</li>
                 </ul>
               </div>
             </section>

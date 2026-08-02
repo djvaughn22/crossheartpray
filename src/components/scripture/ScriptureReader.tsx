@@ -34,7 +34,6 @@ import {
   type ScriptureTranslation,
 } from "../../lib/scripture";
 import { ACTIVE_BIBLE_TRANSLATION } from "../../lib/scripture/translationConfig";
-import ReadInContextButton from "./ReadInContextButton";
 import ScriptureReferenceInput from "./ScriptureReferenceInput";
 import TranslationPicker from "./TranslationPicker";
 
@@ -230,17 +229,12 @@ export default function ScriptureReader({
       : formatScriptureReference({ book: current.book, chapter: current.chapter });
 
   // Truthful labeling when the picked translation is external-only: the text
-  // on screen is the local active translation, and the way to the picked
-  // translation stays clear.
+  // on screen is the local active translation, named plainly.
   const unlicensedNotice =
     translation.access === "bibleComLink" && readTranslation.source === "local"
-      ? `${translation.label} can't be read inside CrossHeartPray yet — showing the ${LOCAL_TRANSLATION_NOTICE_NAME}. The Bible.com button below opens ${translation.label}.`
+      ? `${translation.label} can't be read inside CrossHeartPray yet — showing the ${LOCAL_TRANSLATION_NOTICE_NAME}.`
       : null;
   const notice = fallbackNotice ?? unlicensedNotice;
-
-  const externalReference = targetVerse ? { ...current, verse: targetVerse } : current;
-  const externalLabel =
-    translation.access === "readHere" ? "Bible.com" : `${translation.label} · Bible.com`;
 
   const lastTargetVerse = targetEndVerse ?? targetVerse;
   const isTargetVerse = (verse: number) =>
@@ -364,11 +358,13 @@ export default function ScriptureReader({
               Couldn&apos;t load {heading} here right now.
             </p>
             <div className="mt-5 flex justify-center">
-              <ReadInContextButton
-                reference={current}
-                version={translation}
-                label={`${heading} · Bible.com`}
-              />
+              <button
+                type="button"
+                onClick={() => setCurrent((reference) => ({ ...reference }))}
+                className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-sm font-black text-white transition hover:bg-white/15"
+              >
+                Try again
+              </button>
             </div>
           </div>
         )}
@@ -485,12 +481,12 @@ export default function ScriptureReader({
           ← Previous
         </button>
 
-        <ReadInContextButton
-          reference={externalReference}
-          version={translation}
-          label={externalLabel}
-          className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-2xl px-3 text-center text-xs font-bold leading-4 text-zinc-400 transition hover:text-white"
-        />
+        <span
+          aria-hidden="true"
+          className="inline-flex min-h-12 shrink-0 items-center justify-center px-3 text-center text-xs font-bold leading-4 text-zinc-500"
+        >
+          {heading}
+        </span>
 
         <button
           type="button"

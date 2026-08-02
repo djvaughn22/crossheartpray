@@ -101,19 +101,61 @@ describe("CardReadMenu Context matters group (source contract)", () => {
     expect(menu).toContain("KindleReaderModal");
     expect(menu).toContain("Read here");
     expect(menu).toContain("Open the chapter in CrossHeartPray");
-    // Menu items: Read here, Read in Bible Plan (if available), Open verse in Bible.com, Open chapter in Bible.com
-    expect(menu.match(/role="menuitem"/g)?.length).toBeGreaterThanOrEqual(3);
+    // Menu items: Read here, Read in Bible Plan (if available).
+    expect(menu.match(/role="menuitem"/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("separates internal CrossHeartPray actions from external Bible.com links", () => {
+  it("every action stays on CrossHeartPray — no external Bible.com links", () => {
     expect(menu).toContain("Read on CrossHeartPray");
     expect(menu).toContain("Read here");
     expect(menu).toContain("Read in Bible Plan");
-    expect(menu).toContain("Open on Bible.com");
-    expect(menu).toContain("Open verse in Bible.com");
-    expect(menu).toContain("Open chapter in Bible.com");
-    expect(menu).toContain('rel="noopener noreferrer"');
-    expect(menu).toContain("in a new tab");
+    expect(menu).not.toContain("Bible.com");
+    expect(menu).not.toContain('target="_blank"');
+    expect(menu).not.toContain("bibleComUrl");
+  });
+});
+
+describe("no one-click external Scripture/resource links (site-wide contract)", () => {
+  // The locked rule: no Scripture-related card, menu, button, text link,
+  // fallback, or secondary action may send someone to Bible.com, BibleHub,
+  // B&H, BiblePrinciples.org, YouTube, or another external Bible/resource
+  // site with one click. Citations stay visible as plain text.
+  const BANNED_HREF_HOSTS = [
+    "bible.com",
+    "biblehub.com",
+    "bhpublishinggroup.com",
+    "bibleprinciples.org",
+    "youtube.com/", // youtube-nocookie.com iframe embeds stay allowed
+    "youtu.be",
+  ];
+
+  function* sourceFiles(dir: string): Generator<string> {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory() && entry.name !== "__tests__") yield* sourceFiles(full);
+      else if (/\.(tsx|ts)$/.test(entry.name) && !/\.test\./.test(entry.name)) yield full;
+    }
+  }
+
+  const srcDir = path.join(__dirname, "..", "..");
+
+  it("no component or page renders an href to a banned Bible/resource host", () => {
+    for (const file of [
+      ...sourceFiles(path.join(srcDir, "components")),
+      ...sourceFiles(path.join(srcDir, "app")),
+    ]) {
+      const source = fs.readFileSync(file, "utf8");
+      for (const host of BANNED_HREF_HOSTS) {
+        // href="https://host/..." or href={`https://host/...`} — a clickable exit.
+        const clickable = new RegExp(
+          String.raw`href=["'{\` ]*[^"'\`}]*${host.replace(/[./]/g, "\\$&")}`,
+        );
+        expect(
+          clickable.test(source),
+          `${path.relative(srcDir, file)} renders a one-click link to ${host}`,
+        ).toBe(false);
+      }
+    }
   });
 });
 
