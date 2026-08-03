@@ -275,6 +275,39 @@ export default function AboutPage() {
               </p>
               <p className="mt-1 text-xl">✝️ ❤️ 🙏</p>
             </section>
+
+            {/* The footer's Contact and Disclaimer links land on these two
+                sections (family standard, 2026-08-02). */}
+            <section id="contact" className="scroll-mt-24">
+              <h2 className="text-lg font-black text-white">Contact</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                Have a question or an idea? Email{" "}
+                <a
+                  href="mailto:ask@openmirrorllc.com?subject=Open%20Mirror%20Inquiry"
+                  className="text-emerald-200 underline decoration-white/20 underline-offset-4 transition hover:decoration-emerald-100/60"
+                >
+                  ask@openmirrorllc.com
+                </a>
+                .
+              </p>
+            </section>
+
+            <section id="disclaimer" className="scroll-mt-24">
+              <h2 className="text-lg font-black text-white">Disclaimer</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                Open Mirror LLC is independently owned and operated. Nothing
+                published by Open Mirror LLC is sponsored by, affiliated with,
+                endorsed by, or representative of the owner&rsquo;s full-time
+                employer. Read the{" "}
+                <a
+                  href="https://openmirrorllc.com/disclaimer"
+                  className="text-emerald-200 underline decoration-white/20 underline-offset-4 transition hover:decoration-emerald-100/60"
+                >
+                  full Open Mirror disclaimer
+                </a>
+                .
+              </p>
+            </section>
           </div>
         </div>
       </div>

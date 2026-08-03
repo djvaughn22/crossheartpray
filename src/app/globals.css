@@ -418,16 +418,6 @@ html[data-chp-visual-theme="light"] :is(table, thead, tbody, tr, th, td, caption
   color: #0f172a !important;
 }
 
-/* Shared Open Mirror footer ships inline dark-theme colors; retint for Light.
-   (Its own om-theme override only fires on data-om-theme sites.) */
-html[data-chp-visual-theme="light"] .om-footer {
-  border-top-color: #dbe2ea !important;
-}
-html[data-chp-visual-theme="light"] .om-footer p,
-html[data-chp-visual-theme="light"] .om-footer a {
-  color: #475569 !important;
-}
-
 html[data-chp-visual-theme="light"] .bible-bingo-bottom-card-spin::after,
 html[data-chp-visual-theme="light"] .bible-bingo-card-spin::after,
 html[data-chp-visual-theme="light"] .bible-bingo-board-card-spin::after,
