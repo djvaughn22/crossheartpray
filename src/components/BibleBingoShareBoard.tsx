@@ -175,7 +175,8 @@ export default function BibleBingoShareBoard({
                 ) : (
                   <p className="mx-auto mt-4 max-w-sm text-sm leading-7 text-slate-300">
                     This verse is carried in a footnote in the current
-                    translation — open it on Bible.com to read it in full.
+                    translation — open the chapter with Read to see it in
+                    context.
                   </p>
                 )}
 

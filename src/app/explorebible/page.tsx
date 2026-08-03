@@ -1237,7 +1237,7 @@ function BibleExplorerExperience() {
           <h2 className="text-xl font-bold text-white">How it works</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-400">
             Every board deals a fresh path through the Bible. Read opens the
-            verse in its week of the 52-week Reading Plan, or on Bible.com.
+            verse right here, or in its week of the 52-week Reading Plan.
             Deep Dive opens when verified Hebrew or Greek word details are
             available.
           </p>

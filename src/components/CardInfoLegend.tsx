@@ -23,7 +23,7 @@ export const DEFAULT_CARD_LEGEND: CardLegendItem[] = [
   {
     term: "Read",
     detail:
-      "Context matters: read the verse or the whole chapter right here on CrossHeartPray, open the exact verse on Bible.com (↗ leaves the site), or jump to its week in the 52-week Reading Plan.",
+      "Context matters: read the verse or the whole chapter right here on CrossHeartPray, or jump to its week in the 52-week Reading Plan.",
   },
   {
     term: "Underlined words",
@@ -122,8 +122,7 @@ export default function CardInfoLegend({
                 </dl>
 
                 <p className="mt-5 border-t border-white/10 pt-3 text-[11px] font-semibold leading-5 text-slate-400">
-                  Bible.com links may follow your Bible App or device theme
-                  settings.
+                  Every action here stays on CrossHeartPray.
                 </p>
               </div>
             </>,
