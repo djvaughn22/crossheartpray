@@ -42,7 +42,7 @@ import {
 } from "../../lib/dailyBibleBingo";
 import PageNucleusHero from "../../components/PageNucleusHero";
 import {
-  buildDeepDiveWordStudiesUrl,
+  fetchVerifiedWordStudies,
   getDefaultWordStudy,
   hasVerifiedWordStudies,
   type VerifiedWordStudy,
@@ -618,24 +618,13 @@ function BibleExplorerExperience() {
       );
 
       const entries = await Promise.all(
-        [...uniquePassages.entries()].map(async ([key, passage]) => {
-          try {
-            const response = await fetch(buildDeepDiveWordStudiesUrl(passage));
-
-            if (!response.ok) {
-              return [key, []] as const;
-            }
-
-            const data = await response.json();
-
-            return [
+        [...uniquePassages.entries()].map(
+          async ([key, passage]) =>
+            [
               key,
-              Array.isArray(data.wordStudies) ? data.wordStudies : [],
-            ] as const;
-          } catch {
-            return [key, []] as const;
-          }
-        }),
+              await fetchVerifiedWordStudies(passage).catch(() => []),
+            ] as const,
+        ),
       );
 
       if (!cancelled) {
@@ -748,13 +737,7 @@ function BibleExplorerExperience() {
     // the button always responds instead of silently doing nothing.
     if (studies === undefined) {
       setLoadingStudyKey(key);
-      try {
-        const response = await fetch(buildDeepDiveWordStudiesUrl(passage));
-        const data = response.ok ? await response.json() : null;
-        studies = Array.isArray(data?.wordStudies) ? data.wordStudies : [];
-      } catch {
-        studies = [];
-      }
+      studies = await fetchVerifiedWordStudies(passage).catch(() => []);
       const loaded = studies ?? [];
       setWordStudiesByPassage((current) => ({ ...current, [key]: loaded }));
       setLoadingStudyKey((prev) => (prev === key ? null : prev));

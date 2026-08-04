@@ -5,7 +5,7 @@ import BibleBingoVerseCard, {
 } from "./BibleBingoVerseCard";
 import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import {
-  buildDeepDiveWordStudiesUrl,
+  fetchVerifiedWordStudies,
   getDefaultWordStudy,
   type VerifiedWordStudy,
 } from "../lib/originalLanguageWordStudy";
@@ -263,30 +263,13 @@ export default function BibleVerseLookup({
       setIsLoadingWordStudies(true);
       setWordStudies([]);
 
-      try {
-        const response = await fetch(buildDeepDiveWordStudiesUrl(selectedPassage));
+      const studies = await fetchVerifiedWordStudies(selectedPassage).catch(
+        () => [] as VerifiedWordStudy[],
+      );
 
-        if (!response.ok) {
-          if (!cancelled) {
-            setWordStudies([]);
-          }
-
-          return;
-        }
-
-        const data = await response.json();
-
-        if (!cancelled) {
-          setWordStudies(Array.isArray(data.wordStudies) ? data.wordStudies : []);
-        }
-      } catch {
-        if (!cancelled) {
-          setWordStudies([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingWordStudies(false);
-        }
+      if (!cancelled) {
+        setWordStudies(studies);
+        setIsLoadingWordStudies(false);
       }
     }
 

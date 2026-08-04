@@ -247,15 +247,18 @@ export default function OriginalWordStudyModal({
   }, [wordStudy]);
 
   useEffect(() => {
+    // Capture phase: when Deep Dive sits inside the Scripture reader modal,
+    // Escape closes only this panel — never the whole reader underneath it.
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.stopPropagation();
         onClose();
       }
     }
 
-    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown, true);
 
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [onClose]);
 
   const verifiedWordStudies = useMemo(() => {

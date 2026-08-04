@@ -9,7 +9,11 @@ import {
   type ScriptureReference,
 } from "../lib/scripture";
 import { getGeneGetzPrinciplesForVerse, type LifeEssentialsPrinciple } from "../lib/geneGetzLifeEssentials";
-import type { VerifiedWordStudy } from "../lib/originalLanguageWordStudy";
+import {
+  fetchVerifiedWordStudies,
+  getDefaultWordStudy,
+  type VerifiedWordStudy,
+} from "../lib/originalLanguageWordStudy";
 import type { BibleBingoCardPassage } from "./BibleBingoVerseCard";
 import KindleReaderModal from "./scripture/KindleReaderModal";
 import ReaderLifeEssentials from "./scripture/ReaderLifeEssentials";
@@ -23,6 +27,7 @@ type VerseData = {
   passage: BibleBingoCardPassage;
   principles: LifeEssentialsPrinciple[];
   wordStudy: VerifiedWordStudy | null;
+  wordStudies: VerifiedWordStudy[];
 };
 
 const provider = getScriptureProvider();
@@ -102,11 +107,17 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
           resolved.verse ?? 1,
         );
 
+        // The same verified Deep Dive data Bible Bingo 7 uses — for the
+        // connected verse's first verse. [] when unavailable; nothing invented.
+        const wordStudies = await fetchVerifiedWordStudies(passage);
+        if (cancelled) return;
+
         if (!cancelled) {
           setData({
             passage,
             principles,
-            wordStudy: null,
+            wordStudy: getDefaultWordStudy(wordStudies),
+            wordStudies,
           });
         }
       } catch (err) {
@@ -170,7 +181,7 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
     );
   }
 
-  const { passage, principles, wordStudy } = data;
+  const { passage, principles, wordStudy, wordStudies } = data;
 
   const handleOpenVerse = () => {
     const reference: ScriptureReference = {
@@ -409,7 +420,7 @@ export default function BehindTheVerse({ verseReference }: BehindTheVerseProps) 
       <OriginalWordStudyModal
         passage={passage}
         wordStudy={wordStudy}
-        wordStudies={[wordStudy]}
+        wordStudies={wordStudies}
         onClose={() => setShowWordStudyModal(false)}
       />
     )}

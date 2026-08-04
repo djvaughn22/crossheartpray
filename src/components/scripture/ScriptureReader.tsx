@@ -36,6 +36,17 @@ import {
 import { ACTIVE_BIBLE_TRANSLATION } from "../../lib/scripture/translationConfig";
 import ScriptureReferenceInput from "./ScriptureReferenceInput";
 import TranslationPicker from "./TranslationPicker";
+import VerifiedVerseText from "../VerifiedVerseText";
+import OriginalWordStudyModal from "../OriginalWordStudyModal";
+import {
+  fetchVerifiedWordStudies,
+  getDefaultWordStudy,
+  hasVerifiedWordStudies,
+  originalLanguageName,
+  wordStudyLookupKey,
+  type VerifiedWordStudy,
+  type WordStudyPassage,
+} from "../../lib/originalLanguageWordStudy";
 
 // "Berean Standard Bible (BSB)" — how fallback notices name the local text.
 const LOCAL_TRANSLATION_NOTICE_NAME = `${ACTIVE_BIBLE_TRANSLATION.name} (${ACTIVE_BIBLE_TRANSLATION.shortName})`;
@@ -119,6 +130,86 @@ export default function ScriptureReader({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [justMarkedComplete, setJustMarkedComplete] = useState(false);
 
+  // ── Deep Dive — the same verified Greek/Hebrew word study Bible Bingo 7
+  // uses, available on every verse of every chapter read here. Session-memory
+  // cache only (never persisted): key → verified records, or undefined while
+  // that verse has never been checked.
+  const [studyVerse, setStudyVerse] = useState<number | null>(null);
+  const [wordStudiesByVerse, setWordStudiesByVerse] = useState<
+    Record<string, VerifiedWordStudy[]>
+  >({});
+  const [activeWordStudy, setActiveWordStudy] = useState<{
+    passage: WordStudyPassage;
+    wordStudy: VerifiedWordStudy;
+  } | null>(null);
+  const pendingStudyKeysRef = useRef<Set<string>>(new Set());
+
+  const studyKeyForVerse = useCallback(
+    (verse: number) =>
+      wordStudyLookupKey({
+        code: current.book,
+        chapter: String(current.chapter ?? 1),
+        verse: String(verse),
+      }),
+    [current],
+  );
+
+  const loadWordStudiesForVerse = useCallback(
+    (verse: number) => {
+      const key = wordStudyLookupKey({
+        code: current.book,
+        chapter: String(current.chapter ?? 1),
+        verse: String(verse),
+      });
+      if (pendingStudyKeysRef.current.has(key)) return;
+      pendingStudyKeysRef.current.add(key);
+
+      fetchVerifiedWordStudies({
+        code: current.book,
+        chapter: String(current.chapter ?? 1),
+        verse: String(verse),
+      })
+        .then((studies) => {
+          setWordStudiesByVerse((cache) =>
+            key in cache ? cache : { ...cache, [key]: studies },
+          );
+        })
+        .catch(() => {
+          // Aborted or offline — the verse stays readable; Deep Dive simply
+          // reports no verified data for now.
+          setWordStudiesByVerse((cache) =>
+            key in cache ? cache : { ...cache, [key]: [] },
+          );
+        })
+        .finally(() => {
+          pendingStudyKeysRef.current.delete(key);
+        });
+    },
+    [current],
+  );
+
+  const toggleStudyVerse = useCallback(
+    (verse: number) => {
+      setStudyVerse((selected) => {
+        const next = selected === verse ? null : verse;
+        if (next !== null) loadWordStudiesForVerse(verse);
+        return next;
+      });
+    },
+    [loadWordStudiesForVerse],
+  );
+
+  const passageForVerse = useCallback(
+    (verse: number, text: string): WordStudyPassage => ({
+      label: `${chapterData?.bookName ?? current.book} ${current.chapter ?? 1}:${verse}`,
+      code: current.book,
+      chapter: String(current.chapter ?? 1),
+      verse: String(verse),
+      text,
+    }),
+    [chapterData, current],
+  );
+
   // Upgrade to the live capability list once it arrives; a user's explicit
   // in-session pick is never overridden.
   useEffect(() => {
@@ -143,6 +234,9 @@ export default function ScriptureReader({
       setCurrent({ book: reference.book, chapter: reference.chapter ?? 1 });
       setTargetVerse(reference.verse ?? null);
       setTargetEndVerse(reference.endVerse ?? null);
+      // A new chapter starts calm — no verse selected for Deep Dive yet.
+      setStudyVerse(null);
+      setActiveWordStudy(null);
       onReferenceChange?.(reference);
     },
     [onReferenceChange],
@@ -380,6 +474,9 @@ export default function ScriptureReader({
                 {chapterData.bookName} {chapterData.chapter}
               </h3>
               <hr className="mx-auto mt-3.5 w-16 border-white/15" />
+              <p className="mt-3 text-[11px] font-semibold leading-4 text-zinc-500">
+                Tap any verse for Deep Dive — the original Greek or Hebrew, word by word.
+              </p>
             </header>
 
             {notice ? (
@@ -392,24 +489,102 @@ export default function ScriptureReader({
             ) : null}
 
             <div className="mx-auto max-w-[38rem]">
-              {chapterData.verses.map(({ verse, text }) => (
-                <p
-                  key={verse}
-                  data-verse={verse}
-                  className={`flex items-baseline gap-2.5 rounded-xl px-2 py-[0.3rem] ${
-                    isTargetVerse(verse)
-                      ? "chp-verse-target bg-emerald-300/10 ring-1 ring-emerald-200/25"
-                      : ""
-                  }`}
-                >
-                  <span className="w-6 shrink-0 select-none text-right text-[0.68rem] font-bold leading-6 text-zinc-500">
-                    {verse}
-                  </span>
-                  <span className="chp-scripture-serif min-w-0 flex-1 text-[1.05rem] leading-[1.8] text-slate-100 sm:text-lg sm:leading-8">
-                    {text}
-                  </span>
-                </p>
-              ))}
+              {chapterData.verses.map(({ verse, text }) => {
+                const isStudyVerse = studyVerse === verse;
+                const studies = wordStudiesByVerse[studyKeyForVerse(verse)];
+                const studiesReady = Array.isArray(studies);
+                const hasStudies = studiesReady && hasVerifiedWordStudies(studies);
+                const studyLanguage = hasStudies
+                  ? originalLanguageName(
+                      (getDefaultWordStudy(studies) as VerifiedWordStudy).language,
+                    )
+                  : null;
+
+                return (
+                  <div
+                    key={verse}
+                    data-verse={verse}
+                    className={`rounded-xl ${
+                      isTargetVerse(verse)
+                        ? "chp-verse-target bg-emerald-300/10 ring-1 ring-emerald-200/25"
+                        : isStudyVerse
+                          ? "bg-white/[0.05] ring-1 ring-emerald-200/30"
+                          : ""
+                    }`}
+                  >
+                    <p
+                      onClick={(event) => {
+                        // Word-link and verse-number buttons handle themselves.
+                        if ((event.target as HTMLElement).closest("button")) return;
+                        toggleStudyVerse(verse);
+                      }}
+                      className="flex cursor-pointer items-baseline gap-2.5 px-2 py-[0.3rem]"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleStudyVerse(verse)}
+                        aria-expanded={isStudyVerse}
+                        aria-label={`Deep Dive for verse ${verse}`}
+                        className="w-6 shrink-0 select-none rounded text-right text-[0.68rem] font-bold leading-6 text-zinc-500 transition hover:text-emerald-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                      >
+                        {verse}
+                      </button>
+                      <span className="chp-scripture-serif min-w-0 flex-1 break-words text-[1.05rem] leading-[1.8] text-slate-100 sm:text-lg sm:leading-8">
+                        {isStudyVerse && hasStudies ? (
+                          <VerifiedVerseText
+                            passage={passageForVerse(verse, text)}
+                            wordStudies={studies}
+                            onWordClick={(wordStudy) =>
+                              setActiveWordStudy({
+                                passage: passageForVerse(verse, text),
+                                wordStudy,
+                              })
+                            }
+                          />
+                        ) : (
+                          text
+                        )}
+                      </span>
+                    </p>
+
+                    {isStudyVerse ? (
+                      <div className="mx-2 mb-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
+                        {!studiesReady ? (
+                          <p role="status" className="text-xs font-semibold leading-5 text-slate-300">
+                            Checking verified Greek &amp; Hebrew word links…
+                          </p>
+                        ) : hasStudies ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const wordStudy = getDefaultWordStudy(studies);
+                                if (!wordStudy) return;
+                                setActiveWordStudy({
+                                  passage: passageForVerse(verse, text),
+                                  wordStudy,
+                                });
+                              }}
+                              className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-300/10 px-5 text-sm font-black text-emerald-100 transition hover:bg-emerald-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                            >
+                              Deep Dive
+                            </button>
+                            <p className="min-w-0 text-xs font-semibold leading-5 text-slate-300">
+                              Verified {studyLanguage} for verse {verse} — underlined
+                              words open the original word.
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs font-semibold leading-5 text-slate-300">
+                            No verified original-language data for this verse yet —
+                            the Scripture stands on its own.
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
 
             <p className="mx-auto mt-7 max-w-md border-t border-white/10 pt-4 text-center text-xs font-semibold leading-5 text-zinc-400">
@@ -504,6 +679,18 @@ export default function ScriptureReader({
           Next →
         </button>
       </div>
+
+      {/* The shared Deep Dive panel — identical to Bible Bingo 7's. */}
+      {activeWordStudy ? (
+        <OriginalWordStudyModal
+          passage={activeWordStudy.passage}
+          wordStudy={activeWordStudy.wordStudy}
+          wordStudies={
+            wordStudiesByVerse[wordStudyLookupKey(activeWordStudy.passage)] ?? []
+          }
+          onClose={() => setActiveWordStudy(null)}
+        />
+      ) : null}
     </section>
   );
 }

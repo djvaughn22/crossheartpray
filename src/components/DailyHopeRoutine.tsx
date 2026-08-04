@@ -17,7 +17,7 @@ import VerifiedVerseText from "./VerifiedVerseText";
 import GeneGetzResourceCard from "./GeneGetzResourceCard";
 import { getGeneGetzPrinciplesForVerse } from "../lib/geneGetzLifeEssentials";
 import {
-  buildDeepDiveWordStudiesUrl,
+  fetchVerifiedWordStudies,
   getDefaultWordStudy,
   hasVerifiedWordStudies,
   type VerifiedWordStudy,
@@ -581,22 +581,10 @@ export default function DailyHopeRoutine({
         allPassages.map(async (passage) => {
           const key = wordStudyLookupKey(passage);
 
-          try {
-            const response = await fetch(buildDeepDiveWordStudiesUrl(passage));
-
-            if (!response.ok) {
-              return [key, []] as const;
-            }
-
-            const data = await response.json();
-
-            return [
-              key,
-              Array.isArray(data.wordStudies) ? data.wordStudies : [],
-            ] as const;
-          } catch {
-            return [key, []] as const;
-          }
+          return [
+            key,
+            await fetchVerifiedWordStudies(passage).catch(() => []),
+          ] as const;
         }),
       );
 

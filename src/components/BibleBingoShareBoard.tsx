@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import type { BibleBingoPassage } from "../lib/bibleRandom";
 import {
-  buildDeepDiveWordStudiesUrl,
+  fetchVerifiedWordStudies,
   getDefaultWordStudy,
   hasVerifiedWordStudies,
   type VerifiedWordStudy,
@@ -95,24 +95,13 @@ export default function BibleBingoShareBoard({
       );
 
       const entries = await Promise.all(
-        [...uniquePassages.entries()].map(async ([key, passage]) => {
-          try {
-            const response = await fetch(buildDeepDiveWordStudiesUrl(passage));
-
-            if (!response.ok) {
-              return [key, []] as const;
-            }
-
-            const data = await response.json();
-
-            return [
+        [...uniquePassages.entries()].map(
+          async ([key, passage]) =>
+            [
               key,
-              Array.isArray(data.wordStudies) ? data.wordStudies : [],
-            ] as const;
-          } catch {
-            return [key, []] as const;
-          }
-        }),
+              await fetchVerifiedWordStudies(passage).catch(() => []),
+            ] as const,
+        ),
       );
 
       if (!cancelled) {

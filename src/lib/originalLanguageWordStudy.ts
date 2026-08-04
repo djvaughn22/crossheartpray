@@ -38,13 +38,16 @@ export function normalizeStudyWord(value: string) {
     .trim();
 }
 
-export function wordStudyLookupKey(passage: WordStudyPassage) {
+/** The verse coordinates the Deep Dive data API needs — label/text not required. */
+export type WordStudyVerseKey = Pick<WordStudyPassage, "code" | "chapter" | "verse">;
+
+export function wordStudyLookupKey(passage: WordStudyVerseKey) {
   return `${passage.code.toUpperCase()}|${Number(passage.chapter)}|${Number(
     passage.verse,
   )}`;
 }
 
-export function buildDeepDiveWordStudiesUrl(passage: WordStudyPassage) {
+export function buildDeepDiveWordStudiesUrl(passage: WordStudyVerseKey) {
   const params = new URLSearchParams({
     code: passage.code.toUpperCase(),
     chapter: String(Number(passage.chapter)),
@@ -52,6 +55,33 @@ export function buildDeepDiveWordStudiesUrl(passage: WordStudyPassage) {
   });
 
   return `https://openmirrorllc.com/api/deep-dive-word-studies?${params.toString()}`;
+}
+
+/**
+ * The one Deep Dive fetch for every surface (Bible Bingo 7, Daily Hope, the
+ * Scripture reader, Behind the Verse). Returns the verified word-study records
+ * for a single verse, or [] when the data is unavailable — callers show a calm
+ * empty state, never a raw error and never fabricated data.
+ */
+export async function fetchVerifiedWordStudies(
+  passage: WordStudyVerseKey,
+  options?: { signal?: AbortSignal },
+): Promise<VerifiedWordStudy[]> {
+  try {
+    const response = await fetch(buildDeepDiveWordStudiesUrl(passage), {
+      signal: options?.signal,
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+
+    return Array.isArray(data?.wordStudies) ? data.wordStudies : [];
+  } catch (caught) {
+    // A caller-driven abort should propagate so effects can ignore it.
+    if (caught instanceof DOMException && caught.name === "AbortError") throw caught;
+    return [];
+  }
 }
 
 const lowValueEnglishWords = new Set([
