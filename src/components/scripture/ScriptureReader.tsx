@@ -25,6 +25,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   fetchAvailableTranslations,
   formatScriptureReference,
+  getScriptureBook,
   getScriptureProvider,
   loadTranslationPreference,
   pickDefaultTranslation,
@@ -474,8 +475,9 @@ export default function ScriptureReader({
                 {chapterData.bookName} {chapterData.chapter}
               </h3>
               <hr className="mx-auto mt-3.5 w-16 border-white/15" />
-              <p className="mt-3 text-[11px] font-semibold leading-4 text-zinc-500">
-                Tap any verse for Deep Dive — the original Greek or Hebrew, word by word.
+              <p className="mx-auto mt-3 max-w-xs text-xs font-semibold leading-5 text-zinc-400">
+                Choose Deep Dive beside any verse to explore its original Hebrew
+                or Greek words.
               </p>
             </header>
 
@@ -499,6 +501,14 @@ export default function ScriptureReader({
                       (getDefaultWordStudy(studies) as VerifiedWordStudy).language,
                     )
                   : null;
+                // OT verses study Hebrew, NT verses study Greek — known from
+                // the canon table before any data loads, so every verse can
+                // carry its visible Deep Dive control immediately.
+                const verseLanguage =
+                  getScriptureBook(current.book)?.testament === "OT"
+                    ? "Hebrew"
+                    : "Greek";
+                const verseLabel = `${chapterData.bookName} ${chapterData.chapter}:${verse}`;
 
                 return (
                   <div
@@ -508,27 +518,22 @@ export default function ScriptureReader({
                       isTargetVerse(verse)
                         ? "chp-verse-target bg-emerald-300/10 ring-1 ring-emerald-200/25"
                         : isStudyVerse
-                          ? "bg-white/[0.05] ring-1 ring-emerald-200/30"
+                          ? "chp-study-verse bg-white/[0.05] ring-1 ring-emerald-200/30"
                           : ""
                     }`}
                   >
                     <p
                       onClick={(event) => {
-                        // Word-link and verse-number buttons handle themselves.
+                        // The pill and word links handle themselves; the whole
+                        // row stays an optional larger touch target.
                         if ((event.target as HTMLElement).closest("button")) return;
                         toggleStudyVerse(verse);
                       }}
                       className="flex cursor-pointer items-baseline gap-2.5 px-2 py-[0.3rem]"
                     >
-                      <button
-                        type="button"
-                        onClick={() => toggleStudyVerse(verse)}
-                        aria-expanded={isStudyVerse}
-                        aria-label={`Deep Dive for verse ${verse}`}
-                        className="w-6 shrink-0 select-none rounded text-right text-[0.68rem] font-bold leading-6 text-zinc-500 transition hover:text-emerald-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-                      >
+                      <span className="w-6 shrink-0 select-none text-right text-[0.68rem] font-bold leading-6 text-zinc-500">
                         {verse}
-                      </button>
+                      </span>
                       <span className="chp-scripture-serif min-w-0 flex-1 break-words text-[1.05rem] leading-[1.8] text-slate-100 sm:text-lg sm:leading-8">
                         {isStudyVerse && hasStudies ? (
                           <VerifiedVerseText
@@ -543,7 +548,25 @@ export default function ScriptureReader({
                           />
                         ) : (
                           text
-                        )}
+                        )}{" "}
+                        {/* The visible per-verse Deep Dive control — a real
+                            button on every verse, quiet but unmistakable. */}
+                        <button
+                          type="button"
+                          onClick={() => toggleStudyVerse(verse)}
+                          aria-expanded={isStudyVerse}
+                          aria-label={`Open ${verseLanguage} Deep Dive for ${verseLabel}`}
+                          className={`ml-1 inline-flex translate-y-[-0.08rem] cursor-pointer select-none items-center gap-1 rounded-full border px-2 py-[0.14rem] align-middle font-sans text-[0.6rem] font-black uppercase tracking-[0.12em] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 active:scale-95 ${
+                            isStudyVerse
+                              ? "border-emerald-200/60 bg-emerald-300/25 text-emerald-50"
+                              : "border-emerald-200/30 bg-emerald-300/[0.09] text-emerald-100/90 hover:border-emerald-200/50 hover:bg-emerald-300/20 hover:text-emerald-50"
+                          }`}
+                        >
+                          <span aria-hidden="true" className="text-[0.55rem] leading-none">
+                            {isStudyVerse ? "▾" : "▸"}
+                          </span>
+                          {verseLanguage}
+                        </button>
                       </span>
                     </p>
 

@@ -38,10 +38,19 @@ describe("the one reader carries the one Deep Dive", () => {
     expect(reader).toContain("No verified original-language data for this verse yet");
   });
 
-  it("the reader invites Deep Dive compactly, without covering the Scripture", () => {
+  it("the reader introduces Deep Dive compactly, without covering the Scripture", () => {
     expect(reader).toContain(
-      "Tap any verse for Deep Dive — the original Greek or Hebrew, word by word.",
+      "Choose Deep Dive beside any verse to explore its original Hebrew",
     );
+  });
+
+  it("every verse carries a VISIBLE per-verse control — not hidden click behavior", () => {
+    // A real button with a verse-specific accessible label, whose visible
+    // text names the language (Hebrew for OT, Greek for NT) from the canon
+    // table — no data preload needed to show it.
+    expect(reader).toContain("Open ${verseLanguage} Deep Dive for ${verseLabel}");
+    expect(reader).toContain('?.testament === "OT"');
+    expect(reader).toContain("{verseLanguage}");
   });
 
   it("the Deep Dive cache is session memory only — never persisted", () => {

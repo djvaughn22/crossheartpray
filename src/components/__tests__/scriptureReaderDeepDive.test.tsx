@@ -7,7 +7,7 @@
 // fabricates data when a verse has none.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ScriptureReader from "../scripture/ScriptureReader";
@@ -128,15 +128,68 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("the shared reader carries Deep Dive on every verse", () => {
-  it("shows the compact Deep Dive invitation without overwhelming the chapter", async () => {
+describe("the shared reader carries a VISIBLE Deep Dive control on every verse", () => {
+  it("every rendered verse has its own visible, labeled Deep Dive button", async () => {
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
     await screen.findByText(
-      "Tap any verse for Deep Dive — the original Greek or Hebrew, word by word.",
+      "Choose Deep Dive beside any verse to explore its original Hebrew or Greek words.",
     );
-    // Calm by default: no Deep Dive button until a verse is chosen.
+
+    // One real button per verse — visible, not hidden click behavior.
+    const controls = await screen.findAllByRole("button", {
+      name: /Open Greek Deep Dive for John 3:\d+/,
+    });
+    expect(controls.length).toBe(20);
+    // The visible label names the language a first-time visitor will get.
+    expect(controls[0].textContent).toContain("Greek");
+    // Verse-specific accessible label, e.g. "Open Greek Deep Dive for John 3:16".
+    expect(
+      screen.getByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
+    ).toBeTruthy();
+    // Still calm: the panel-level Deep Dive action waits for a selection.
     expect(screen.queryByRole("button", { name: "Deep Dive" })).toBeNull();
+  });
+
+  it("an Old Testament chapter shows Hebrew controls before any data loads", async () => {
+    render(<ScriptureReader initialReference={{ book: "GEN", chapter: 1 }} />);
+
+    const controls = await screen.findAllByRole("button", {
+      name: /Open Hebrew Deep Dive for Genesis 1:\d+/,
+    });
+    expect(controls.length).toBe(20);
+    expect(controls[0].textContent).toContain("Hebrew");
+  });
+
+  it("selecting the control visibly highlights the verse row", async () => {
+    const user = userEvent.setup();
+    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
+
+    const control = await screen.findByRole("button", {
+      name: "Open Greek Deep Dive for John 3:16",
+    });
+    const row = control.closest("[data-verse]") as HTMLElement;
+    expect(row.className).not.toContain("chp-study-verse");
+
+    await user.click(control);
+
+    expect(control.getAttribute("aria-expanded")).toBe("true");
+    expect(row.className).toContain("chp-study-verse");
+  });
+
+  it("keyboard users can reach and activate the control", async () => {
+    const user = userEvent.setup();
+    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
+
+    const control = await screen.findByRole("button", {
+      name: "Open Greek Deep Dive for John 3:16",
+    });
+    control.focus();
+    expect(document.activeElement).toBe(control);
+    await user.keyboard("{Enter}");
+
+    await screen.findByText(/Verified Greek for verse 16/);
+    expect(control.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("a New Testament verse opens verified Greek data", async () => {
@@ -144,7 +197,7 @@ describe("the shared reader carries Deep Dive on every verse", () => {
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Deep Dive for verse 16" }),
+      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
     );
 
     // The verse's verified word becomes an underlined word link…
@@ -155,9 +208,10 @@ describe("the shared reader carries Deep Dive on every verse", () => {
     // …and Deep Dive opens the same verified Strong's panel Bingo uses.
     await user.click(screen.getByRole("button", { name: "Deep Dive" }));
     await screen.findByText("Verified Strong's Data");
-    expect(screen.getByText("Greek")).toBeTruthy();
-    expect(screen.getAllByText(/G25/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("ηγαπησεν").length).toBeGreaterThan(0);
+    const dialog = screen.getByRole("dialog", { name: "Behind the Verse" });
+    expect(within(dialog).getByText("Greek")).toBeTruthy();
+    expect(within(dialog).getAllByText(/G25/).length).toBeGreaterThan(0);
+    expect(within(dialog).getAllByText("ηγαπησεν").length).toBeGreaterThan(0);
   });
 
   it("an Old Testament verse opens verified Hebrew data", async () => {
@@ -165,14 +219,15 @@ describe("the shared reader carries Deep Dive on every verse", () => {
     render(<ScriptureReader initialReference={{ book: "GEN", chapter: 1 }} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Deep Dive for verse 1" }),
+      await screen.findByRole("button", { name: "Open Hebrew Deep Dive for Genesis 1:1" }),
     );
     await screen.findByText(/Verified Hebrew for verse 1/);
 
     await user.click(screen.getByRole("button", { name: "Deep Dive" }));
     await screen.findByText("Verified Strong's Data");
-    expect(screen.getByText("Hebrew")).toBeTruthy();
-    expect(screen.getAllByText(/H1254/).length).toBeGreaterThan(0);
+    const dialog = screen.getByRole("dialog", { name: "Behind the Verse" });
+    expect(within(dialog).getByText("Hebrew")).toBeTruthy();
+    expect(within(dialog).getAllByText(/H1254/).length).toBeGreaterThan(0);
   });
 
   it("tapping an underlined word opens that word's study directly", async () => {
@@ -180,7 +235,7 @@ describe("the shared reader carries Deep Dive on every verse", () => {
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Deep Dive for verse 16" }),
+      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
     );
     await user.click(await screen.findByRole("button", { name: "loved" }));
 
@@ -193,7 +248,7 @@ describe("the shared reader carries Deep Dive on every verse", () => {
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Deep Dive for verse 2" }),
+      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:2" }),
     );
 
     await screen.findByText(
@@ -224,7 +279,7 @@ describe("the shared reader carries Deep Dive on every verse", () => {
 
     render(<ScriptureReader initialReference={{ book: "PSA", chapter: 23 }} />);
     await user.click(
-      await screen.findByRole("button", { name: "Deep Dive for verse 1" }),
+      await screen.findByRole("button", { name: "Open Hebrew Deep Dive for Psalms 23:1" }),
     );
 
     await screen.findByText(
@@ -239,7 +294,7 @@ describe("the shared reader carries Deep Dive on every verse", () => {
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Deep Dive for verse 16" }),
+      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
     );
     await screen.findByText(/Verified Greek for verse 16/);
 
