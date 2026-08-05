@@ -25,7 +25,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   fetchAvailableTranslations,
   formatScriptureReference,
-  getScriptureBook,
   getScriptureProvider,
   loadTranslationPreference,
   pickDefaultTranslation,
@@ -41,9 +40,6 @@ import VerifiedVerseText from "../VerifiedVerseText";
 import OriginalWordStudyModal from "../OriginalWordStudyModal";
 import {
   fetchVerifiedWordStudies,
-  getDefaultWordStudy,
-  hasVerifiedWordStudies,
-  originalLanguageName,
   wordStudyLookupKey,
   type VerifiedWordStudy,
   type WordStudyPassage,
@@ -129,7 +125,6 @@ export default function ScriptureReader({
   );
   const userPickedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [justMarkedComplete, setJustMarkedComplete] = useState(false);
 
   // ── Deep Dive — the same verified Greek/Hebrew word study Bible Bingo 7
   // uses, available on every verse of every chapter read here. Loads once
@@ -142,53 +137,6 @@ export default function ScriptureReader({
     wordStudy: VerifiedWordStudy;
   } | null>(null);
   const chapterStudiesRef = useRef<string | null>(null);
-
-  const loadChapterWordStudies = useCallback(
-    async (controller: AbortController) => {
-      const chapterKey = `${current.book}|${current.chapter ?? 1}`;
-      if (chapterStudiesRef.current === chapterKey) return;
-      chapterStudiesRef.current = chapterKey;
-
-      try {
-        const chapterStudies: Record<string, VerifiedWordStudy[]> = {};
-        if (!chapterData) return;
-
-        await Promise.all(
-          chapterData.verses.map(({ verse }) =>
-            fetchVerifiedWordStudies(
-              {
-                code: current.book,
-                chapter: String(current.chapter ?? 1),
-                verse: String(verse),
-              },
-              { signal: controller.signal }
-            )
-              .then((studies) => {
-                const key = wordStudyLookupKey({
-                  code: current.book,
-                  chapter: String(current.chapter ?? 1),
-                  verse: String(verse),
-                });
-                chapterStudies[key] = studies;
-              })
-              .catch(() => {
-                const key = wordStudyLookupKey({
-                  code: current.book,
-                  chapter: String(current.chapter ?? 1),
-                  verse: String(verse),
-                });
-                chapterStudies[key] = [];
-              })
-          )
-        );
-
-        setChapterWordStudies(chapterStudies);
-      } catch (caught) {
-        if (caught instanceof DOMException && caught.name === "AbortError") throw caught;
-      }
-    },
-    [current, chapterData]
-  );
 
   const passageForVerse = useCallback(
     (verse: number, text: string): WordStudyPassage => ({
@@ -296,11 +244,59 @@ export default function ScriptureReader({
   useEffect(() => {
     if (!chapterData) return;
 
-    const controller = new AbortController();
-    loadChapterWordStudies(controller);
+    const chapterKey = `${current.book}|${current.chapter ?? 1}`;
+    if (chapterStudiesRef.current === chapterKey) return;
+    chapterStudiesRef.current = chapterKey;
 
-    return () => controller.abort();
-  }, [chapterData, loadChapterWordStudies]);
+    const controller = new AbortController();
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const chapterStudies: Record<string, VerifiedWordStudy[]> = {};
+
+        await Promise.all(
+          chapterData.verses.map(({ verse }) =>
+            fetchVerifiedWordStudies(
+              {
+                code: current.book,
+                chapter: String(current.chapter ?? 1),
+                verse: String(verse),
+              },
+              { signal: controller.signal }
+            )
+              .then((studies) => {
+                const key = wordStudyLookupKey({
+                  code: current.book,
+                  chapter: String(current.chapter ?? 1),
+                  verse: String(verse),
+                });
+                chapterStudies[key] = studies;
+              })
+              .catch(() => {
+                const key = wordStudyLookupKey({
+                  code: current.book,
+                  chapter: String(current.chapter ?? 1),
+                  verse: String(verse),
+                });
+                chapterStudies[key] = [];
+              })
+          )
+        );
+
+        if (!cancelled) {
+          setChapterWordStudies(chapterStudies);
+        }
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") throw caught;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [chapterData, current]);
 
   // Scroll the target verse into view once its chapter is on screen;
   // otherwise start each chapter at the top.
@@ -545,10 +541,7 @@ export default function ScriptureReader({
                 <div className="mx-auto mt-8 max-w-md space-y-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      onMarkComplete(readingId);
-                      setJustMarkedComplete(true);
-                    }}
+                    onClick={() => onMarkComplete(readingId)}
                     aria-pressed={isCompleted}
                     aria-label={isCompleted ? "Mark this reading as unread" : "Mark this day read"}
                     className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
