@@ -414,7 +414,7 @@ export default function ScriptureReader({
       {/* Quiet go-to search. */}
       <ScriptureReferenceInput
         className={`mt-2.5 shrink-0 ${fill ? "px-4 sm:px-5" : ""}`}
-        inputClassName="min-h-11 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm font-semibold text-white placeholder:text-white/30 outline-none ring-0 focus:border-white/40"
+        inputClassName="chp-reader-goto min-h-11 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm font-semibold text-white placeholder:text-white/30 outline-none ring-0 focus:border-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
         onSelect={(suggestion) => goTo(suggestion.reference)}
         placeholder="Go to a book, chapter, or verse"
         ariaLabel="Go to a book, chapter, or verse"

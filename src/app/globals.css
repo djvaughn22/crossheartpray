@@ -356,9 +356,30 @@ html[data-chp-visual-theme="light"] ul[data-scripture-listbox] li[aria-selected=
 html[data-chp-visual-theme="light"] ul[data-scripture-listbox] li:hover {
   background: #eef4ff !important;
 }
-html[data-chp-visual-theme="light"] p[data-verse][class*="bg-white/"] {
+/* Verse rows are wrapper divs (data-verse) since the Deep Dive rebuild. */
+html[data-chp-visual-theme="light"] [data-verse][class*="bg-white/"] {
   background: #e2e8f0 !important;
   --tw-ring-color: #cbd5e1 !important;
+}
+/* The reader's go-to field: the dark classes (bg-black/25, white text) have
+   no readable light form on their own — give the field an explicit light
+   treatment: visible boundary, restrained background, readable placeholder
+   and typed text, and an obvious focus state. */
+html[data-chp-visual-theme="light"] input.chp-reader-goto {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html[data-chp-visual-theme="light"] input.chp-reader-goto::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+html[data-chp-visual-theme="light"] input.chp-reader-goto:focus {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.22) !important;
+}
+html[data-chp-visual-theme="light"] input.chp-reader-goto:focus-visible {
+  outline-color: #059669 !important;
 }
 
 /* Client re-renders serialize inline colors as rgb() - match that form too. */

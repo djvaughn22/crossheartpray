@@ -112,6 +112,40 @@ describe("reader chrome (source contract)", () => {
   });
 });
 
+describe("the go-to field is readable in both themes (source contract)", () => {
+  it("keeps its dark appearance and gains explicit light-mode styling", () => {
+    // Dark: unchanged quiet field.
+    expect(reader).toContain("chp-reader-goto");
+    expect(reader).toContain("bg-black/25");
+    // Light: explicit boundary, background, and readable text/placeholder —
+    // never white-on-white.
+    expect(globals).toContain('html[data-chp-visual-theme="light"] input.chp-reader-goto {');
+    expect(globals).toMatch(
+      /input\.chp-reader-goto \{\s*background: #f1f5f9 !important;\s*border-color: #cbd5e1 !important;\s*color: #0f172a !important;/,
+    );
+    expect(globals).toContain("input.chp-reader-goto::placeholder");
+  });
+
+  it("keyboard focus is obvious in both themes", () => {
+    expect(reader).toContain("focus-visible:outline-emerald-300");
+    expect(globals).toContain("input.chp-reader-goto:focus-visible");
+    expect(globals).toContain("input.chp-reader-goto:focus {");
+  });
+
+  it("the field keeps its accessible name and fluid width", () => {
+    expect(reader).toContain('ariaLabel="Go to a book, chapter, or verse"');
+    // w-full, no fixed width — the field can never overflow a narrow reader.
+    expect(reader).toMatch(/chp-reader-goto[^"]*w-full/);
+  });
+
+  it("the light selected-verse flattener matches the div verse rows", () => {
+    // Rows became <div data-verse> in the Deep Dive rebuild; the light
+    // override must not be pinned to the old <p> tag.
+    expect(globals).toContain('[data-verse][class*="bg-white/"]');
+    expect(globals).not.toContain('p[data-verse][class*="bg-white/"]');
+  });
+});
+
 describe("modal reader accessibility (source contract)", () => {
   it("the reader keeps safe-area padding for phone layouts", () => {
     expect(reader).toContain("env(safe-area-inset-bottom)");
