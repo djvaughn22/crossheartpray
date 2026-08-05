@@ -454,17 +454,34 @@ export function getDefaultWordStudy(wordStudies: VerifiedWordStudy[]) {
   return wordStudies.find(isUsefulVerifiedWordStudy) ?? null;
 }
 
+// The divine name (Hebrew יהוה, Strong's H3068) is rendered differently by
+// different English translations — this app's word-study data is generated
+// against the World English Bible, which spells it "Yahweh", while the
+// Scripture reader also displays ASV ("Jehovah") and BSB/KJV-style Bibles
+// ("LORD", conventionally capitalized to mark the tetragrammaton). Bridge
+// those three spellings to the same underlying record. Title-case "Lord"
+// is deliberately excluded — that spelling is ambiguous with "master"
+// (Hebrew adon/adonai) and aliasing it here would create false matches.
+const divineNameSpellings = new Set(["yahweh", "jehovah"]);
+
+function canonicalEnglishWord(rawWord: string) {
+  if (rawWord === "LORD") return "yahweh";
+
+  const normalized = normalizeStudyWord(rawWord);
+  return divineNameSpellings.has(normalized) ? "yahweh" : normalized;
+}
+
 export function getVerifiedWordStudyForWord(
   wordStudies: VerifiedWordStudy[],
   englishWord: string,
 ) {
-  const normalizedWord = normalizeStudyWord(englishWord);
+  const normalizedWord = canonicalEnglishWord(englishWord);
 
   return (
     wordStudies.find(
       (wordStudy) =>
         isUsefulVerifiedWordStudy(wordStudy) &&
-        normalizeStudyWord(wordStudy.englishWord) === normalizedWord,
+        canonicalEnglishWord(wordStudy.englishWord) === normalizedWord,
     ) ?? null
   );
 }
