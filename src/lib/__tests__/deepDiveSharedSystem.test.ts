@@ -30,27 +30,24 @@ describe("the one reader carries the one Deep Dive", () => {
     expect(reader).toContain("VerifiedVerseText");
     expect(reader).toContain("OriginalWordStudyModal");
     expect(reader).toContain("fetchVerifiedWordStudies");
-    expect(reader).toContain("hasVerifiedWordStudies");
   });
 
-  it("Deep Dive in the reader is honest: loading, verified, or a calm empty state", () => {
-    expect(reader).toContain("Checking verified Greek");
-    expect(reader).toContain("No verified original-language data for this verse yet");
+  it("Deep Dive in the reader is honest: verified words link to studies, or no words appear", () => {
+    // When data is available, VerifiedVerseText renders dotted-underlined word buttons.
+    // When data is unavailable, no inline failure message appears — Scripture remains readable.
+    expect(reader).toContain("VerifiedVerseText");
+    expect(reader).toContain("chapterWordStudies");
   });
 
-  it("the reader introduces Deep Dive compactly, without covering the Scripture", () => {
-    expect(reader).toContain(
-      "Choose Deep Dive beside any verse to explore its original Hebrew",
-    );
+  it("the reader introduces Deep Dive compactly via dotted-word styling, not per-verse buttons", () => {
+    expect(reader).toContain("Dotted words open the original Hebrew or Greek study.");
   });
 
-  it("every verse carries a VISIBLE per-verse control — not hidden click behavior", () => {
-    // A real button with a verse-specific accessible label, whose visible
-    // text names the language (Hebrew for OT, Greek for NT) from the canon
-    // table — no data preload needed to show it.
-    expect(reader).toContain("Open ${verseLanguage} Deep Dive for ${verseLabel}");
-    expect(reader).toContain('?.testament === "OT"');
-    expect(reader).toContain("{verseLanguage}");
+  it("verified words appear as dotted underlines in the Scripture text", () => {
+    // VerifiedVerseText renders dotted-underlined buttons inline — not a separate
+    // control panel. Clicking opens the shared Deep Dive modal.
+    expect(reader).toContain("VerifiedVerseText");
+    expect(reader).toContain("onWordClick");
   });
 
   it("the Deep Dive cache is session memory only — never persisted", () => {

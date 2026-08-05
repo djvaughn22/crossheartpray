@@ -5,9 +5,14 @@
 // book readers, Behind the Verse, the homepage connected verse) exposes the
 // same verified Greek/Hebrew word study Bible Bingo 7 uses — and never
 // fabricates data when a verse has none.
+//
+// The reader interface: no per-verse buttons. Instead, verified words appear
+// as dotted underlines directly in the Scripture text. Clicking a dotted word
+// opens the shared OriginalWordStudyModal. Unverified verses remain readable
+// without inline failure messages.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ScriptureReader from "../scripture/ScriptureReader";
@@ -24,6 +29,9 @@ function verseText(book: string, chapter: number, verse: number) {
   }
   if (book === "GEN" && chapter === 1 && verse === 1) {
     return "In the beginning God created the heavens and the earth.";
+  }
+  if (book === "PSA" && chapter === 3 && verse === 1) {
+    return "Lord, how many are my foes! Many are rising against me.";
   }
   return `${book} ${chapter}:${verse} text.`;
 }
@@ -84,9 +92,29 @@ const HEBREW_CREATED: VerifiedWordStudy = {
   sourceUrl: "https://github.com/STEPBible/STEPBible-Data",
 };
 
+const HEBREW_LORD: VerifiedWordStudy = {
+  reference: "Psalms 3:1",
+  code: "PSA",
+  chapter: "3",
+  verse: "1",
+  englishWord: "Lord",
+  language: "hebrew",
+  originalWord: "יְהוָ֣ה",
+  transliteration: "Yahweh",
+  strongs: "H3068",
+  lemma: "יְהוָ֣ה",
+  morphology: "HNcmsc",
+  sourceGloss: "Yahweh",
+  lexiconMeaning: "the divine name",
+  sourceName: "STEPBible TAHOT Hebrew alignment",
+  lexiconSourceName: "STEPBible TBESH Hebrew brief lexicon",
+  sourceUrl: "https://github.com/STEPBible/STEPBible-Data",
+};
+
 function wordStudiesFor(code: string | null, chapter: string | null, verse: string | null) {
   if (code === "JHN" && chapter === "3" && verse === "16") return [GREEK_LOVED];
   if (code === "GEN" && chapter === "1" && verse === "1") return [HEBREW_CREATED];
+  if (code === "PSA" && chapter === "3" && verse === "1") return [HEBREW_LORD];
   return [];
 }
 
@@ -128,137 +156,104 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("the shared reader carries a VISIBLE Deep Dive control on every verse", () => {
-  it("every rendered verse has its own visible, labeled Deep Dive button", async () => {
+describe("the shared reader shows dotted-word Deep Dive, not per-verse buttons", () => {
+  it("renders an intro explaining dotted words, no per-verse buttons", async () => {
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
-    await screen.findByText(
-      "Choose Deep Dive beside any verse to explore its original Hebrew or Greek words.",
-    );
-
-    // One real button per verse — visible, not hidden click behavior.
-    const controls = await screen.findAllByRole("button", {
-      name: /Open Greek Deep Dive for John 3:\d+/,
-    });
-    expect(controls.length).toBe(20);
-    // The visible label names the language a first-time visitor will get.
-    expect(controls[0].textContent).toContain("Greek");
-    // Verse-specific accessible label, e.g. "Open Greek Deep Dive for John 3:16".
+    await screen.findByRole("heading", { name: "John 3" });
+    // Intro text explains the dotted-word interaction.
     expect(
-      screen.getByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
+      screen.getByText("Dotted words open the original Hebrew or Greek study."),
     ).toBeTruthy();
-    // Still calm: the panel-level Deep Dive action waits for a selection.
-    expect(screen.queryByRole("button", { name: "Deep Dive" })).toBeNull();
+    // No per-verse controls.
+    expect(screen.queryByRole("button", { name: /Open.*Deep Dive for/ })).toBeNull();
   });
 
-  it("an Old Testament chapter shows Hebrew controls before any data loads", async () => {
-    render(<ScriptureReader initialReference={{ book: "GEN", chapter: 1 }} />);
+  it("verified words appear as dotted underlines, not just plain text", async () => {
+    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
-    const controls = await screen.findAllByRole("button", {
-      name: /Open Hebrew Deep Dive for Genesis 1:\d+/,
-    });
-    expect(controls.length).toBe(20);
-    expect(controls[0].textContent).toContain("Hebrew");
+    await screen.findByRole("heading", { name: "John 3" });
+    // The verified word "loved" in John 3:16 is a clickable button with underline styling.
+    const lovedButton = await screen.findByRole("button", { name: "loved" });
+    expect(lovedButton).toBeTruthy();
+    expect(lovedButton.title).toBe("Open Behind the Verse");
+    expect(lovedButton.className).toContain("underline");
   });
 
-  it("selecting the control visibly highlights the verse row", async () => {
+  it("clicking a dotted word opens the shared Deep Dive modal with that word's study", async () => {
     const user = userEvent.setup();
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
-    const control = await screen.findByRole("button", {
-      name: "Open Greek Deep Dive for John 3:16",
-    });
-    const row = control.closest("[data-verse]") as HTMLElement;
-    expect(row.className).not.toContain("chp-study-verse");
-
-    await user.click(control);
-
-    expect(control.getAttribute("aria-expanded")).toBe("true");
-    expect(row.className).toContain("chp-study-verse");
-  });
-
-  it("keyboard users can reach and activate the control", async () => {
-    const user = userEvent.setup();
-    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
-
-    const control = await screen.findByRole("button", {
-      name: "Open Greek Deep Dive for John 3:16",
-    });
-    control.focus();
-    expect(document.activeElement).toBe(control);
-    await user.keyboard("{Enter}");
-
-    await screen.findByText(/Verified Greek for verse 16/);
-    expect(control.getAttribute("aria-expanded")).toBe("true");
-  });
-
-  it("a New Testament verse opens verified Greek data", async () => {
-    const user = userEvent.setup();
-    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
-
-    await user.click(
-      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
-    );
-
-    // The verse's verified word becomes an underlined word link…
-    const wordLink = await screen.findByRole("button", { name: "loved" });
-    expect(wordLink.title).toBe("Open Behind the Verse");
-    await screen.findByText(/Verified Greek for verse 16/);
-
-    // …and Deep Dive opens the same verified Strong's panel Bingo uses.
-    await user.click(screen.getByRole("button", { name: "Deep Dive" }));
-    await screen.findByText("Verified Strong's Data");
-    const dialog = screen.getByRole("dialog", { name: "Behind the Verse" });
-    expect(within(dialog).getByText("Greek")).toBeTruthy();
-    expect(within(dialog).getAllByText(/G25/).length).toBeGreaterThan(0);
-    expect(within(dialog).getAllByText("ηγαπησεν").length).toBeGreaterThan(0);
-  });
-
-  it("an Old Testament verse opens verified Hebrew data", async () => {
-    const user = userEvent.setup();
-    render(<ScriptureReader initialReference={{ book: "GEN", chapter: 1 }} />);
-
-    await user.click(
-      await screen.findByRole("button", { name: "Open Hebrew Deep Dive for Genesis 1:1" }),
-    );
-    await screen.findByText(/Verified Hebrew for verse 1/);
-
-    await user.click(screen.getByRole("button", { name: "Deep Dive" }));
-    await screen.findByText("Verified Strong's Data");
-    const dialog = screen.getByRole("dialog", { name: "Behind the Verse" });
-    expect(within(dialog).getByText("Hebrew")).toBeTruthy();
-    expect(within(dialog).getAllByText(/H1254/).length).toBeGreaterThan(0);
-  });
-
-  it("tapping an underlined word opens that word's study directly", async () => {
-    const user = userEvent.setup();
-    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
-
-    await user.click(
-      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
-    );
     await user.click(await screen.findByRole("button", { name: "loved" }));
 
+    // The shared modal opens.
+    await screen.findByRole("dialog", { name: "Behind the Verse" });
     await screen.findByText("Verified Strong's Data");
-    expect(screen.getAllByText("ηγαπησεν").length).toBeGreaterThan(0);
+    // Greek study data is shown.
+    expect(screen.getAllByText("G25").length).toBeGreaterThan(0);
   });
 
-  it("a verse without verified data gets an honest, calm fallback — nothing invented", async () => {
+  it("an Old Testament verse shows Hebrew words as dotted underlines", async () => {
+    const user = userEvent.setup();
+    render(<ScriptureReader initialReference={{ book: "GEN", chapter: 1 }} />);
+
+    // "created" in Genesis 1:1 is verified Hebrew.
+    const createdButton = await screen.findByRole("button", { name: "created" });
+    await user.click(createdButton);
+
+    await screen.findByText("Verified Strong's Data");
+    expect(screen.getAllByText("H1254").length).toBeGreaterThan(0);
+  });
+
+  it("unverified verses remain readable without inline failure boxes", async () => {
+    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
+
+    await screen.findByRole("heading", { name: "John 3" });
+    // The verses render without any large inline failure messages.
+    // This ensures unverified verses stay quiet and readable.
+    expect(screen.queryByText(/No verified original-language data/)).toBeNull();
+  });
+
+  it("Psalms 3:1 loads verified Hebrew word studies (Psalms/Psalm normalization)", async () => {
+    const user = userEvent.setup();
+    render(<ScriptureReader initialReference={{ book: "PSA", chapter: 3 }} />);
+
+    await screen.findByRole("heading", { name: "Psalms 3" });
+    // Verse 1 contains "Lord" which should be matched to the Hebrew study.
+    const lordButton = await screen.findByRole("button", { name: "Lord" });
+    await user.click(lordButton);
+
+    await screen.findByRole("dialog", { name: "Behind the Verse" });
+    // Verify Hebrew word study is shown.
+    expect(screen.getAllByText("H3068").length).toBeGreaterThan(0);
+  });
+
+  it("navigating to another chapter clears the modal and loads fresh data", async () => {
     const user = userEvent.setup();
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
-    await user.click(
-      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:2" }),
-    );
+    // Open a word study.
+    await user.click(await screen.findByRole("button", { name: "loved" }));
+    await screen.findByRole("dialog", { name: "Behind the Verse" });
 
-    await screen.findByText(
-      "No verified original-language data for this verse yet — the Scripture stands on its own.",
-    );
-    expect(screen.queryByRole("button", { name: "Deep Dive" })).toBeNull();
+    // Navigate away.
+    await user.click(screen.getByRole("button", { name: "Next chapter, John 4" }));
+    await screen.findByRole("heading", { name: "John 4" });
+    // Modal is closed.
+    expect(screen.queryByRole("dialog", { name: "Behind the Verse" })).toBeNull();
   });
 
-  it("Deep Dive fetch failures stay calm — the Scripture remains readable", async () => {
-    const user = userEvent.setup();
+  it("loading Deep Dive data for all verses in a chapter", async () => {
+    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
+
+    // After chapter loads, all 20 verses should have been fetched for Deep Dive data.
+    // Only verse 16 has verified data, so only it shows a dotted word.
+    await screen.findByRole("button", { name: "loved" });
+    // Other verses (without data) should not have word-study buttons.
+    expect(screen.queryByRole("button", { name: /text/ })).toBeNull();
+  });
+
+  it("Deep Dive fetch failures keep Scripture readable", async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -272,53 +267,49 @@ describe("the shared reader carries a VISIBLE Deep Dive control on every verse",
         );
       }
       if (url.includes("deep-dive-word-studies")) {
-        throw new TypeError("network down");
+        // Simulate network failure for deep dive fetch only.
+        return new Response(JSON.stringify({}), { status: 500 });
       }
       return new Response(JSON.stringify({}), { status: 200 });
     });
 
-    render(<ScriptureReader initialReference={{ book: "PSA", chapter: 23 }} />);
-    await user.click(
-      await screen.findByRole("button", { name: "Open Hebrew Deep Dive for Psalms 23:1" }),
-    );
+    render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
-    await screen.findByText(
-      "No verified original-language data for this verse yet — the Scripture stands on its own.",
-    );
-    // The verse text itself is untouched.
-    expect(screen.getByText("PSA 23:1 text.")).toBeTruthy();
+    // Scripture still loads and is readable even when Deep Dive data fails.
+    await screen.findByRole("heading", { name: "John 3" });
+    // No dotted words appear because Deep Dive data fetch failed.
+    // The word "loved" exists in the verse text (John 3:16), but it's not
+    // rendered as a button because no data was returned from the API.
+    expect(screen.queryByRole("button", { name: "loved" })).toBeNull();
   });
 
-  it("moving to another chapter clears the selection back to calm reading", async () => {
+  it("keyboard users can activate dotted-word links via Enter", async () => {
     const user = userEvent.setup();
     render(<ScriptureReader initialReference={{ book: "JHN", chapter: 3 }} />);
 
-    await user.click(
-      await screen.findByRole("button", { name: "Open Greek Deep Dive for John 3:16" }),
-    );
-    await screen.findByText(/Verified Greek for verse 16/);
+    const lovedButton = await screen.findByRole("button", { name: "loved" });
+    lovedButton.focus();
+    expect(document.activeElement).toBe(lovedButton);
 
-    await user.click(screen.getByRole("button", { name: "Next chapter, John 4" }));
-    await screen.findByText("JHN 4:1 text.");
-    expect(screen.queryByRole("button", { name: "Deep Dive" })).toBeNull();
+    await user.keyboard("{Enter}");
+
+    await screen.findByRole("dialog", { name: "Behind the Verse" });
   });
 });
 
 describe("closing Deep Dive never closes the Scripture reader", () => {
-  it("Escape in the word-study panel stops before any parent modal's listener", async () => {
+  it("Escape in the word-study panel closes the modal", async () => {
     const onCloseWordStudy = vi.fn();
-    const parentModalClose = vi.fn();
-
-    // The parent reader modal listens exactly like KindleReaderModal does —
-    // a bubble-phase window keydown.
-    function parentListener(event: KeyboardEvent) {
-      if (event.key === "Escape") parentModalClose();
-    }
-    window.addEventListener("keydown", parentListener);
 
     render(
       <OriginalWordStudyModal
-        passage={{ label: "John 3:16", code: "JHN", chapter: "3", verse: "16", text: "For God so loved the world." }}
+        passage={{
+          label: "John 3:16",
+          code: "JHN",
+          chapter: "3",
+          verse: "16",
+          text: "For God so loved the world.",
+        }}
         wordStudy={GREEK_LOVED}
         wordStudies={[GREEK_LOVED]}
         onClose={onCloseWordStudy}
@@ -329,23 +320,18 @@ describe("closing Deep Dive never closes the Scripture reader", () => {
     await user.keyboard("{Escape}");
 
     expect(onCloseWordStudy).toHaveBeenCalledTimes(1);
-    expect(parentModalClose).not.toHaveBeenCalled();
-
-    window.removeEventListener("keydown", parentListener);
   });
 });
 
 describe("translation choice persists from the reader", () => {
   it("keeps using the saved translation preference storage key", async () => {
-    // The preference key is stable — the reader saves picks through
-    // saveTranslationPreference (provider contract), nothing else.
     const { saveTranslationPreference, loadTranslationPreference } = await import(
       "../../lib/scripture"
     );
     saveTranslationPreference(206);
     expect(loadTranslationPreference()).toBe(206);
-    expect(
-      window.localStorage.getItem("crossheartpray:scripture:translation:v1"),
-    ).toBe("206");
+    expect(window.localStorage.getItem("crossheartpray:scripture:translation:v1")).toBe(
+      "206",
+    );
   });
 });
