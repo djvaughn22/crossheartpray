@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   formatPrincipleRange,
   getAdjacentPlayablePrinciple,
@@ -13,6 +13,7 @@ import { type ScriptureReference } from "../lib/scripture";
 import {
   fetchVerifiedWordStudies,
   getDefaultWordStudy,
+  hasVerifiedWordStudies,
   type VerifiedWordStudy,
   type WordStudyPassage,
 } from "../lib/originalLanguageWordStudy";
@@ -23,6 +24,7 @@ type Group = { book: string; items: LifeEssentialsPrinciple[] };
 type ActiveWordStudy = {
   passage: WordStudyPassage;
   wordStudy: VerifiedWordStudy;
+  studies: VerifiedWordStudy[];
 };
 
 function principleKey(p: LifeEssentialsPrinciple) {
@@ -67,6 +69,10 @@ export default function GeneGetzFullIndex({
   const [activeWordStudy, setActiveWordStudy] = useState<ActiveWordStudy | null>(null);
   const [wordStudiesByPrinciple, setWordStudiesByPrinciple] = useState<Map<string, VerifiedWordStudy[]>>(new Map());
   const [loadingWordStudies, setLoadingWordStudies] = useState<Set<string>>(new Set());
+  // Tracks keys already fetched or in flight. A ref (not state) so writing to
+  // it never re-triggers or tears down the effect below — the same pattern
+  // ScriptureReader.tsx uses to avoid the effect racing its own state writes.
+  const requestedKeysRef = useRef<Set<string>>(new Set());
 
   // When a principle is expanded, fetch its Deep Dive word studies
   useEffect(() => {
@@ -74,14 +80,16 @@ export default function GeneGetzFullIndex({
 
     const toLoad: string[] = [];
     for (const key of expanded) {
-      if (!wordStudiesByPrinciple.has(key) && !loadingWordStudies.has(key)) {
+      if (!requestedKeysRef.current.has(key)) {
+        requestedKeysRef.current.add(key);
         toLoad.push(key);
       }
     }
 
     if (!toLoad.length) return;
 
-    let isMounted = true;
+    let cancelled = false;
+    const controller = new AbortController();
 
     (async () => {
       for (const key of toLoad) {
@@ -92,17 +100,20 @@ export default function GeneGetzFullIndex({
           const principle = group.items.find((p) => principleKey(p) === key);
           if (principle) {
             try {
-              const studies = await fetchVerifiedWordStudies({
-                code: principle.code,
-                chapter: String(principle.startChapter),
-                verse: String(principle.startVerse),
-              }).catch(() => [] as VerifiedWordStudy[]);
+              const studies = await fetchVerifiedWordStudies(
+                {
+                  code: principle.code,
+                  chapter: String(principle.startChapter),
+                  verse: String(principle.startVerse),
+                },
+                { signal: controller.signal },
+              ).catch(() => [] as VerifiedWordStudy[]);
 
-              if (isMounted) {
+              if (!cancelled) {
                 setWordStudiesByPrinciple((prev) => new Map(prev).set(key, studies));
               }
             } finally {
-              if (isMounted) {
+              if (!cancelled) {
                 setLoadingWordStudies((prev) => {
                   const next = new Set(prev);
                   next.delete(key);
@@ -117,9 +128,10 @@ export default function GeneGetzFullIndex({
     })();
 
     return () => {
-      isMounted = false;
+      cancelled = true;
+      controller.abort();
     };
-  }, [expanded, groups, wordStudiesByPrinciple, loadingWordStudies]);
+  }, [expanded, groups]);
 
   function toggle(key: string) {
     setExpanded((prev) => {
@@ -146,6 +158,7 @@ export default function GeneGetzFullIndex({
     setActiveWordStudy({
       passage: principleAsWordStudyPassage(principle),
       wordStudy,
+      studies,
     });
   }
 
@@ -208,7 +221,7 @@ export default function GeneGetzFullIndex({
                         const key = principleKey(p);
                         const studies = wordStudiesByPrinciple.get(key) ?? [];
                         const isLoading = loadingWordStudies.has(key);
-                        const hasStudies = studies.length > 0;
+                        const hasStudies = hasVerifiedWordStudies(studies);
 
                         return (
                           <button
@@ -283,7 +296,7 @@ export default function GeneGetzFullIndex({
         <OriginalWordStudyModal
           passage={activeWordStudy.passage}
           wordStudy={activeWordStudy.wordStudy}
-          wordStudies={Object.values(wordStudiesByPrinciple).flat()}
+          wordStudies={activeWordStudy.studies}
           onClose={() => setActiveWordStudy(null)}
         />
       ) : null}
