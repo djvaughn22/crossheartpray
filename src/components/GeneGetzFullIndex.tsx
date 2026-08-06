@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   formatPrincipleRange,
   getAdjacentPlayablePrinciple,
@@ -8,9 +8,22 @@ import {
 } from "../lib/geneGetzLifeEssentials";
 import CardReadMenu from "./CardReadMenu";
 import YouTubeModal from "./YouTubeModal";
+import OriginalWordStudyModal from "./OriginalWordStudyModal";
 import { type ScriptureReference } from "../lib/scripture";
+import {
+  fetchVerifiedWordStudies,
+  getDefaultWordStudy,
+  type VerifiedWordStudy,
+  type WordStudyPassage,
+} from "../lib/originalLanguageWordStudy";
+import { track } from "../lib/analytics";
 
 type Group = { book: string; items: LifeEssentialsPrinciple[] };
+
+type ActiveWordStudy = {
+  passage: WordStudyPassage;
+  wordStudy: VerifiedWordStudy;
+};
 
 function principleKey(p: LifeEssentialsPrinciple) {
   return `${p.code}-${p.principleNumber}-${p.startChapter}-${p.startVerse}`;
@@ -30,6 +43,17 @@ function principleReference(p: LifeEssentialsPrinciple): ScriptureReference {
   };
 }
 
+// Convert principle to word study passage format for Deep Dive
+function principleAsWordStudyPassage(p: LifeEssentialsPrinciple): WordStudyPassage {
+  return {
+    label: `${p.book} ${p.startChapter}:${p.startVerse}`,
+    code: p.code,
+    chapter: String(p.startChapter),
+    verse: String(p.startVerse),
+    text: "",
+  };
+}
+
 // Full 1,500-principle index, grouped by book (collapsible). Click a principle to
 // open/close it and read the full principle text with a link to the passage; the
 // Watch button plays the official Dr. Gene Getz video in-app.
@@ -40,6 +64,62 @@ export default function GeneGetzFullIndex({
 }) {
   const [active, setActive] = useState<LifeEssentialsPrinciple | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [activeWordStudy, setActiveWordStudy] = useState<ActiveWordStudy | null>(null);
+  const [wordStudiesByPrinciple, setWordStudiesByPrinciple] = useState<Map<string, VerifiedWordStudy[]>>(new Map());
+  const [loadingWordStudies, setLoadingWordStudies] = useState<Set<string>>(new Set());
+
+  // When a principle is expanded, fetch its Deep Dive word studies
+  useEffect(() => {
+    if (!expanded.size) return;
+
+    const toLoad: string[] = [];
+    for (const key of expanded) {
+      if (!wordStudiesByPrinciple.has(key) && !loadingWordStudies.has(key)) {
+        toLoad.push(key);
+      }
+    }
+
+    if (!toLoad.length) return;
+
+    let isMounted = true;
+
+    (async () => {
+      for (const key of toLoad) {
+        setLoadingWordStudies((prev) => new Set([...prev, key]));
+
+        // Find the principle by key to get its coordinates
+        for (const group of groups) {
+          const principle = group.items.find((p) => principleKey(p) === key);
+          if (principle) {
+            try {
+              const studies = await fetchVerifiedWordStudies({
+                code: principle.code,
+                chapter: String(principle.startChapter),
+                verse: String(principle.startVerse),
+              }).catch(() => [] as VerifiedWordStudy[]);
+
+              if (isMounted) {
+                setWordStudiesByPrinciple((prev) => new Map(prev).set(key, studies));
+              }
+            } finally {
+              if (isMounted) {
+                setLoadingWordStudies((prev) => {
+                  const next = new Set(prev);
+                  next.delete(key);
+                  return next;
+                });
+              }
+            }
+            break;
+          }
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [expanded, groups, wordStudiesByPrinciple, loadingWordStudies]);
 
   function toggle(key: string) {
     setExpanded((prev) => {
@@ -50,6 +130,22 @@ export default function GeneGetzFullIndex({
         next.add(key);
       }
       return next;
+    });
+  }
+
+  function openDeepDive(principle: LifeEssentialsPrinciple) {
+    const key = principleKey(principle);
+    const studies = wordStudiesByPrinciple.get(key) ?? [];
+    const wordStudy = getDefaultWordStudy(studies);
+
+    if (!wordStudy) {
+      return;
+    }
+
+    track("word_study_open", { word: wordStudy.englishWord, reference: wordStudy.reference });
+    setActiveWordStudy({
+      passage: principleAsWordStudyPassage(principle),
+      wordStudy,
     });
   }
 
@@ -108,6 +204,31 @@ export default function GeneGetzFullIndex({
                         triggerAriaLabel={`Read ${p.book} ${formatPrincipleRange(p)}`}
                       />
 
+                      {(() => {
+                        const key = principleKey(p);
+                        const studies = wordStudiesByPrinciple.get(key) ?? [];
+                        const isLoading = loadingWordStudies.has(key);
+                        const hasStudies = studies.length > 0;
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => openDeepDive(p)}
+                            disabled={!hasStudies && !isLoading}
+                            title={
+                              isLoading
+                                ? "Checking for verified original-language word links."
+                                : hasStudies
+                                  ? "Open verified original-language word study"
+                                  : "Deep Dive opens when this verse has verified underlined word links."
+                            }
+                            className="inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-200/20 bg-emerald-300/10 px-4 py-1.5 text-xs font-bold text-emerald-100 transition hover:bg-emerald-300/15 disabled:cursor-not-allowed disabled:border-zinc-700/70 disabled:bg-zinc-800/70 disabled:text-zinc-500 disabled:shadow-none disabled:hover:bg-zinc-800/70"
+                          >
+                            {isLoading ? "…" : "Hebrew/Greek"}
+                          </button>
+                        );
+                      })()}
+
                       {p.youtubeId ? (
                         <button
                           type="button"
@@ -158,6 +279,14 @@ export default function GeneGetzFullIndex({
         />
       ) : null}
 
+      {activeWordStudy ? (
+        <OriginalWordStudyModal
+          passage={activeWordStudy.passage}
+          wordStudy={activeWordStudy.wordStudy}
+          wordStudies={Object.values(wordStudiesByPrinciple).flat()}
+          onClose={() => setActiveWordStudy(null)}
+        />
+      ) : null}
     </div>
   );
 }
