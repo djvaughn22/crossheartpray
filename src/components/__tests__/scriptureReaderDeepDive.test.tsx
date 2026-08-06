@@ -31,7 +31,7 @@ function verseText(book: string, chapter: number, verse: number) {
     return "In the beginning God created the heavens and the earth.";
   }
   if (book === "PSA" && chapter === 3 && verse === 1) {
-    return "Lord, how many are my foes! Many are rising against me.";
+    return "Jehovah, how are mine adversaries increased! Many are they that rise up against me.";
   }
   return `${book} ${chapter}:${verse} text.`;
 }
@@ -97,16 +97,16 @@ const HEBREW_LORD: VerifiedWordStudy = {
   code: "PSA",
   chapter: "3",
   verse: "1",
-  englishWord: "Lord",
+  englishWord: "yahweh",
   language: "hebrew",
-  originalWord: "יְהוָ֣ה",
-  transliteration: "Yahweh",
+  originalWord: "יְ֭הוָה",
+  transliteration: "Yah.weh",
   strongs: "H3068",
-  lemma: "יְהוָ֣ה",
-  morphology: "HNcmsc",
-  sourceGloss: "Yahweh",
-  lexiconMeaning: "the divine name",
-  sourceName: "STEPBible TAHOT Hebrew alignment",
+  lemma: "יְ֭הוָה",
+  morphology: "HNpt",
+  sourceGloss: "O Yahweh",
+  lexiconMeaning: "LORD",
+  sourceName: "STEPBible TAHOT Hebrew alignment + TBESH Strong's meaning",
   lexiconSourceName: "STEPBible TBESH Hebrew brief lexicon",
   sourceUrl: "https://github.com/STEPBible/STEPBible-Data",
 };
@@ -214,17 +214,17 @@ describe("the shared reader shows dotted-word Deep Dive, not per-verse buttons",
     expect(screen.queryByText(/No verified original-language data/)).toBeNull();
   });
 
-  it("Psalms 3:1 loads verified Hebrew word studies (Psalms/Psalm normalization)", async () => {
+  it("Psalms 3:1 loads verified Hebrew word studies (divine-name canonicalization: ASV Jehovah→yahweh)", async () => {
     const user = userEvent.setup();
     render(<ScriptureReader initialReference={{ book: "PSA", chapter: 3 }} />);
 
     await screen.findByRole("heading", { name: "Psalms 3" });
-    // Verse 1 contains "Lord" which should be matched to the Hebrew study.
-    const lordButton = await screen.findByRole("button", { name: "Lord" });
-    await user.click(lordButton);
+    // Verse 1 contains "Jehovah" (ASV rendering) which canonicalizes to the yahweh study via divine-name bridging.
+    const jehovahButton = await screen.findByRole("button", { name: "Jehovah" });
+    await user.click(jehovahButton);
 
     await screen.findByRole("dialog", { name: "Behind the Verse" });
-    // Verify Hebrew word study is shown.
+    // Verify Hebrew word study is shown: H3068 (Yahweh/Jehovah/LORD).
     expect(screen.getAllByText("H3068").length).toBeGreaterThan(0);
   });
 
