@@ -18,6 +18,7 @@ import {
   type WordStudyPassage,
 } from "../lib/originalLanguageWordStudy";
 import { track } from "../lib/analytics";
+import { originalLanguageForBook } from "../lib/bibleTestament";
 
 type Group = { book: string; items: LifeEssentialsPrinciple[] };
 
@@ -217,31 +218,6 @@ export default function GeneGetzFullIndex({
                         triggerAriaLabel={`Read ${p.book} ${formatPrincipleRange(p)}`}
                       />
 
-                      {(() => {
-                        const key = principleKey(p);
-                        const studies = wordStudiesByPrinciple.get(key) ?? [];
-                        const isLoading = loadingWordStudies.has(key);
-                        const hasStudies = hasVerifiedWordStudies(studies);
-
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => openDeepDive(p)}
-                            disabled={!hasStudies && !isLoading}
-                            title={
-                              isLoading
-                                ? "Checking for verified original-language word links."
-                                : hasStudies
-                                  ? "Open verified original-language word study"
-                                  : "Deep Dive opens when this verse has verified underlined word links."
-                            }
-                            className="inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-200/20 bg-emerald-300/10 px-4 py-1.5 text-xs font-bold text-emerald-100 transition hover:bg-emerald-300/15 disabled:cursor-not-allowed disabled:border-zinc-700/70 disabled:bg-zinc-800/70 disabled:text-zinc-500 disabled:shadow-none disabled:hover:bg-zinc-800/70"
-                          >
-                            {isLoading ? "…" : "Hebrew/Greek"}
-                          </button>
-                        );
-                      })()}
-
                       {p.youtubeId ? (
                         <button
                           type="button"
@@ -273,6 +249,32 @@ export default function GeneGetzFullIndex({
                         Source: Dr. Gene Getz, Life Essentials / BiblePrinciples.org
                         (Principle {p.principleNumber}).
                       </p>
+
+                      {(() => {
+                        const key = principleKey(p);
+                        const studies = wordStudiesByPrinciple.get(key) ?? [];
+                        const isLoading = loadingWordStudies.has(key);
+                        const hasStudies = hasVerifiedWordStudies(studies);
+                        const language = originalLanguageForBook(p.book);
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => openDeepDive(p)}
+                            disabled={!hasStudies && !isLoading}
+                            title={
+                              isLoading
+                                ? "Checking for verified original-language word links."
+                                : hasStudies
+                                  ? `Open verified ${language} word study`
+                                  : "Deep Dive opens when this verse has verified underlined word links."
+                            }
+                            className="mt-3 inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-200/20 bg-emerald-300/10 px-4 py-1.5 text-xs font-bold text-emerald-100 transition hover:bg-emerald-300/15 disabled:cursor-not-allowed disabled:border-zinc-700/70 disabled:bg-zinc-800/70 disabled:text-zinc-500 disabled:shadow-none disabled:hover:bg-zinc-800/70"
+                          >
+                            {isLoading ? "…" : language}
+                          </button>
+                        );
+                      })()}
                     </div>
                   ) : null}
                 </li>

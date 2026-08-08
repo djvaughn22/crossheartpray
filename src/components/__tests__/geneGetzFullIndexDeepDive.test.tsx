@@ -3,7 +3,7 @@
 // Life Essentials must reuse the exact shared Deep Dive architecture the
 // Reading Plan already proved out (fetchVerifiedWordStudies,
 // hasVerifiedWordStudies/getDefaultWordStudy, OriginalWordStudyModal). This
-// guards the regression where the "Hebrew/Greek" pill got permanently stuck
+// guards the regression where the original-language pill got permanently stuck
 // disabled/"…" because its own loading effect depended on the state it wrote.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -139,8 +139,46 @@ async function expandAndFindPill(user: ReturnType<typeof userEvent.setup>, princ
   const item = titleNode.closest("li");
   if (!item) throw new Error(`Could not find <li> for principle "${principleTitle}"`);
   await user.click(within(item).getByText(principleTitle));
-  return within(item).findByRole("button", { name: /Hebrew\/Greek|…/ });
+  return within(item).findByRole("button", { name: /^(Hebrew|Greek|…)$/ });
 }
+
+describe("the original-language control is quiet until a principle is opened", () => {
+  it("is absent while the principle is collapsed", async () => {
+    const user = userEvent.setup();
+    render(<GeneGetzFullIndex groups={GROUPS} />);
+
+    await user.click(screen.getByText("Genesis"));
+
+    const item = screen.getByText("Chosen in Christ").closest("li");
+    expect(item).not.toBeNull();
+    expect(
+      within(item!).queryByRole("button", { name: /^(Hebrew|Greek|…)$/ }),
+    ).toBeNull();
+  });
+
+  it("appears once the principle is expanded, and names the right language", async () => {
+    const user = userEvent.setup();
+    render(<GeneGetzFullIndex groups={GROUPS} />);
+
+    await user.click(screen.getByText("Genesis"));
+    const oldTestament = await expandAndFindPill(user, "Chosen in Christ");
+    expect(oldTestament.textContent).toBe("Hebrew");
+
+    await user.click(screen.getByText("John"));
+    const newTestament = await expandAndFindPill(user, "The Deity of Christ");
+    expect(newTestament.textContent).toBe("Greek");
+  });
+
+  it("never offers both languages at once", async () => {
+    const user = userEvent.setup();
+    render(<GeneGetzFullIndex groups={GROUPS} />);
+
+    await user.click(screen.getByText("Genesis"));
+    await expandAndFindPill(user, "Chosen in Christ");
+
+    expect(screen.queryByText("Hebrew/Greek")).toBeNull();
+  });
+});
 
 describe("Life Essentials Deep Dive reuses the shared architecture", () => {
   it("an Old Testament Life Essentials verse enables Hebrew", async () => {
@@ -151,7 +189,7 @@ describe("Life Essentials Deep Dive reuses the shared architecture", () => {
     const pill = await expandAndFindPill(user, "Chosen in Christ");
 
     await waitFor(() => expect((pill as HTMLButtonElement).disabled).toBe(false));
-    expect(pill.textContent).toBe("Hebrew/Greek");
+    expect(pill.textContent).toBe("Hebrew");
   });
 
   it("a New Testament Life Essentials verse enables Greek", async () => {
@@ -162,7 +200,7 @@ describe("Life Essentials Deep Dive reuses the shared architecture", () => {
     const pill = await expandAndFindPill(user, "The Deity of Christ");
 
     await waitFor(() => expect((pill as HTMLButtonElement).disabled).toBe(false));
-    expect(pill.textContent).toBe("Hebrew/Greek");
+    expect(pill.textContent).toBe("Greek");
   });
 
   it("the enabled control opens the shared Deep Dive UI", async () => {
@@ -213,7 +251,7 @@ describe("Life Essentials Deep Dive reuses the shared architecture", () => {
 
     const pill = await expandAndFindPill(user, "Chosen in Christ");
     // It must not still say "…" (stuck checking) once the fetch has settled.
-    await waitFor(() => expect(pill.textContent).toBe("Hebrew/Greek"), { timeout: 3000 });
+    await waitFor(() => expect(pill.textContent).toBe("Hebrew"), { timeout: 3000 });
     expect((pill as HTMLButtonElement).disabled).toBe(false);
   });
 
