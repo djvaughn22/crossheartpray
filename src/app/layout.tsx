@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChpProductNav from "../components/ChpProductNav";
 import VisualThemeProvider from "../components/VisualThemeProvider";
+import SyncBridge from "../components/SyncBridge";
 import Script from "next/script";
 
 const geistSans = Geist({
@@ -47,6 +48,7 @@ export default function RootLayout({
           <ChpProductNav />
           {children}
         </VisualThemeProvider>
+        <SyncBridge />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-2PXSNXTPX0"
           strategy="afterInteractive"

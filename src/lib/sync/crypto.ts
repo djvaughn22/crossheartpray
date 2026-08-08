@@ -42,6 +42,21 @@ export function normalizeSyncEmail(value: unknown): string | null {
   return email;
 }
 
+/**
+ * Codes are compared case-insensitively with spaces and dashes ignored, so a
+ * code read off a screen or a card matches however it was typed. Only the
+ * normalized form is ever hashed.
+ */
+export function normalizeSyncCode(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const code = value.replace(/[\s-]/g, "").toUpperCase();
+  if (code.length < 8 || code.length > 64) return null;
+  if (!/^[A-Z0-9]+$/.test(code)) return null;
+
+  return code;
+}
+
 export function validateSyncPassword(value: unknown): string | null {
   if (typeof value !== "string") return null;
   if (value.length < 12 || value.length > 256) return null;

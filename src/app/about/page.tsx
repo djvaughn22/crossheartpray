@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
+import SyncCard from "../../components/SyncCard";
 
 export const metadata = {
   title: "About",
@@ -275,6 +276,8 @@ export default function AboutPage() {
               </p>
               <p className="mt-1 text-xl">✝️ ❤️ 🙏</p>
             </section>
+
+            <SyncCard />
 
             {/* The footer's Contact and Disclaimer links land on these two
                 sections (family standard, 2026-08-02). */}

@@ -3,6 +3,7 @@ import {
   createSyncSessionToken,
   hashSyncPassword,
   hashSyncSecret,
+  normalizeSyncCode,
   normalizeSyncEmail,
   validateSyncPassword,
   verifySyncPassword,
@@ -223,6 +224,99 @@ export class SyncService {
 
     await this.store.deleteUser(user.id);
     return { ok: true as const };
+  }
+
+  /**
+   * Turn an owner-issued Sync code into an active entitlement.
+   *
+   * This is the owner's own activation path — how Save on Any Device is
+   * tested and granted before real billing is switched on. It writes the same
+   * entitlement record that a future payment provider will write, so enabling
+   * charging later adds a source, it does not change how access is decided.
+   *
+   * Every failure returns one generic message so a stranger cannot use the
+   * response to tell a revoked code from an unknown one.
+   */
+  async redeemSyncCode(
+    rawToken: string | null,
+    rawCode: unknown,
+    now: Date = new Date(),
+  ) {
+    const user = await this.userForSession(rawToken, now);
+    if (!user) {
+      return { ok: false as const, error: "not-authenticated" as const };
+    }
+
+    const code = normalizeSyncCode(rawCode);
+    if (!code) {
+      return { ok: false as const, error: "invalid-code" as const };
+    }
+
+    const record = await this.store.getCodeByHash(hashSyncSecret(code));
+    if (!record || !record.enabled || record.disabledAt) {
+      return { ok: false as const, error: "invalid-code" as const };
+    }
+
+    const account = await this.publicAccount(user, now);
+    if (account.syncActive) {
+      return { ok: true as const, account, alreadyActive: true as const };
+    }
+
+    const recorded = await this.store.recordCodeRedemption({
+      id: createSyncId(),
+      codeId: record.id,
+      userId: user.id,
+      normalizedEmail: user.email,
+      redeemedAt: now.toISOString(),
+    });
+
+    if (!recorded) {
+      return { ok: false as const, error: "invalid-code" as const };
+    }
+
+    await this.store.createEntitlement({
+      id: createSyncId(),
+      userId: user.id,
+      kind: "free-code",
+      status: "active",
+      sourceRef: record.id,
+      startsAt: now.toISOString(),
+      endsAt: null,
+      createdAt: now.toISOString(),
+    });
+
+    return {
+      ok: true as const,
+      account: await this.publicAccount(user, now),
+      alreadyActive: false as const,
+    };
+  }
+
+  /** Mint an owner-issued Sync code. Only the hash is ever stored. */
+  async createSyncCode(
+    rawCode: unknown,
+    label: unknown,
+    now: Date = new Date(),
+  ) {
+    const code = normalizeSyncCode(rawCode);
+    if (!code) {
+      return { ok: false as const, error: "invalid-code" as const };
+    }
+
+    const created = await this.store.createCode({
+      id: createSyncId(),
+      codeHash: hashSyncSecret(code),
+      label: typeof label === "string" && label.trim() ? label.trim() : "sync",
+      enabled: true,
+      createdAt: now.toISOString(),
+      disabledAt: null,
+    });
+
+    if (!created) {
+      return { ok: false as const, error: "code-exists" as const };
+    }
+
+    return { ok: true as const, id: created.id, label: created.label };
   }
 
   async listProgressForSession(

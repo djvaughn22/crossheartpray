@@ -139,6 +139,18 @@ export function loadReadingPlanProgress(year: number = currentPlanYear()): Check
   return stored ? normalizeProgressMap(stored) : {};
 }
 
+/**
+ * Every plan year this device has stored, canonicalized. Optional Sync reads
+ * this so a person who read through a year boundary keeps both years.
+ */
+export function loadAllReadingPlanYears(): Record<string, ChecklistProgress> {
+  const result: Record<string, ChecklistProgress> = {};
+  for (const [year, progress] of Object.entries(readStoredYears())) {
+    result[year] = normalizeProgressMap(progress);
+  }
+  return result;
+}
+
 /** The set of canonically completed entry ids for a plan year. */
 export function completedReadingPlanEntryIds(
   year: number = currentPlanYear(),

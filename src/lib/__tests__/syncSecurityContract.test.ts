@@ -66,4 +66,53 @@ describe("CrossHeartPray Sync security contract", () => {
     expect(route).toContain("sync-inactive");
     expect(route).toContain("Local reading progress still works");
   });
+
+  it("keeps every secret out of the browser-side Sync code", () => {
+    for (const path of [
+      "src/lib/syncClient.ts",
+      "src/lib/syncMergeModel.ts",
+      "src/components/SyncCard.tsx",
+      "src/components/SyncBridge.tsx",
+    ]) {
+      const src = source(path);
+
+      expect(src, path).not.toMatch(
+        /SYNC_ADMIN_KEY|DATABASE_URL|passwordHash|tokenHash|codeHash|scrypt|hashSync/,
+      );
+      expect(src, path).not.toContain("NEXT_PUBLIC");
+      // The session cookie is HttpOnly; the browser must never name or read it.
+      expect(src, path).not.toContain("chp_sync_session");
+    }
+  });
+
+  it("never lets the browser decide that sync is entitled", () => {
+    const client = source("src/lib/syncClient.ts");
+    const bridge = source("src/components/SyncBridge.tsx");
+
+    // syncActive is only ever read from a server response, never written or
+    // persisted locally, so clearing storage cannot grant sync.
+    expect(client).not.toMatch(/syncActive\s*[=:]\s*(true|false)/);
+    expect(bridge).not.toMatch(/syncActive\s*[=:]\s*(true|false)/);
+    expect(client).not.toMatch(/localStorage[^\n]*syncActive/);
+  });
+
+  it("mints codes only behind an owner key that fails closed when unset", () => {
+    const admin = source("src/app/api/sync/admin/codes/route.ts");
+
+    expect(admin).toContain("SYNC_ADMIN_KEY");
+    expect(admin).toContain("if (!adminKey) return false");
+    // The raw code is never echoed back to the caller.
+    expect(admin).not.toMatch(/code:\s*(?:result\.)?code/);
+  });
+
+  it("keeps the local-first progress services free of account dependencies", () => {
+    for (const path of [
+      "src/lib/readingPlanProgress.ts",
+      "src/lib/readingPlan104Progress.ts",
+    ]) {
+      const src = source(path);
+      expect(src, path).not.toContain("syncClient");
+      expect(src, path).not.toContain("fetch(");
+    }
+  });
 });
