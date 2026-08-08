@@ -26,6 +26,15 @@ import {
   subscribeToReadingPlanProgress,
 } from "../lib/readingPlanProgress";
 import {
+  saveReadingPlan104Progress,
+  subscribeToReadingPlan104Progress,
+} from "../lib/readingPlan104Progress";
+import { isCatchUpReading } from "../lib/bibleReadingPlan104";
+import {
+  DEFAULT_READING_PLAN_DURATION,
+  type ReadingPlanDuration,
+} from "../lib/readingPlanDuration";
+import {
   bibleComUrlForPassage,
   getScriptureBook,
   parseScriptureReference,
@@ -35,7 +44,27 @@ import {
 
 type BibleReadingPlanProgressProps = {
   weeks: BibleReadingPlanWeek[];
+  /**
+   * Which pacing these weeks belong to. Defaults to the 1-year plan, so every
+   * existing caller keeps the exact behavior it has always had.
+   */
+  duration?: ReadingPlanDuration;
 };
+
+// Each pacing keeps its own progress. The 52-week entry points ARE the
+// canonical annual service — untouched — so the 1-year plan, Bible Bingo, and
+// the Bingo email journey all keep reading and writing the same key they
+// always have.
+const PROGRESS_STORES = {
+  52: {
+    save: saveReadingPlanProgress,
+    subscribe: subscribeToReadingPlanProgress,
+  },
+  104: {
+    save: saveReadingPlan104Progress,
+    subscribe: subscribeToReadingPlan104Progress,
+  },
+} as const;
 
 type AnyRecord = Record<string, unknown>;
 
@@ -357,6 +386,9 @@ function flattenPlan(weeks: BibleReadingPlanWeek[]) {
       const reading = readingForLane(week, laneIndex);
       const label = labelForReading(reading);
       const id = idForReading(reading, weekNo, laneIndex);
+      // A Catch-up cell is a rest day, not a reading: no Scripture, so no
+      // reader, no completion, and no place in the counts.
+      const catchUp = isCatchUpReading(label);
 
       return {
         id,
@@ -366,7 +398,8 @@ function flattenPlan(weeks: BibleReadingPlanWeek[]) {
         short: lane.short,
         lane: laneForReading(reading, laneIndex),
         label,
-        readerReference: referenceForReading(reading),
+        catchUp,
+        readerReference: catchUp ? null : referenceForReading(reading),
       };
     });
   });
@@ -379,8 +412,12 @@ function parseReadingId(readingId: string) {
   return { week: Number(match[1]), daySlug: match[2] };
 }
 
-export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProgressProps) {
+export default function BibleReadingPlanProgress({
+  weeks,
+  duration = DEFAULT_READING_PLAN_DURATION,
+}: BibleReadingPlanProgressProps) {
   const readings = useMemo(() => flattenPlan(weeks), [weeks]);
+  const progressStore = PROGRESS_STORES[duration];
   const [progress, setProgress] = useState<ChecklistProgress>({});
   // Bible Bingo email arrival (?bingoBatch=TOKEN from a daily email):
   // server completions merge into the local checklist, and checking a
@@ -492,14 +529,20 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
   }, [activeReadingId]);
 
   useEffect(() => {
-    // Canonical annual progress subscription: hydrates after mount and
-    // follows completions made on Bible Bingo, emails, or other tabs.
-    return subscribeToReadingPlanProgress((next) => {
+    // Progress subscription for the active pacing: hydrates after mount and
+    // follows completions made on Bible Bingo, emails, or other tabs. On the
+    // 1-year plan this is the canonical annual service, exactly as before;
+    // switching pacing swaps in that track's own store and re-hydrates.
+    return progressStore.subscribe((next) => {
       setProgress(next);
     });
-  }, []);
+  }, [progressStore]);
 
   useEffect(() => {
+    // Bible Bingo emails are an annual-plan feature and stay bound to the
+    // canonical 52-week progress. The 2-year track never touches a journey.
+    if (duration !== 52) return;
+
     const token = new URLSearchParams(window.location.search)
       .get("bingoBatch")
       ?.trim();
@@ -545,7 +588,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [duration]);
 
   useEffect(() => {
     let clearHighlightTimer: number | undefined;
@@ -651,24 +694,35 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
     };
   }, [returnFocusToId]);
 
-  const readingIds = useMemo(() => readings.map((reading) => reading.id), [readings]);
+  // Catch-up cells carry no Scripture, so they are not part of the counts and
+  // never hold the plan back from reading 100% done.
+  const countedReadings = useMemo(
+    () => readings.filter((reading) => !reading.catchUp),
+    [readings],
+  );
+  const readingIds = useMemo(
+    () => countedReadings.map((reading) => reading.id),
+    [countedReadings],
+  );
   const { done: doneCount, remaining: daysLeft, percent } = checklistStats(readingIds, progress);
   const weeksLeft = weeks.filter((week, weekIndex) => {
     const weekNo = weekNumber(week, weekIndex + 1);
 
     return LANES.some((lane, laneIndex) => {
       const reading = readingForLane(week, laneIndex);
+      if (isCatchUpReading(labelForReading(reading))) return false;
       const id = idForReading(reading, weekNo, laneIndex);
       return !progress[id];
     });
   }).length;
-  const nextReading = readings.find((reading) => !progress[reading.id]) ?? readings[0];
+  const nextReading =
+    countedReadings.find((reading) => !progress[reading.id]) ?? countedReadings[0];
 
   function toggleReading(id: string) {
     if (!progress[id]) track("reading_check", { reading_id: id });
     setProgress((current) => {
       const next = toggleChecklistItem(current, id);
-      saveReadingPlanProgress(next);
+      progressStore.save(next);
       // Emailed readings also update the subscriber's server-side journey.
       // Computed from `next` (not the render closure) so rapid toggles
       // always send the state that actually committed; the POST is
@@ -712,7 +766,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
 
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center justify-between gap-3 text-[0.62rem] font-black uppercase tracking-[0.14em] text-slate-300">
-              <span>{doneCount}/{readings.length}</span>
+              <span>{doneCount}/{countedReadings.length}</span>
               <span className="text-emerald-100">{percent}% done</span>
             </div>
             <div className="h-2 overflow-visible rounded-full border border-white/10 bg-white/10">
@@ -832,7 +886,30 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
                     const label = labelForReading(reading);
                     const id = idForReading(reading, weekNo, laneIndex);
                     const isRead = Boolean(progress[id]);
-                    const getz = geneGetzForReading(reading).find((p) => p.youtubeId);
+                    const catchUp = isCatchUpReading(label);
+                    const getz = catchUp
+                      ? undefined
+                      : geneGetzForReading(reading).find((p) => p.youtubeId);
+
+                    // A rest cell on the 2-year pace: the source reading was a
+                    // single chapter and could not be divided, so this half of
+                    // the pair is time to catch up. Nothing to check, nothing
+                    // to open — quiet on purpose, not broken.
+                    if (catchUp) {
+                      return (
+                        <td
+                          id={id}
+                          key={lane.key}
+                          className="chp-reading-plan-cell chp-reading-catchup-cell scroll-mt-36 border-r border-white/[0.07] bg-white/[0.015] px-2 py-1 text-left last:border-r-0"
+                        >
+                          <div className="flex min-h-[1.85rem] items-center justify-start">
+                            <span className="text-[0.72rem] font-bold leading-snug text-slate-500">
+                              Catch-up
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    }
 
                     return (
                       <td
@@ -924,7 +1001,7 @@ export default function BibleReadingPlanProgress({ weeks }: BibleReadingPlanProg
         onMarkComplete={(id) => {
           setProgress((current) => {
             const next = toggleChecklistItem(current, id);
-            saveReadingPlanProgress(next);
+            progressStore.save(next);
             return next;
           });
           setReturnFocusToId(id);

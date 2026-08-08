@@ -25,16 +25,21 @@ describe("Read the Plan never replaces the CrossHeartPray page", () => {
   });
 
   it("tells assistive tech the link opens a new tab", () => {
+    // The label names whichever plan is active ("52-week" / "104-week") and
+    // still ends by announcing the new tab.
     expect(actions).toContain(
-      'aria-label="Read the 52-week Bible Reading Plan PDF in a new tab"',
+      "aria-label={`Read the ${planLabel} Bible Reading Plan PDF in a new tab`}",
     );
+    expect(actions).toContain('const planLabel = duration === 104 ? "104-week" : "52-week";');
   });
 });
 
 describe("Download is a real handler, not a same-tab PDF navigation", () => {
   it("uses a button wired to the unit-tested blob download lib", () => {
     expect(actions).toContain('type="button"');
-    expect(actions).toContain("downloadReadingPlanPdf()");
+    // The handler now takes the active pace so it fetches the matching file;
+    // it is still the tested blob handler, never a same-tab navigation.
+    expect(actions).toContain("downloadReadingPlanPdf(duration)");
     // The old trap: a plain anchor with a download attribute that mobile
     // browsers turn into same-tab navigation.
     expect(actions).not.toMatch(/<a[^>]*\bdownload=/);
