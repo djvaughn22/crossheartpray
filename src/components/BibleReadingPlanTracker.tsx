@@ -44,15 +44,15 @@ export default function BibleReadingPlanTracker({ weeks }: BibleReadingPlanTrack
 
         <details className="chp-lane-guide-details mt-4 rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-4 print:hidden">
           <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.18em] text-emerald-100">
-            52-week plan details
+            Reading plan details
           </summary>
           <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 className="text-sm font-black uppercase tracking-[0.22em] text-emerald-100">
-              52-week lanes
+              Reading plan lanes
             </h2>
             <p className="text-xs font-semibold text-slate-400">
-              Same weekly flow across all 52 weeks
+              Same weekly flow, every week
             </p>
           </div>
 
