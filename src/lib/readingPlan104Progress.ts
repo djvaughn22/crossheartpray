@@ -21,21 +21,15 @@ import {
   loadChecklistProgress,
   type ChecklistProgress,
 } from "./checklistProgress";
+import {
+  normalizeReadingPlanSyncEntryId,
+  READING_PLAN_SYNC_PLAN_IDS,
+} from "./readingPlanSyncModel";
 
 export const READING_PLAN_104_PROGRESS_KEY =
   "crossheartpray:bible-reading-plan-104:v1";
 export const READING_PLAN_104_PROGRESS_EVENT =
   "crossheartpray:bible-reading-plan-104-progress";
-
-const DAY_SLUGS = new Set([
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-]);
 
 /**
  * Normalize a stored id to canonical `week-N-daySlug` form for N in 1..104.
@@ -43,16 +37,10 @@ const DAY_SLUGS = new Set([
  * unknown ids stored (never destroy data) but don't count them.
  */
 export function normalizeReadingPlan104EntryId(id: string): string | null {
-  const match = id
-    .trim()
-    .toLowerCase()
-    .match(/^week-0*(\d{1,3})-([a-z]+)$/);
-  if (!match) return null;
-  const week = Number(match[1]);
-  if (!Number.isInteger(week) || week < 1 || week > 104 || !DAY_SLUGS.has(match[2])) {
-    return null;
-  }
-  return `week-${week}-${match[2]}`;
+  return normalizeReadingPlanSyncEntryId(
+    READING_PLAN_SYNC_PLAN_IDS.twoYear,
+    id,
+  );
 }
 
 function normalizeProgressMap(progress: ChecklistProgress): ChecklistProgress {

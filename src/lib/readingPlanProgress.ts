@@ -23,20 +23,14 @@ import {
   parseChecklistProgress,
   type ChecklistProgress,
 } from "./checklistProgress";
+import {
+  normalizeReadingPlanSyncEntryId,
+  READING_PLAN_SYNC_PLAN_IDS,
+} from "./readingPlanSyncModel";
 
 export const READING_PLAN_PROGRESS_KEY_V1 = "crossheartpray:bible-reading-plan:v1";
 export const READING_PLAN_PROGRESS_KEY_V2 = "crossheartpray:bible-reading-plan:v2";
 export const READING_PLAN_PROGRESS_EVENT = "crossheartpray:bible-reading-plan-progress";
-
-const DAY_SLUGS = new Set([
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-]);
 
 /** The plan year for a moment in time — America/Chicago, like /today. */
 export function currentPlanYear(date: Date = new Date()): number {
@@ -56,16 +50,10 @@ export function currentPlanYear(date: Date = new Date()): number {
  * keep unknown ids stored (never destroy data) but don't count them.
  */
 export function normalizeReadingPlanEntryId(id: string): string | null {
-  const match = id
-    .trim()
-    .toLowerCase()
-    .match(/^week-0*(\d{1,2})-([a-z]+)$/);
-  if (!match) return null;
-  const week = Number(match[1]);
-  if (!Number.isInteger(week) || week < 1 || week > 52 || !DAY_SLUGS.has(match[2])) {
-    return null;
-  }
-  return `week-${week}-${match[2]}`;
+  return normalizeReadingPlanSyncEntryId(
+    READING_PLAN_SYNC_PLAN_IDS.oneYear,
+    id,
+  );
 }
 
 type StoredYears = Record<string, ChecklistProgress>;
