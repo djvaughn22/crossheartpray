@@ -77,7 +77,7 @@ describe("CrossHeartPray Sync security contract", () => {
       const src = source(path);
 
       expect(src, path).not.toMatch(
-        /SYNC_ADMIN_KEY|DATABASE_URL|passwordHash|tokenHash|codeHash|scrypt|hashSync/,
+        /SYNC_ADMIN_KEY|CHP_SYNC_BETA_ACCESS_PASSWORD|DATABASE_URL|passwordHash|tokenHash|codeHash|scrypt|hashSync/,
       );
       expect(src, path).not.toContain("NEXT_PUBLIC");
       // The session cookie is HttpOnly; the browser must never name or read it.
@@ -103,6 +103,32 @@ describe("CrossHeartPray Sync security contract", () => {
     expect(admin).toContain("if (!adminKey) return false");
     // The raw code is never echoed back to the caller.
     expect(admin).not.toMatch(/code:\s*(?:result\.)?code/);
+  });
+
+  it("the temporary beta door fails closed and never echoes the shared password", () => {
+    const betaAccess = source("src/lib/sync/betaAccess.ts");
+    const route = source("src/app/api/sync/auth/beta/route.ts");
+
+    expect(betaAccess).toContain("CHP_SYNC_BETA_ACCESS_PASSWORD");
+    expect(betaAccess).toContain("if (!configured) return false");
+
+    // Isolated from Step In The Ring's own beta-access env var — a shared
+    // password value must not become a shared config dependency.
+    expect(betaAccess).not.toContain("SITR_BETA_ACCESS_PASSWORD");
+    expect(route).not.toContain("SITR");
+
+    expect(route).not.toMatch(/password["']?\s*:\s*(?:payload\.)?password/);
+    expect(route).not.toContain("CHP_SYNC_BETA_ACCESS_PASSWORD");
+  });
+
+  it("the beta door refuses a revoked account even with the correct password", () => {
+    const service = source("src/lib/sync/service.ts");
+    const admit = service.slice(service.indexOf("admitViaBetaAccess"));
+
+    expect(admit).toContain('"revoked"');
+    expect(admit.slice(0, admit.indexOf("createEntitlement"))).toContain(
+      "revoked",
+    );
   });
 
   it("keeps the local-first progress services free of account dependencies", () => {

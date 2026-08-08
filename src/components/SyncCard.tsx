@@ -7,10 +7,11 @@
 // card only offers cross-device persistence, and it is deliberately a quiet
 // utility rather than a pitch — no hero, no banner, no interruption.
 //
-// It shows no price. No price or cadence has been approved for CrossHeartPray
-// and no payment provider is wired, so claiming anything purchasable here
-// would be untrue. Signing in and activating still work, which is how the
-// owner tests the real product before charging is switched on.
+// Access is temporary owner-decision scaffolding, not the product: email +
+// the one shared beta password admits immediately (POST /api/sync/auth/beta).
+// A paid subscription will replace the shared password as the source of the
+// Sync entitlement later without changing anything below this card — the
+// account, session, and merge engine stay the same either way.
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -19,8 +20,6 @@ import {
   syncProgressNow,
   type SyncAccount,
 } from "../lib/syncClient";
-
-type Mode = "idle" | "create" | "signin";
 
 const fieldClass =
   "w-full rounded-2xl border border-white/15 bg-slate-900/70 px-4 py-3 text-sm font-semibold text-slate-100 placeholder:text-slate-500 focus:border-emerald-200/50 focus:outline-none";
@@ -32,10 +31,8 @@ const quietClass =
 export default function SyncCard() {
   const [account, setAccount] = useState<SyncAccount | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [mode, setMode] = useState<Mode>("idle");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -67,16 +64,14 @@ export default function SyncCard() {
     setError(result.error);
   }, []);
 
-  async function submitAccount(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError(null);
     setNotice(null);
 
-    const path = mode === "create" ? "register" : "login";
-
     try {
-      const response = await fetch(`/api/sync/auth/${path}`, {
+      const response = await fetch("/api/sync/auth/beta", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -95,49 +90,11 @@ export default function SyncCard() {
 
       setAccount(body.account);
       setPassword("");
-      setMode("idle");
-
-      if (body.account.syncActive) {
-        await runSync(body.account.id);
-      }
+      await runSync(body.account.id);
     } catch {
       setError(
         "Could not reach CrossHeartPray Sync. Your reading progress is still saved on this device.",
       );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function submitCode(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-
-    try {
-      const response = await fetch("/api/sync/redeem", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-
-      const body = (await response.json().catch(() => ({}))) as {
-        account?: SyncAccount;
-        error?: string;
-      };
-
-      if (!response.ok || !body.account) {
-        setError(body.error ?? "That code is not valid.");
-        return;
-      }
-
-      setAccount(body.account);
-      setCode("");
-      await runSync(body.account.id);
-    } catch {
-      setError("Could not reach CrossHeartPray Sync. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -159,6 +116,7 @@ export default function SyncCard() {
 
     clearSyncShadow();
     setAccount(null);
+    setEmail("");
     setNotice(
       "Signed out. CrossHeartPray keeps working on this device, and your saved progress is still on your account.",
     );
@@ -182,11 +140,11 @@ export default function SyncCard() {
             <span className="font-black text-white">{account.email}</span>.{" "}
             {account.syncActive
               ? "Save on any device is on for this account."
-              : "Save on any device is not active on this account yet."}
+              : "Save on any device is not active on this account."}
           </p>
 
-          {account.syncActive ? (
-            <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-3">
+            {account.syncActive ? (
               <button
                 type="button"
                 className={primaryClass}
@@ -200,85 +158,19 @@ export default function SyncCard() {
               >
                 {busy ? "Syncing…" : "Sync now"}
               </button>
-              <button
-                type="button"
-                className={quietClass}
-                disabled={busy}
-                onClick={signOut}
-              >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <>
-              <form className="mt-4 space-y-3" onSubmit={submitCode}>
-                <label
-                  className="block text-xs font-black uppercase tracking-[0.18em] text-slate-400"
-                  htmlFor="chp-sync-code"
-                >
-                  Activation code
-                </label>
-                <input
-                  id="chp-sync-code"
-                  className={fieldClass}
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                  autoComplete="off"
-                  placeholder="Enter your activation code"
-                />
-                <div className="flex flex-wrap gap-3">
-                  <button type="submit" className={primaryClass} disabled={busy}>
-                    {busy ? "Working…" : "Activate"}
-                  </button>
-                  <button
-                    type="button"
-                    className={quietClass}
-                    disabled={busy}
-                    onClick={signOut}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              </form>
-              <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
-                Subscriptions are not open yet.
-              </p>
-            </>
-          )}
-        </div>
-      ) : mode === "idle" ? (
-        <div className="mt-5">
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              className={primaryClass}
-              onClick={() => {
-                setMode("create");
-                setError(null);
-                setNotice(null);
-              }}
-            >
-              Set up sync
-            </button>
+            ) : null}
             <button
               type="button"
               className={quietClass}
-              onClick={() => {
-                setMode("signin");
-                setError(null);
-                setNotice(null);
-              }}
+              disabled={busy}
+              onClick={signOut}
             >
-              Sign in
+              Sign out
             </button>
           </div>
-          <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
-            Subscriptions are not open yet. Everything else in CrossHeartPray
-            works without an account.
-          </p>
         </div>
       ) : (
-        <form className="mt-5 space-y-3" onSubmit={submitAccount}>
+        <form className="mt-5 space-y-3" onSubmit={submit}>
           <label
             className="block text-xs font-black uppercase tracking-[0.18em] text-slate-400"
             htmlFor="chp-sync-email"
@@ -307,40 +199,13 @@ export default function SyncCard() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            autoComplete={
-              mode === "create" ? "new-password" : "current-password"
-            }
+            autoComplete="current-password"
             required
           />
 
-          {mode === "create" ? (
-            <p className="text-xs font-semibold leading-5 text-slate-400">
-              Use at least 12 characters. There is no password recovery yet, so
-              please keep it somewhere safe.
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap gap-3">
-            <button type="submit" className={primaryClass} disabled={busy}>
-              {busy
-                ? "Working…"
-                : mode === "create"
-                  ? "Create account"
-                  : "Sign in"}
-            </button>
-            <button
-              type="button"
-              className={quietClass}
-              disabled={busy}
-              onClick={() => {
-                setMode("idle");
-                setPassword("");
-                setError(null);
-              }}
-            >
-              Cancel
-            </button>
-          </div>
+          <button type="submit" className={primaryClass} disabled={busy}>
+            {busy ? "Working…" : "Save on any device"}
+          </button>
         </form>
       )}
 

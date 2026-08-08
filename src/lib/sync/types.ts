@@ -14,7 +14,7 @@ export type SyncSession = {
   revokedAt: string | null;
 };
 
-export type SyncEntitlementKind = "annual" | "lifetime" | "free-code";
+export type SyncEntitlementKind = "annual" | "lifetime" | "free-code" | "beta";
 export type SyncEntitlementStatus = "active" | "revoked" | "expired";
 
 export type SyncEntitlement = {

@@ -8,6 +8,7 @@ import {
   validateSyncPassword,
   verifySyncPassword,
 } from "./crypto";
+import { verifyBetaAccessPassword } from "./betaAccess";
 import { getSyncStore, type SyncStore } from "./store";
 import type {
   SyncEntitlement,
@@ -224,6 +225,79 @@ export class SyncService {
 
     await this.store.deleteUser(user.id);
     return { ok: true as const };
+  }
+
+  /**
+   * The temporary beta door: email + the one shared password admits
+   * immediately, no owner activation step. Finds-or-creates the account,
+   * grants a 'beta' entitlement unless it is explicitly revoked, and issues
+   * the normal secure session — everything downstream (merge, progress,
+   * sign out) is the same Sync engine a paid entitlement will use later.
+   *
+   * A revoked account is never re-admitted by the shared password: the
+   * owner's kill switch outranks it. Every other failure returns one
+   * generic error so a wrong guess can't be used to probe which emails
+   * already have accounts.
+   */
+  async admitViaBetaAccess(
+    input: { email?: unknown; password?: unknown },
+    now: Date = new Date(),
+  ) {
+    const email = normalizeSyncEmail(input.email);
+    if (!email || !verifyBetaAccessPassword(input.password)) {
+      return { ok: false as const, error: "invalid" as const };
+    }
+
+    let user = await this.store.getUserByEmail(email);
+
+    if (!user) {
+      // Beta admission never uses a personal password — this account is
+      // only ever reached through the shared door, so its password hash is
+      // unusable filler, not a credential anyone needs to know.
+      const unusablePassword = await hashSyncPassword(
+        `${createSyncId()}${createSyncId()}`,
+      );
+
+      user = await this.store.createUser({
+        id: createSyncId(),
+        email,
+        passwordHash: unusablePassword,
+        createdAt: now.toISOString(),
+      });
+
+      // Lost a race with a concurrent admission for the same email.
+      if (!user) user = await this.store.getUserByEmail(email);
+    }
+
+    if (!user) {
+      return { ok: false as const, error: "unavailable" as const };
+    }
+
+    const entitlements = await this.store.listEntitlements(user.id);
+    if (entitlements.some((value) => value.status === "revoked")) {
+      return { ok: false as const, error: "invalid" as const };
+    }
+
+    if (!entitlements.some((value) => isActiveEntitlement(value, now))) {
+      await this.store.createEntitlement({
+        id: createSyncId(),
+        userId: user.id,
+        kind: "beta",
+        status: "active",
+        sourceRef: "beta-password",
+        startsAt: now.toISOString(),
+        endsAt: null,
+        createdAt: now.toISOString(),
+      });
+    }
+
+    const session = await this.issueSession(user.id, now);
+
+    return {
+      ok: true as const,
+      account: await this.publicAccount(user, now),
+      ...session,
+    };
   }
 
   /**

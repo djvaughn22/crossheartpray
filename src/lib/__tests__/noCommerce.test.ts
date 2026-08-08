@@ -48,6 +48,7 @@ const SYNC_SURFACE = new Set([
   "components/SyncBridge.tsx",
   "app/api/sync/redeem/route.ts",
   "app/api/sync/admin/codes/route.ts",
+  "app/api/sync/auth/beta/route.ts",
   "app/api/sync/progress/route.ts",
   "app/api/sync/routeShared.ts",
   "app/api/sync/auth/register/route.ts",

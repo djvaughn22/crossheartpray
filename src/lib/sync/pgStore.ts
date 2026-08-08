@@ -135,7 +135,7 @@ export async function createPostgresSyncStore(
       id text PRIMARY KEY,
       user_id text NOT NULL REFERENCES sync_users(id) ON DELETE CASCADE,
       kind text NOT NULL
-        CHECK (kind IN ('annual', 'lifetime', 'free-code')),
+        CHECK (kind IN ('annual', 'lifetime', 'free-code', 'beta')),
       status text NOT NULL
         CHECK (status IN ('active', 'revoked', 'expired')),
       source_ref text,
@@ -143,6 +143,18 @@ export async function createPostgresSyncStore(
       ends_at timestamptz,
       created_at timestamptz NOT NULL
     )`;
+
+  // The table already existed in production with the narrower CHECK from
+  // before 'beta' was a valid kind. CREATE TABLE IF NOT EXISTS is a no-op
+  // there, so the constraint is widened explicitly — idempotent, safe to run
+  // on every boot.
+  await sql`
+    ALTER TABLE sync_entitlements
+    DROP CONSTRAINT IF EXISTS sync_entitlements_kind_check`;
+  await sql`
+    ALTER TABLE sync_entitlements
+    ADD CONSTRAINT sync_entitlements_kind_check
+    CHECK (kind IN ('annual', 'lifetime', 'free-code', 'beta'))`;
 
   await sql`
     CREATE INDEX IF NOT EXISTS sync_entitlements_user_id_idx
