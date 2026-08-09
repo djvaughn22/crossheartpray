@@ -15,7 +15,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { GET as getChapter } from "../../app/api/scripture/chapter/route";
-import { localWebProvider } from "../scripture";
+import {
+  ACTIVE_BIBLE_TRANSLATION,
+  localWebProvider,
+  pickDefaultTranslation,
+} from "../scripture";
 import {
   LOCAL_READABLE_TRANSLATIONS,
   localChapterIndex,
@@ -107,6 +111,37 @@ describe("each translation renders its own words", () => {
       const { data } = await readChapter(`book=JHN&chapter=1&version=${id}`);
       expect(data.translation.id, String(id)).toBe(id);
     }
+  });
+});
+
+describe("the default translation is the site-wide one", () => {
+  const readable = (id: number, abbreviation: string) => ({
+    id,
+    abbreviation,
+    label: abbreviation,
+    access: "readHere" as const,
+    source: "local" as const,
+  });
+
+  it("opens in the site-wide translation even when another is listed first", () => {
+    // KJV outranks BSB in picker order; that must not change which Bible the
+    // reader opens in, or Deep Dive would silently switch off by default.
+    const picked = pickDefaultTranslation(
+      [readable(KJV, "KJV"), readable(BSB, "BSB"), readable(WEB, "WEBUS")],
+      null,
+    );
+
+    expect(picked.id).toBe(ACTIVE_BIBLE_TRANSLATION.bibleComId);
+    expect(picked.abbreviation).toBe("BSB");
+  });
+
+  it("still honours a saved preference over the site-wide default", () => {
+    const picked = pickDefaultTranslation(
+      [readable(KJV, "KJV"), readable(BSB, "BSB")],
+      KJV,
+    );
+
+    expect(picked.abbreviation).toBe("KJV");
   });
 });
 

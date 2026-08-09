@@ -237,8 +237,16 @@ export function pickDefaultTranslation(
   const saved = readable.find((translation) => translation.id === savedId);
   if (saved) return saved;
 
-  const activeLocal = readable.find((translation) => translation.source === "local");
-  if (activeLocal) return activeLocal;
+  // The site-wide translation specifically, not merely the first local one:
+  // several translations now ship locally, and picker order must not be able
+  // to change which Bible CrossHeartPray opens in by default.
+  const siteWide = readable.find(
+    (translation) => translation.id === ACTIVE_BIBLE_TRANSLATION.bibleComId,
+  );
+  if (siteWide) return siteWide;
+
+  const anyLocal = readable.find((translation) => translation.source === "local");
+  if (anyLocal) return anyLocal;
 
   return readable[0] ?? translations[0];
 }

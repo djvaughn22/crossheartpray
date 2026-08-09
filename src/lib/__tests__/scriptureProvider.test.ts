@@ -195,19 +195,20 @@ describe("no server-only secrets in client Scripture code", () => {
 });
 
 describe("truthful default-translation priority", () => {
-  const webLocal: ScriptureTranslation = {
-    id: 206,
-    abbreviation: "WEBUS",
-    label: "WEB",
+  // The site-wide translation is BSB (src/lib/scripture/translationConfig.ts).
+  const siteWide: ScriptureTranslation = {
+    id: ACTIVE_BIBLE_TRANSLATION.bibleComId,
+    abbreviation: ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
+    label: ACTIVE_BIBLE_TRANSLATION.shortName,
     access: "readHere",
     source: "local",
   };
-  const bsb: ScriptureTranslation = {
-    id: 3034,
-    abbreviation: "BSB",
-    label: "BSB",
+  const kjvLocal: ScriptureTranslation = {
+    id: 1,
+    abbreviation: "KJV",
+    label: "KJV",
     access: "readHere",
-    source: "youVersion",
+    source: "local",
   };
   const csbReadable: ScriptureTranslation = {
     id: 1713,
@@ -216,29 +217,30 @@ describe("truthful default-translation priority", () => {
     access: "readHere",
     source: "youVersion",
   };
-  const csbExternal: ScriptureTranslation = {
-    id: 1713,
-    abbreviation: "CSB",
-    label: "CSB",
+  const unreadable: ScriptureTranslation = {
+    id: 111,
+    abbreviation: "NIV",
+    label: "NIV",
     access: "bibleComLink",
     source: "bibleCom",
   };
 
-  it("defaults to the local active translation while CSB is only an external link", () => {
-    expect(pickDefaultTranslation([webLocal, bsb, csbExternal], null)).toBe(webLocal);
+  it("defaults to the site-wide translation, not merely the first local one", () => {
+    // KJV is listed first; the default must still be the site-wide Bible.
+    expect(pickDefaultTranslation([kjvLocal, siteWide, csbReadable], null)).toBe(siteWide);
   });
 
-  it("the local active translation outranks licensed YouVersion translations", () => {
-    expect(pickDefaultTranslation([webLocal, csbReadable, bsb], null)).toBe(webLocal);
+  it("the site-wide translation outranks licensed YouVersion translations", () => {
+    expect(pickDefaultTranslation([csbReadable, siteWide], null)).toBe(siteWide);
   });
 
   it("a saved readable preference beats the site default", () => {
-    expect(pickDefaultTranslation([webLocal, csbReadable, bsb], bsb.id)).toBe(bsb);
+    expect(pickDefaultTranslation([siteWide, kjvLocal], kjvLocal.id)).toBe(kjvLocal);
   });
 
-  it("a saved external-only preference is ignored — external links are never 'read here'", () => {
-    expect(pickDefaultTranslation([webLocal, bsb, csbExternal], csbExternal.id)).toBe(
-      webLocal,
+  it("a saved preference that cannot be read here is ignored", () => {
+    expect(pickDefaultTranslation([siteWide, kjvLocal, unreadable], unreadable.id)).toBe(
+      siteWide,
     );
   });
 });
