@@ -80,10 +80,14 @@ export default function AboutPage() {
               <h2 className="text-2xl font-black text-white">Bible Reading Plan</h2>
 
               <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
-                <li>Start here with the 52-week board.</li>
-                <li>Follow seven lanes across each week.</li>
+                <li>Choose your pace: 1 Year · 52 Weeks or 2 Years · 104 Weeks.</li>
+                <li>Follow the same seven lanes across each week, either pace.</li>
                 <li>Open the linked chapter in the Bible app.</li>
                 <li>Mark readings done and keep moving.</li>
+                <li>
+                  Progress saves free on this device. CrossHeartPray Sync can
+                  keep it with you on your other devices.
+                </li>
               </ul>
 
               <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">

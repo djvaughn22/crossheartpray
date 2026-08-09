@@ -26,9 +26,9 @@ const dailyWays = [
     href: "/bible-reading-plan",
     icon: "📖",
     eyebrow: "Structured",
-    title: "52-week Bible Reading Plan",
+    title: "Bible in 1 or 2 Years",
     body:
-      "A 52-week Bible table with seven lanes across each week, chapter links, checkboxes, and simple progress.",
+      "Choose your pace: 1 Year · 52 Weeks or 2 Years · 104 Weeks, with chapter links, checkboxes, and simple progress tracking.",
     cta: "Open Bible Reading",
   },
   {
