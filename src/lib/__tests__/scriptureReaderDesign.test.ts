@@ -80,7 +80,7 @@ describe("reader chrome (source contract)", () => {
   });
 
   it("names the failed translation in its error state instead of swapping text", () => {
-    expect(reader).toContain("in {translation.label} right now");
+    expect(reader).toContain("in ${translation.label} right now");
   });
 
   it("the translation picker is a dialog of full-name Bible cards, not an abbreviation menu", () => {

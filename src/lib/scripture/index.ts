@@ -39,6 +39,7 @@ export {
   localWebProvider,
   pickDefaultTranslation,
   saveTranslationPreference,
+  translationIncludesBook,
   type ReaderCapability,
   type ScriptureChapter,
   type ScriptureProvider,

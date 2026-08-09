@@ -282,7 +282,7 @@ describe("the reader keeps its promises (source contract)", () => {
 
   it("an error state renders no Scripture at all", () => {
     expect(reader).toContain("setChapterData(null);");
-    expect(reader).toContain("setLoadFailed(true);");
+    expect(reader).toContain('setLoadError("failed");');
   });
 
   it("selector state and rendered metadata are checked against each other", () => {

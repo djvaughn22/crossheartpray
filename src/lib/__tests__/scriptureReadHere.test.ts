@@ -57,8 +57,11 @@ describe("reader truthfulness (source contract)", () => {
   });
 
   it("treats a version that lacks the requested book as an error, not a swap", () => {
-    expect(reader).toContain("does not include");
-    expect(reader).toContain("setLoadFailed(true)");
+    // The missing book is named as the permanent fact it is — never a
+    // transient failure, and never another Bible under that version's name.
+    expect(reader).toContain("translationIncludesBook(readTranslation, current.book)");
+    expect(reader).toContain('setLoadError("missingBook")');
+    expect(reader).toContain("doesn't include ${");
   });
 
   it("offers a real retry rather than quietly loading something else", () => {

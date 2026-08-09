@@ -21,10 +21,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ACTIVE_BIBLE_TRANSLATION } from "../../lib/scripture/translationConfig";
 import {
+  getScriptureBook,
   isRecommendedTranslation,
   matchesTranslationSearch,
   recommendedRank,
   translationDisplayName,
+  translationIncludesBook,
   type ScriptureTranslation,
 } from "../../lib/scripture";
 
@@ -32,6 +34,12 @@ type TranslationPickerProps = {
   translations: ScriptureTranslation[];
   selectedId: number;
   onChange: (translation: ScriptureTranslation) => void;
+  /**
+   * The USFM book on screen. Translations that do not contain it (TCENT is
+   * New Testament only) say so plainly and cannot be chosen for this passage
+   * — the picker never promises reading it cannot deliver.
+   */
+  currentBook?: string;
   /** Render the trigger as a compact pill (reader top bar). */
   compact?: boolean;
   className?: string;
@@ -45,6 +53,7 @@ export default function TranslationPicker({
   translations,
   selectedId,
   onChange,
+  currentBook,
   compact = false,
   className = "",
   ariaLabel = "Choose a Bible",
@@ -129,19 +138,34 @@ export default function TranslationPicker({
   function bibleCard(translation: ScriptureTranslation) {
     const isSelected = translation.id === selectedId;
     const readsHere = translation.access === "readHere";
+    // Passage-aware truthfulness: a version that does not contain the book on
+    // screen is shown, named, and explained — never offered as if it could
+    // render this passage, and never quietly swapped for another Bible.
+    const hasPassage = currentBook
+      ? translationIncludesBook(translation, currentBook)
+      : true;
+    const bookName = currentBook
+      ? (getScriptureBook(currentBook)?.name ?? currentBook)
+      : "";
+
     return (
       <button
         key={translation.id}
         type="button"
+        disabled={!hasPassage}
         aria-current={isSelected ? "true" : undefined}
+        aria-disabled={!hasPassage || undefined}
         onClick={() => {
+          if (!hasPassage) return;
           onChange(translation);
           closePicker();
         }}
         className={`w-full rounded-2xl border p-4 text-left transition ${
-          isSelected
-            ? "chp-bible-card-selected border-emerald-300/45 bg-emerald-300/10"
-            : "border-white/10 bg-white/5 hover:bg-white/10"
+          !hasPassage
+            ? "cursor-not-allowed border-white/10 bg-white/[0.02] opacity-60"
+            : isSelected
+              ? "chp-bible-card-selected border-emerald-300/45 bg-emerald-300/10"
+              : "border-white/10 bg-white/5 hover:bg-white/10"
         }`}
       >
         <span className="flex items-baseline justify-between gap-3">
@@ -154,12 +178,20 @@ export default function TranslationPicker({
         </span>
         <span
           className={`mt-1.5 flex items-center gap-1.5 text-xs font-semibold ${
-            readsHere ? "text-emerald-200/90" : "text-zinc-400"
+            !hasPassage
+              ? "text-zinc-400"
+              : readsHere
+                ? "text-emerald-200/90"
+                : "text-zinc-400"
           }`}
         >
-          <span aria-hidden="true">{readsHere ? "📖" : "↗"}</span>
-          {readsHere ? "Reads inside CrossHeartPray" : "Opens in YouVersion"}
-          {isSelected ? (
+          <span aria-hidden="true">{!hasPassage ? "—" : readsHere ? "📖" : "↗"}</span>
+          {!hasPassage
+            ? `Doesn't include ${bookName}`
+            : readsHere
+              ? "Reads inside CrossHeartPray"
+              : "Opens in YouVersion"}
+          {isSelected && hasPassage ? (
             <span className="ml-auto shrink-0 rounded-full border border-emerald-200/35 bg-emerald-300/10 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-emerald-100">
               ✓ Selected
             </span>

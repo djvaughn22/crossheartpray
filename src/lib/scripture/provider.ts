@@ -44,6 +44,25 @@ export type ScriptureTranslation = {
   books?: string[];
 };
 
+/**
+ * Can this translation actually render this book?
+ *
+ * YouVersion versions publish the USFM codes they contain, and several of
+ * them are not complete Bibles — TCENT, for one, is New Testament only. A
+ * translation with no book list is a complete Bible (every local dataset is),
+ * so the honest answer there is yes. The picker asks this before offering a
+ * translation for the passage on screen: advertising "Reads inside
+ * CrossHeartPray" for a book the version does not contain is a promise the
+ * reader cannot keep.
+ */
+export function translationIncludesBook(
+  translation: Pick<ScriptureTranslation, "books">,
+  book: string,
+): boolean {
+  if (!translation.books || translation.books.length === 0) return true;
+  return translation.books.includes(book);
+}
+
 export type ScriptureChapter = {
   book: string;
   bookName: string;

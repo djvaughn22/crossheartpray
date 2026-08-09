@@ -25,6 +25,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   fetchAvailableTranslations,
   formatScriptureReference,
+  getScriptureBook,
   getScriptureProvider,
   loadTranslationPreference,
   pickDefaultTranslation,
@@ -41,6 +42,7 @@ import ScriptureReferenceInput from "./ScriptureReferenceInput";
 import TranslationPicker from "./TranslationPicker";
 import VerifiedVerseText from "../VerifiedVerseText";
 import OriginalWordStudyModal from "../OriginalWordStudyModal";
+import { translationIncludesBook } from "../../lib/scripture/provider";
 import {
   fetchVerifiedWordStudies,
   wordStudyLookupKey,
@@ -130,7 +132,11 @@ export default function ScriptureReader({
   );
   const [chapterData, setChapterData] = useState<ScriptureChapter | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadFailed, setLoadFailed] = useState(false);
+  // "missingBook" is a permanent fact about the translation (TCENT has no
+  // Genesis); "failed" is a transient problem worth retrying. Telling them
+  // apart is what keeps the reader from offering a Try again that can never
+  // succeed.
+  const [loadError, setLoadError] = useState<"missingBook" | "failed" | null>(null);
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   // Bumped by Try again, so a failed load can be retried without changing
   // the reference or the translation.
@@ -220,16 +226,15 @@ export default function ScriptureReader({
 
     (async () => {
       try {
-        const missingBook =
-          readTranslation.source === "youVersion" &&
-          readTranslation.books &&
-          readTranslation.books.length > 0 &&
-          !readTranslation.books.includes(current.book);
-
-        if (missingBook) {
-          throw new Error(
-            `${readTranslation.label} does not include ${current.book}.`,
-          );
+        if (!translationIncludesBook(readTranslation, current.book)) {
+          // Not a failure to report as one: this translation simply does not
+          // contain this book. Say so, and never substitute another Bible.
+          if (!isStale()) {
+            setChapterData(null);
+            setLoadError("missingBook");
+            setFallbackNotice(null);
+          }
+          return;
         }
 
         const data = await provider.loadChapter(current, {
@@ -240,14 +245,14 @@ export default function ScriptureReader({
         if (isStale()) return;
 
         setChapterData(data);
-        setLoadFailed(false);
+        setLoadError(null);
         setFallbackNotice(null);
       } catch (caught) {
         if (isAbortError(caught) || isStale()) return;
         // Failure is reported as failure. Showing a different translation
         // here is what made the reader lie about what it was displaying.
         setChapterData(null);
-        setLoadFailed(true);
+        setLoadError("failed");
         setFallbackNotice(null);
       } finally {
         if (!isStale()) setIsLoading(false);
@@ -271,10 +276,16 @@ export default function ScriptureReader({
 
     const chapterKey = `${current.book}|${current.chapter ?? 1}`;
     if (chapterStudiesRef.current === chapterKey) return;
+    // Claimed, not yet loaded. If this run is cancelled before the studies
+    // land — switching translation mid-fetch aborts it — the claim is
+    // released below, so returning to this chapter tries again. Marking the
+    // chapter "done" before its text arrived is what left Deep Dive
+    // permanently dotless while the header still promised dotted words.
     chapterStudiesRef.current = chapterKey;
 
     const controller = new AbortController();
     let cancelled = false;
+    let loaded = false;
 
     (async () => {
       try {
@@ -310,6 +321,7 @@ export default function ScriptureReader({
         );
 
         if (!cancelled) {
+          loaded = true;
           setChapterWordStudies(chapterStudies);
         }
       } catch (caught) {
@@ -319,6 +331,10 @@ export default function ScriptureReader({
 
     return () => {
       cancelled = true;
+      // An interrupted load never counts as a loaded chapter.
+      if (!loaded && chapterStudiesRef.current === chapterKey) {
+        chapterStudiesRef.current = null;
+      }
       controller.abort();
     };
   }, [chapterData, current, deepDiveAligned]);
@@ -421,6 +437,7 @@ export default function ScriptureReader({
           compact
           translations={translations}
           selectedId={translation.id}
+          currentBook={current.book}
           onChange={(picked) => {
             userPickedRef.current = true;
             setTranslation(picked);
@@ -465,20 +482,26 @@ export default function ScriptureReader({
           </>
         )}
 
-        {!isLoading && loadFailed && (
+        {!isLoading && loadError && (
           <div className="py-10 text-center">
             <p className="text-sm font-semibold leading-6 text-zinc-300">
-              Couldn&apos;t load {heading} in {translation.label} right now.
+              {loadError === "missingBook"
+                ? `${translation.label} doesn't include ${
+                    getScriptureBook(current.book)?.name ?? current.book
+                  }. Choose another Bible to read it here.`
+                : `Couldn't load ${heading} in ${translation.label} right now.`}
             </p>
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setReloadToken((token) => token + 1)}
-                className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-sm font-black text-white transition hover:bg-white/15"
-              >
-                Try again
-              </button>
-            </div>
+            {loadError === "failed" ? (
+              <div className="mt-5 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setReloadToken((token) => token + 1)}
+                  className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-sm font-black text-white transition hover:bg-white/15"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 
