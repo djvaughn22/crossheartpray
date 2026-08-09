@@ -24,58 +24,58 @@ describe("provider selection and capability", () => {
     expect(getScriptureProvider().determineReaderCapability()).toBe("embeddedReader");
   });
 
-  it("external fallback provider offers links only and refuses loadChapter", async () => {
+  it("external fallback provider refuses loadChapter and still offers only real translations", async () => {
     expect(externalLinkFallbackProvider.determineReaderCapability()).toBe("externalLinksOnly");
     await expect(
       externalLinkFallbackProvider.loadChapter({ book: "JHN", chapter: 3 }),
     ).rejects.toThrow(/buildExternalUrl/);
+    // Even the degraded provider never advertises a translation it has no
+    // text for — that is what produced KJV-labelled BSB on screen.
     expect(
       externalLinkFallbackProvider.listAvailableTranslations().every(
-        (translation) => translation.access === "bibleComLink",
+        (translation) => translation.access === "readHere" && translation.source === "local",
       ),
     ).toBe(true);
   });
 });
 
 describe("translation truthfulness", () => {
-  it("only the active translation is readable in the static list; everything else links to Bible.com", () => {
+  // The picker is a promise: every name in it renders that translation's own
+  // words. A version with no readable text must simply not be offered.
+  it("offers only translations that can genuinely be read here", () => {
     const translations = localWebProvider.listAvailableTranslations();
-    const active = translations.find(
-      (translation) =>
-        translation.abbreviation === ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
-    );
-    expect(active?.access).toBe("readHere");
-    expect(active?.source).toBe("local");
+    expect(translations.length).toBeGreaterThan(0);
     for (const translation of translations) {
-      if (translation.abbreviation !== ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation) {
-        expect(translation.access).toBe("bibleComLink");
-      }
+      expect(translation.access, translation.abbreviation).toBe("readHere");
+      expect(translation.source, translation.abbreviation).toBe("local");
     }
   });
 
-  it("the supported fallback translation (WEBUS) stays available as a Bible.com link", () => {
-    const web = localWebProvider
-      .listAvailableTranslations()
-      .find((translation) => translation.abbreviation === "WEBUS");
-    expect(web?.access).toBe("bibleComLink");
-  });
-
-  it("offers CSB, KJV, and NIV as external links in the static list", () => {
+  it("offers every public-domain translation that ships a local dataset", () => {
     const abbreviations = localWebProvider
       .listAvailableTranslations()
       .map((translation) => translation.abbreviation);
-    expect(abbreviations).toEqual(
-      expect.arrayContaining(["CSB", "KJV", "NIV", "ESV", "NLT"]),
-    );
+    expect(abbreviations).toEqual(expect.arrayContaining(["BSB", "WEBUS", "KJV"]));
   });
 
-  it("licensed translations build correct external Bible.com links", () => {
-    const niv = localWebProvider
+  it("never offers a translation CrossHeartPray has no licence or text for", () => {
+    const abbreviations = localWebProvider
       .listAvailableTranslations()
-      .find((translation) => translation.abbreviation === "NIV")!;
-    expect(
-      localWebProvider.buildExternalUrl({ book: "JHN", chapter: 3, verse: 16 }, niv),
-    ).toBe("https://www.bible.com/bible/111/JHN.3.16.NIV");
+      .map((translation) => translation.abbreviation);
+    for (const unlicensed of ["CSB", "NIV", "ESV", "NLT"]) {
+      expect(abbreviations, unlicensed).not.toContain(unlicensed);
+    }
+  });
+
+  it("the active site-wide translation is among the readable ones", () => {
+    const active = localWebProvider
+      .listAvailableTranslations()
+      .find(
+        (translation) =>
+          translation.abbreviation === ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
+      );
+    expect(active?.access).toBe("readHere");
+    expect(active?.source).toBe("local");
   });
 });
 

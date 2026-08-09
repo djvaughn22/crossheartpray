@@ -79,8 +79,8 @@ describe("reader chrome (source contract)", () => {
     expect(reader).toContain('role="status"');
   });
 
-  it("labels an external-only translation pick truthfully over local WEB text", () => {
-    expect(reader).toContain("can't be read inside CrossHeartPray yet");
+  it("names the failed translation in its error state instead of swapping text", () => {
+    expect(reader).toContain("in {translation.label} right now");
   });
 
   it("the translation picker is a dialog of full-name Bible cards, not an abbreviation menu", () => {

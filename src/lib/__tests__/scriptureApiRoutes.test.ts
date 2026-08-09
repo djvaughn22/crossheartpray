@@ -70,48 +70,58 @@ async function translationsPayload() {
 }
 
 describe("/api/scripture/translations", () => {
-  it("lists the local active translation (BSB) first, licensed versions as readHere, CSB/KJV/NIV as external", async () => {
+  it("lists every locally readable translation, KJV included, all readHere", async () => {
     const translations = await translationsPayload();
 
-    expect(translations[0]).toMatchObject({
-      abbreviation: "BSB",
-      access: "readHere",
-      source: "local",
-    });
-
-    // The platform's own BSB entry is not duplicated — local BSB covers it.
-    expect(translations.filter((entry) => entry.id === 3034)).toHaveLength(1);
-
-    // WEB stays genuinely available: the platform's licensed entry reads
-    // here, and the deep-link duplicate is dropped by id.
-    expect(translations.filter((entry) => entry.id === 206)).toHaveLength(1);
-    expect(
-      translations.find((entry) => entry.id === 206),
-    ).toMatchObject({ access: "readHere", source: "youVersion" });
-
-    for (const abbreviation of ["CSB", "KJV", "NIV", "ESV", "NLT"]) {
+    for (const abbreviation of ["KJV", "BSB", "WEBUS"]) {
       const entry = translations.find((item) => item.abbreviation === abbreviation);
       expect(entry, abbreviation).toBeDefined();
-      expect(entry?.access, abbreviation).toBe("bibleComLink");
+      expect(entry?.access, abbreviation).toBe("readHere");
+      expect(entry?.source, abbreviation).toBe("local");
+    }
+
+    // Local datasets are not duplicated by the platform's own entries.
+    expect(translations.filter((entry) => entry.id === 3034)).toHaveLength(1);
+    expect(translations.filter((entry) => entry.id === 206)).toHaveLength(1);
+    expect(translations.filter((entry) => entry.id === 1)).toHaveLength(1);
+  });
+
+  // The reported bug: the picker offered KJV, the reader showed BSB. A
+  // translation with no readable text must not appear at all.
+  it("never lists a translation that cannot be rendered", async () => {
+    const translations = await translationsPayload();
+
+    for (const entry of translations) {
+      expect(entry.access, entry.abbreviation).toBe("readHere");
+    }
+    for (const unlicensed of ["CSB", "NIV", "ESV", "NLT"]) {
+      expect(
+        translations.some((entry) => entry.abbreviation === unlicensed),
+        unlicensed,
+      ).toBe(false);
     }
   });
 
   it("never invents readHere access when the key is missing", async () => {
     keyMock.mockReturnValue(null);
     const translations = await translationsPayload();
-    const readHere = translations.filter((entry) => entry.access === "readHere");
-    expect(readHere).toHaveLength(1);
-    expect(readHere[0].abbreviation).toBe("BSB");
+
+    // Only the local datasets — no platform entries invented without a key.
+    expect(translations.map((entry) => entry.abbreviation).sort()).toEqual(
+      ["BSB", "KJV", "WEBUS"].sort(),
+    );
+    expect(translations.every((entry) => entry.source === "local")).toBe(true);
     expect(biblesMock).not.toHaveBeenCalled();
   });
 
-  it("degrades to local + external when the platform is unreachable", async () => {
+  it("degrades to the local datasets when the platform is unreachable", async () => {
     biblesMock.mockRejectedValue(new Error("timeout"));
     const translations = await translationsPayload();
-    expect(translations.filter((entry) => entry.access === "readHere")).toHaveLength(1);
-    expect(
-      translations.some((entry) => entry.abbreviation === "CSB" && entry.access === "bibleComLink"),
-    ).toBe(true);
+
+    expect(translations.every((entry) => entry.access === "readHere")).toBe(true);
+    expect(translations.map((entry) => entry.abbreviation).sort()).toEqual(
+      ["BSB", "KJV", "WEBUS"].sort(),
+    );
   });
 });
 

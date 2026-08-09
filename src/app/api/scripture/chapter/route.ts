@@ -1,61 +1,39 @@
 // Whole-chapter Scripture endpoint for the in-app reader.
 //
-// GET /api/scripture/chapter?book=JHN&chapter=3            → local text in
-//                                            the active default translation
+// GET /api/scripture/chapter?book=JHN&chapter=3          → the site-wide
+//                                                          default translation
+// GET /api/scripture/chapter?book=JHN&chapter=3&version=1  → real KJV text
 // GET /api/scripture/chapter?book=JHN&chapter=3&version=1713
 //                                                          → YouVersion text
 //
-// The local public-domain dataset (BSB by default; see
-// src/lib/scripture/translationConfig.ts) is the always-available
-// foundation: one chapter is a few KB and immutable-cacheable. The optional
-// `version` parameter proxies a YouVersion Platform translation instead —
-// but ONLY a version the application is genuinely licensed for (the
-// enabled-versions list is the gate); the App Key never leaves the server.
-// YouVersion failures return an error status and the client reader falls
-// back to the local text, so there is never a dead end.
+// Every public-domain translation in the registry ships as a complete local
+// dataset and is served straight from it (src/lib/scripture/localDatasets.ts):
+// a few KB per chapter, immutable-cacheable, no network. A `version` outside
+// that registry is proxied from the YouVersion Platform, but ONLY one the
+// application is genuinely licensed for (the enabled-versions list is the
+// gate); the App Key never leaves the server.
+//
+// The response's `translation` field always names the text actually returned.
+// This endpoint never substitutes one translation for another: an unavailable
+// translation is an error status, not someone else's Scripture wearing its
+// label.
 
 import { NextResponse } from "next/server";
-import { LOCAL_BIBLE_VERSES } from "../../../../lib/localBibleVerses";
 import { adjacentChapter, getScriptureBook, type ScriptureBook } from "../../../../lib/scripture";
-import { ACTIVE_BIBLE_TRANSLATION } from "../../../../lib/scripture/translationConfig";
+import {
+  localChapterIndex,
+  translationIdForBibleComId,
+} from "../../../../lib/scripture/localDatasets";
+import {
+  DEFAULT_BIBLE_TRANSLATION,
+  SUPPORTED_BIBLE_TRANSLATIONS,
+  type BibleTranslationId,
+} from "../../../../lib/scripture/translationConfig";
 import {
   fetchEnabledYouVersionBibles,
   fetchYouVersionChapter,
   youVersionServerKey,
 } from "../../../../lib/youversionPlatform";
-
-type ChapterVerse = { verse: number; text: string };
-
-// Bible.com's id for the active local translation — requesting it explicitly
-// is the same as requesting no version: the local text serves it faster.
-const LOCAL_BIBLE_ID = ACTIVE_BIBLE_TRANSLATION.bibleComId;
-
-// code → chapter → verses, built once per server instance.
-let chapterIndex: Map<string, Map<number, ChapterVerse[]>> | null = null;
-
-function getChapterIndex() {
-  if (chapterIndex) return chapterIndex;
-
-  chapterIndex = new Map();
-  for (const verse of LOCAL_BIBLE_VERSES) {
-    const chapter = Number(verse.chapter);
-    const verseNumber = Number(verse.verse);
-    if (!Number.isInteger(chapter) || !Number.isInteger(verseNumber)) continue;
-
-    let byChapter = chapterIndex.get(verse.code);
-    if (!byChapter) {
-      byChapter = new Map();
-      chapterIndex.set(verse.code, byChapter);
-    }
-    let verses = byChapter.get(chapter);
-    if (!verses) {
-      verses = [];
-      byChapter.set(chapter, verses);
-    }
-    verses.push({ verse: verseNumber, text: verse.text });
-  }
-  return chapterIndex;
-}
 
 function chapterEnvelope(book: ScriptureBook, chapter: number) {
   return {
@@ -139,17 +117,26 @@ export async function GET(request: Request) {
     );
   }
 
+  // Which local translation was asked for? No version means the site-wide
+  // default. A version that maps to a local dataset is served from it — that
+  // is how KJV renders real KJV instead of the default text under KJV's name.
+  let localId: BibleTranslationId | null = DEFAULT_BIBLE_TRANSLATION;
+
   if (versionParam !== null) {
     const versionId = Number(versionParam);
     if (!Number.isInteger(versionId) || versionId < 1) {
       return NextResponse.json({ error: "Unknown translation." }, { status: 400 });
     }
-    if (versionId !== LOCAL_BIBLE_ID) {
+
+    localId = translationIdForBibleComId(versionId);
+
+    if (!localId) {
       try {
         return await serveYouVersionChapter(book, chapter, versionId);
       } catch {
-        // Timeouts and upstream failures land here; the reader falls back
-        // to the local text and keeps the external Bible.com option.
+        // Timeouts and upstream failures land here. The caller is told the
+        // request failed; it must never quietly render a different
+        // translation under this one's name.
         return NextResponse.json(
           { error: "That translation could not be loaded right now." },
           { status: 502 },
@@ -158,7 +145,9 @@ export async function GET(request: Request) {
     }
   }
 
-  const verses = getChapterIndex().get(book.usfm)?.get(chapter);
+  const definition = SUPPORTED_BIBLE_TRANSLATIONS[localId];
+  const verses = localChapterIndex(localId).get(book.usfm)?.get(chapter);
+
   if (!verses || verses.length === 0) {
     return NextResponse.json(
       { error: "Chapter text unavailable." },
@@ -170,11 +159,13 @@ export async function GET(request: Request) {
     {
       ...chapterEnvelope(book, chapter),
       verses: [...verses].sort((a, b) => a.verse - b.verse),
-      attribution: ACTIVE_BIBLE_TRANSLATION.attribution,
+      attribution: definition.attribution,
+      // Always the translation actually rendered above, never the requested
+      // one — the response cannot claim a translation it did not serve.
       translation: {
-        id: ACTIVE_BIBLE_TRANSLATION.bibleComId,
-        abbreviation: ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
-        label: ACTIVE_BIBLE_TRANSLATION.shortName,
+        id: definition.bibleComId,
+        abbreviation: definition.bibleComAbbreviation,
+        label: definition.shortName,
       },
     },
     {

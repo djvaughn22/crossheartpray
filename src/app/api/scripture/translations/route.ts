@@ -2,27 +2,22 @@
 //
 // GET /api/scripture/translations
 //
-// Returns the translations CrossHeartPray can genuinely offer right now:
-//   - the local active translation (always readable here, no network needed;
-//     BSB by default — see src/lib/scripture/translationConfig.ts),
+// Returns only the translations CrossHeartPray can genuinely render right
+// now — everything here is marked "readHere" because everything here has
+// text:
+//   - every public-domain translation with a complete local dataset
+//     (BSB, WEB, KJV — see src/lib/scripture/localDatasets.ts),
 //   - every YouVersion Platform translation this application is actually
-//     licensed for (marked "readHere"),
-//   - well-known translations that open on Bible.com (marked "bibleComLink").
+//     licensed for.
 //
-// The list is generated from the live /v1/bibles response, never hard-coded —
-// if the owner is later licensed for CSB/KJV/NIV in the YouVersion dashboard,
-// they appear here (and become the preferred defaults) with no code change.
-// When the key is missing or the platform is unreachable, the response simply
-// omits YouVersion entries: the reader still has local WEB and external
-// links, and the page never breaks.
+// A translation with no readable text is simply absent. The picker is a
+// promise: if it is listed, selecting it shows that translation's own words.
+// When the YouVersion key is missing or the platform is unreachable, the
+// response omits those entries and the local datasets still carry the reader.
 
 import { NextResponse } from "next/server";
-import {
-  BIBLE_COM_DEFAULT_VERSION,
-  BIBLE_COM_LINK_VERSIONS,
-  type ScriptureTranslation,
-} from "../../../../lib/scripture";
-import { ACTIVE_BIBLE_TRANSLATION } from "../../../../lib/scripture/translationConfig";
+import { type ScriptureTranslation } from "../../../../lib/scripture";
+import { LOCAL_READABLE_TRANSLATIONS } from "../../../../lib/scripture/localDatasets";
 import {
   fetchEnabledYouVersionBibles,
   youVersionServerKey,
@@ -71,18 +66,30 @@ function youVersionTranslation(bible: YouVersionBible): ScriptureTranslation {
 }
 
 export async function GET() {
-  const activeLocal: ScriptureTranslation = {
-    ...BIBLE_COM_DEFAULT_VERSION,
-    access: "readHere",
-    source: "local",
-  };
+  // Every translation with a complete local dataset is genuinely readable.
+  // Derived from the dataset registry, so the picker can never advertise a
+  // translation whose text does not exist.
+  const local: ScriptureTranslation[] = LOCAL_READABLE_TRANSLATIONS.map(
+    (translation): ScriptureTranslation => ({
+      id: translation.bibleComId,
+      abbreviation: translation.bibleComAbbreviation,
+      label: translation.shortName,
+      access: "readHere",
+      source: "local",
+    }),
+  ).sort(
+    (a, b) =>
+      readHereRank(a.abbreviation) - readHereRank(b.abbreviation) ||
+      a.label.localeCompare(b.label),
+  );
 
   let youVersion: ScriptureTranslation[] = [];
   if (youVersionServerKey()) {
     try {
+      const localIds = new Set(local.map((translation) => translation.id));
       youVersion = (await fetchEnabledYouVersionBibles())
-        // The local dataset already covers the active translation, faster.
-        .filter((bible) => bible.id !== BIBLE_COM_DEFAULT_VERSION.id)
+        // A local dataset already covers these, faster and offline.
+        .filter((bible) => !localIds.has(bible.id))
         .map(youVersionTranslation)
         .sort(
           (a, b) =>
@@ -90,28 +97,19 @@ export async function GET() {
             a.label.localeCompare(b.label),
         );
     } catch {
-      youVersion = []; // reader still has local WEB + external links
+      youVersion = []; // the local datasets still cover the reader
     }
   }
 
-  const readHereAbbreviations = new Set([
-    ACTIVE_BIBLE_TRANSLATION.bibleComAbbreviation,
-    ...youVersion.map((translation) => translation.abbreviation),
-  ]);
-  // Ids too: the platform's WEB entry is "engWEBUS" while the deep-link list
-  // says "WEBUS" — same Bible.com id, one picker entry.
-  const readHereIds = new Set([
-    BIBLE_COM_DEFAULT_VERSION.id,
-    ...youVersion.map((translation) => translation.id),
-  ]);
-
-  const external: ScriptureTranslation[] = BIBLE_COM_LINK_VERSIONS.filter(
-    (version) =>
-      !readHereAbbreviations.has(version.abbreviation) && !readHereIds.has(version.id),
-  ).map((version) => ({ ...version, access: "bibleComLink", source: "bibleCom" }));
+  // Deliberately no "opens on Bible.com" entries. CrossHeartPray keeps
+  // Scripture inside the app (no external one-click Bible links, locked
+  // 2026-08-02), so a translation we cannot render here has nowhere truthful
+  // to go — listing it only produced a picker that said one translation while
+  // the reader showed another. A translation appears here when, and only
+  // when, its text can actually be rendered.
 
   return NextResponse.json(
-    { translations: [activeLocal, ...youVersion, ...external] },
+    { translations: [...local, ...youVersion] },
     {
       headers: {
         "Cache-Control": "public, max-age=300, s-maxage=3600",

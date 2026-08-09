@@ -3,26 +3,26 @@
 // Presentation components talk to a ScriptureProvider, never to a concrete
 // backend. Reading priority (Phase-verified July 2026):
 //
-//   1. YouVersion Platform — licensed translations proxied through
-//      /api/scripture/chapter?version=<id>. The App Key stays on the server
-//      (the platform client under src/lib); this client code never sees it.
-//   2. The local public-domain dataset in the active site-wide translation
-//      (src/lib/scripture/translationConfig.ts) via the same endpoint.
-//   3. Bible.com deep links when chapter loading fails. No dead ends.
+//   1. Every public-domain translation with a complete local dataset
+//      (BSB, WEB, KJV), served from /api/scripture/chapter?version=<id>.
+//   2. YouVersion Platform translations this application is genuinely
+//      licensed for, through the same endpoint. The App Key stays on the
+//      server; this client code never sees it.
 //
-// Translation truthfulness: /api/scripture/translations returns only the
-// versions the YouVersion application is genuinely licensed for, marked
-// "readHere"; everything else is labeled as opening on Bible.com. Local text
-// is never labeled as any other translation.
+// Translation truthfulness: the picker only ever lists translations whose
+// text can actually be rendered, and a chapter is cached under the
+// translation the server says it served. Local text is never labeled as any
+// other translation, and a failed load is an error — never a substitution.
 
 import {
-  BIBLE_COM_DEFAULT_VERSION,
-  BIBLE_COM_LINK_VERSIONS,
   bibleComUrl,
   parseScriptureReference,
   type ScriptureReference,
 } from "./reference";
-import { ACTIVE_BIBLE_TRANSLATION } from "./translationConfig";
+import {
+  ACTIVE_BIBLE_TRANSLATION,
+  SUPPORTED_BIBLE_TRANSLATIONS,
+} from "./translationConfig";
 import { suggestScriptureReferences, type ScriptureSuggestion } from "./search";
 
 export type ScriptureProviderId = "localWeb" | "youVersion" | "externalLinkFallback";
@@ -88,15 +88,20 @@ const sharedReferenceOperations = {
   ) => bibleComUrl(reference, version),
 };
 
-/** The static list: the active translation readable locally, the rest external. */
+/**
+ * The offline fallback list, used when /api/scripture/translations can't be
+ * reached: every translation with a complete local dataset, all genuinely
+ * readable. Nothing unreadable is ever offered, so losing the network
+ * narrows the picker instead of filling it with names that render someone
+ * else's text.
+ */
 function translationsWithLocalWeb(): ScriptureTranslation[] {
-  return BIBLE_COM_LINK_VERSIONS.map((version) => ({
-    ...version,
-    access: version.id === BIBLE_COM_DEFAULT_VERSION.id ? "readHere" : "bibleComLink",
-    source:
-      version.id === BIBLE_COM_DEFAULT_VERSION.id
-        ? ("local" as const)
-        : ("bibleCom" as const),
+  return Object.values(SUPPORTED_BIBLE_TRANSLATIONS).map((translation) => ({
+    id: translation.bibleComId,
+    abbreviation: translation.bibleComAbbreviation,
+    label: translation.shortName,
+    access: "readHere" as const,
+    source: "local" as const,
   }));
 }
 
@@ -107,29 +112,29 @@ export const localWebProvider: ScriptureProvider = {
   async loadChapter(reference, options) {
     const chapter = reference.chapter ?? 1;
     const translation = options?.translation;
-    const useYouVersion = translation?.source === "youVersion";
-    const key = useYouVersion
-      ? `${translation.id}:${reference.book}.${chapter}`
-      : `${ACTIVE_BIBLE_TRANSLATION.id}:${reference.book}.${chapter}`;
+
+    // Translation is part of Scripture identity. The requested version id is
+    // always in both the cache key and the URL, so KJV and BSB can never
+    // share an entry and the browser's HTTP cache is keyed the same way.
+    const versionId = translation?.id ?? ACTIVE_BIBLE_TRANSLATION.bibleComId;
+    const key = `${versionId}:${reference.book}.${chapter}`;
 
     const cached = chapterCache.get(key);
     if (cached) return cached;
 
-    // Local requests also carry the version id so the browser's HTTP cache
-    // is keyed by translation — a deployment switched to the other
-    // translation can never serve stale text under a generic URL.
-    const versionParam = useYouVersion
-      ? `&version=${translation.id}`
-      : `&version=${ACTIVE_BIBLE_TRANSLATION.bibleComId}`;
     const response = await fetch(
-      `/api/scripture/chapter?book=${reference.book}&chapter=${chapter}${versionParam}`,
+      `/api/scripture/chapter?book=${reference.book}&chapter=${chapter}&version=${versionId}`,
       { signal: options?.signal },
     );
     if (!response.ok) {
       throw new Error(`Chapter ${key} unavailable (${response.status}).`);
     }
     const data: ScriptureChapter = await response.json();
-    chapterCache.set(key, data);
+
+    // The server names the translation it actually served. Cache under that,
+    // so a response can never be reused under a different translation's key.
+    const servedId = data.translation?.id ?? versionId;
+    chapterCache.set(`${servedId}:${reference.book}.${chapter}`, data);
     return data;
   },
 
@@ -147,12 +152,7 @@ export const externalLinkFallbackProvider: ScriptureProvider = {
     );
   },
 
-  listAvailableTranslations: () =>
-    BIBLE_COM_LINK_VERSIONS.map((version) => ({
-      ...version,
-      access: "bibleComLink",
-      source: "bibleCom" as const,
-    })),
+  listAvailableTranslations: translationsWithLocalWeb,
   determineReaderCapability: () => "externalLinksOnly",
 };
 

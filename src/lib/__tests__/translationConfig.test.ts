@@ -64,7 +64,8 @@ describe("central translation configuration", () => {
   });
 
   it("an invalid BIBLE_TRANSLATION value falls back safely to BSB", async () => {
-    vi.stubEnv("BIBLE_TRANSLATION", "KJV");
+    // NIV has no local dataset and is not in the registry.
+    vi.stubEnv("BIBLE_TRANSLATION", "NIV");
     vi.resetModules();
 
     const config = await import("../scripture/translationConfig");
@@ -85,11 +86,16 @@ describe("central translation configuration", () => {
       vi.resetModules();
       const config = await import("../scripture/translationConfig");
       const dataset = await import("../localBibleVerses");
-      const expected =
-        config.DEFAULT_BIBLE_TRANSLATION === "WEBUS"
-          ? "In the beginning, God created the heavens and the earth."
-          : "In the beginning God created the heavens and the earth.";
-      expect(dataset.LOCAL_BIBLE_VERSES[0].text).toBe(expected);
+      // Genesis 1:1 reads differently in each supported translation, so a
+      // selector that folded to the wrong dataset could not pass silently.
+      const expectedByTranslation: Record<string, string> = {
+        WEBUS: "In the beginning, God created the heavens and the earth.",
+        BSB: "In the beginning God created the heavens and the earth.",
+        KJV: "In the beginning God created the heaven and the earth.",
+      };
+      expect(dataset.LOCAL_BIBLE_VERSES[0].text, value).toBe(
+        expectedByTranslation[config.DEFAULT_BIBLE_TRANSLATION],
+      );
     }
   });
 });

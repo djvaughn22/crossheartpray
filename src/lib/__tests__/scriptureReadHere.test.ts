@@ -44,16 +44,26 @@ describe("referenceForPassage", () => {
 describe("reader truthfulness (source contract)", () => {
   const reader = read(path.join("scripture", "ScriptureReader.tsx"));
 
-  it("names the local translation plainly when falling back from a licensed translation", () => {
-    expect(reader).toContain("showing the ${LOCAL_TRANSLATION_NOTICE_NAME} instead.");
+  // The reported bug: the reader silently rendered the local text under
+  // another translation's name. No substitution phrasing may come back.
+  it("never substitutes one translation's text for another", () => {
+    expect(reader).not.toContain("showing the");
+    expect(reader).not.toContain("instead.");
+    expect(reader).not.toContain("can't be read inside CrossHeartPray yet");
   });
 
   it("attributes text to what is actually on screen", () => {
     expect(reader).toContain("Reading here: {chapterData?.attribution");
   });
 
-  it("skips versions that genuinely lack the requested book", () => {
-    expect(reader).toContain("doesn't include this book");
+  it("treats a version that lacks the requested book as an error, not a swap", () => {
+    expect(reader).toContain("does not include");
+    expect(reader).toContain("setLoadFailed(true)");
+  });
+
+  it("offers a real retry rather than quietly loading something else", () => {
+    expect(reader).toContain("setReloadToken");
+    expect(reader).toContain("Try again");
   });
 });
 

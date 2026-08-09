@@ -33,7 +33,10 @@ import {
   type ScriptureReference,
   type ScriptureTranslation,
 } from "../../lib/scripture";
-import { ACTIVE_BIBLE_TRANSLATION } from "../../lib/scripture/translationConfig";
+import {
+  ACTIVE_BIBLE_TRANSLATION,
+  SUPPORTED_BIBLE_TRANSLATIONS,
+} from "../../lib/scripture/translationConfig";
 import ScriptureReferenceInput from "./ScriptureReferenceInput";
 import TranslationPicker from "./TranslationPicker";
 import VerifiedVerseText from "../VerifiedVerseText";
@@ -45,8 +48,20 @@ import {
   type WordStudyPassage,
 } from "../../lib/originalLanguageWordStudy";
 
-// "Berean Standard Bible (BSB)" — how fallback notices name the local text.
-const LOCAL_TRANSLATION_NOTICE_NAME = `${ACTIVE_BIBLE_TRANSLATION.name} (${ACTIVE_BIBLE_TRANSLATION.shortName})`;
+// Deep Dive's word-level alignment is verified against ONE English text.
+//
+// The verified word studies map an English word in a specific verse to the
+// Hebrew/Greek term it renders, and that mapping was built from the Berean
+// Standard Bible: John 3:16 aligns "one" and "only" to G3439 (BSB's "one and
+// only Son"), which is not how the KJV or the WEB words that verse.
+//
+// Translations differ in word choice, word count, and which English word
+// carries which original term, so those mappings are not transferable. We
+// therefore offer dotted words only on the translation they were verified
+// against. Showing them over other translations would be guessing at
+// Scripture, which this app does not do.
+const DEEP_DIVE_ALIGNED_TRANSLATION =
+  SUPPORTED_BIBLE_TRANSLATIONS.BSB;
 
 type ScriptureReaderProps = {
   /** Where the reader opens. Book-only references open chapter 1. */
@@ -117,6 +132,10 @@ export default function ScriptureReader({
   const [isLoading, setIsLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
+  // Bumped by Try again, so a failed load can be retried without changing
+  // the reference or the translation.
+  const [reloadToken, setReloadToken] = useState(0);
+  const latestRequestRef = useRef(0);
   const [translations, setTranslations] = useState<ScriptureTranslation[]>(
     () => provider.listAvailableTranslations(),
   );
@@ -181,68 +200,74 @@ export default function ScriptureReader({
     [onReferenceChange],
   );
 
-  // The translation whose text should render: the picked one when readable
-  // here, otherwise local WEB (external-only picks just change the link).
-  const readTranslation =
-    translation.access === "readHere"
-      ? translation
-      : translations.find((entry) => entry.source === "local") ?? translation;
+  // Every translation the picker offers can genuinely be rendered, so the
+  // selected translation is the one that loads. Nothing is ever swapped in
+  // behind its name.
+  const readTranslation = translation;
 
   useEffect(() => {
     const controller = new AbortController();
+    // Only the newest request may write state. Aborting stops the network,
+    // but a request that already resolved — or one answered instantly from
+    // the chapter cache — would otherwise still land after a newer pick and
+    // put the previous translation's text under the current label.
+    const requestId = latestRequestRef.current + 1;
+    latestRequestRef.current = requestId;
+    const isStale = () => latestRequestRef.current !== requestId;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect -- switching translation must show the loading state, not stale text under a new name
     setIsLoading(true);
 
     (async () => {
       try {
-        let notice: string | null = null;
-        let data: ScriptureChapter;
+        const missingBook =
+          readTranslation.source === "youVersion" &&
+          readTranslation.books &&
+          readTranslation.books.length > 0 &&
+          !readTranslation.books.includes(current.book);
 
-        if (readTranslation.source === "youVersion") {
-          const missingBook =
-            readTranslation.books &&
-            readTranslation.books.length > 0 &&
-            !readTranslation.books.includes(current.book);
-
-          if (missingBook) {
-            notice = `${readTranslation.label} doesn't include this book — showing the ${LOCAL_TRANSLATION_NOTICE_NAME} instead.`;
-            data = await provider.loadChapter(current, { signal: controller.signal });
-          } else {
-            try {
-              data = await provider.loadChapter(current, {
-                signal: controller.signal,
-                translation: readTranslation,
-              });
-            } catch (caught) {
-              if (isAbortError(caught)) throw caught;
-              notice = `Couldn't load ${readTranslation.label} right now — showing the ${LOCAL_TRANSLATION_NOTICE_NAME} instead.`;
-              data = await provider.loadChapter(current, { signal: controller.signal });
-            }
-          }
-        } else {
-          data = await provider.loadChapter(current, { signal: controller.signal });
+        if (missingBook) {
+          throw new Error(
+            `${readTranslation.label} does not include ${current.book}.`,
+          );
         }
+
+        const data = await provider.loadChapter(current, {
+          signal: controller.signal,
+          translation: readTranslation,
+        });
+
+        if (isStale()) return;
 
         setChapterData(data);
         setLoadFailed(false);
-        setFallbackNotice(notice);
+        setFallbackNotice(null);
       } catch (caught) {
-        if (!isAbortError(caught)) {
-          setChapterData(null);
-          setLoadFailed(true);
-          setFallbackNotice(null);
-        }
+        if (isAbortError(caught) || isStale()) return;
+        // Failure is reported as failure. Showing a different translation
+        // here is what made the reader lie about what it was displaying.
+        setChapterData(null);
+        setLoadFailed(true);
+        setFallbackNotice(null);
       } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
+        if (!isStale()) setIsLoading(false);
       }
     })();
 
     return () => controller.abort();
-  }, [current, readTranslation]);
+  }, [current, readTranslation, reloadToken]);
 
-  // Load verified word studies for all verses in the chapter once chapter data arrives.
+  // Judged on the translation actually rendered, not the one requested, so a
+  // pending switch can never briefly offer word links over the wrong text.
+  const deepDiveAligned =
+    (chapterData?.translation?.id ?? translation.id) ===
+    DEEP_DIVE_ALIGNED_TRANSLATION.bibleComId;
+
+  // Load verified word studies for all verses in the chapter once chapter data
+  // arrives — only for the translation they are actually aligned to, so an
+  // unaligned translation costs nothing and can never render word links.
   useEffect(() => {
-    if (!chapterData) return;
+    if (!chapterData || !deepDiveAligned) return;
 
     const chapterKey = `${current.book}|${current.chapter ?? 1}`;
     if (chapterStudiesRef.current === chapterKey) return;
@@ -296,7 +321,7 @@ export default function ScriptureReader({
       cancelled = true;
       controller.abort();
     };
-  }, [chapterData, current]);
+  }, [chapterData, current, deepDiveAligned]);
 
   // Scroll the target verse into view once its chapter is on screen;
   // otherwise start each chapter at the top.
@@ -319,13 +344,10 @@ export default function ScriptureReader({
       ? `${chapterData.bookName} ${chapterData.chapter}`
       : formatScriptureReference({ book: current.book, chapter: current.chapter });
 
-  // Truthful labeling when the picked translation is external-only: the text
-  // on screen is the local active translation, named plainly.
-  const unlicensedNotice =
-    translation.access === "bibleComLink" && readTranslation.source === "local"
-      ? `${translation.label} can't be read inside CrossHeartPray yet — showing the ${LOCAL_TRANSLATION_NOTICE_NAME}.`
-      : null;
-  const notice = fallbackNotice ?? unlicensedNotice;
+  // The picker only offers translations that genuinely render, so there is
+  // no "showing something else instead" case left to describe.
+  const notice = fallbackNotice;
+
 
   const lastTargetVerse = targetEndVerse ?? targetVerse;
   const isTargetVerse = (verse: number) =>
@@ -446,12 +468,12 @@ export default function ScriptureReader({
         {!isLoading && loadFailed && (
           <div className="py-10 text-center">
             <p className="text-sm font-semibold leading-6 text-zinc-300">
-              Couldn&apos;t load {heading} here right now.
+              Couldn&apos;t load {heading} in {translation.label} right now.
             </p>
             <div className="mt-5 flex justify-center">
               <button
                 type="button"
-                onClick={() => setCurrent((reference) => ({ ...reference }))}
+                onClick={() => setReloadToken((token) => token + 1)}
                 className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-sm font-black text-white transition hover:bg-white/15"
               >
                 Try again
@@ -472,7 +494,9 @@ export default function ScriptureReader({
               </h3>
               <hr className="mx-auto mt-3.5 w-16 border-white/15" />
               <p className="mx-auto mt-3 max-w-xs text-xs font-semibold leading-5 text-zinc-400">
-                Dotted words open the original Hebrew or Greek study.
+                {deepDiveAligned
+                  ? "Dotted words open the original Hebrew or Greek study."
+                  : `The original Hebrew and Greek study is verified against the ${DEEP_DIVE_ALIGNED_TRANSLATION.shortName}. Switch to it to open words here.`}
               </p>
             </header>
 
@@ -492,7 +516,11 @@ export default function ScriptureReader({
                   chapter: String(current.chapter ?? 1),
                   verse: String(verse),
                 });
-                const studies = chapterWordStudies[studyKey] ?? [];
+                // Only the aligned translation gets clickable words; other
+                // translations render as plain, honest Scripture.
+                const studies = deepDiveAligned
+                  ? chapterWordStudies[studyKey] ?? []
+                  : [];
 
                 return (
                   <div

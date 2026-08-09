@@ -7,9 +7,16 @@
 // next.config.ts inlines the value into both server and client bundles at
 // build time, so the two can never disagree.
 //
-// Both supported translations are public domain and ship as complete local
-// datasets under src/lib/bibleText/. Never scatter per-surface translation
+// Every supported translation is public domain and ships as a complete local
+// dataset under src/lib/bibleText/. Never scatter per-surface translation
 // defaults; import from here instead.
+//
+// BIBLE_TRANSLATION only chooses the SITE-WIDE default — the text used by
+// Bible Bingo pools, Daily Hope, share cards, and exports, and the one dataset
+// bundled for the client. The in-app reader is separate: it serves any of
+// these translations through /api/scripture/chapter, which reads them all
+// server-side (src/lib/scripture/localDatasets.ts). A reader translation is
+// therefore never limited to the build-time default.
 
 export type BibleTranslationDefinition = {
   /** Registry key, e.g. "BSB". */
@@ -42,6 +49,14 @@ export const SUPPORTED_BIBLE_TRANSLATIONS = {
     bibleComId: 206,
     bibleComAbbreviation: "WEBUS",
     attribution: "World English Bible (WEB), public domain.",
+  },
+  KJV: {
+    id: "KJV",
+    name: "King James Version",
+    shortName: "KJV",
+    bibleComId: 1,
+    bibleComAbbreviation: "KJV",
+    attribution: "King James Version (KJV), public domain.",
   },
 } as const satisfies Record<string, BibleTranslationDefinition>;
 
