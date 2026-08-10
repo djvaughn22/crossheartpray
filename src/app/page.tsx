@@ -25,11 +25,11 @@ const dailyWays = [
   {
     href: "/bible-reading-plan",
     icon: "📖",
-    eyebrow: "Structured",
-    title: "Bible in 1 or 2 Years",
+    eyebrow: "Bible Reading Plan",
+    title: "Read the Bible in 1 or 2 Years",
     body:
-      "Choose your pace: 1 Year · 52 Weeks or 2 Years · 104 Weeks, with chapter links, checkboxes, and simple progress tracking.",
-    cta: "Open Bible Reading",
+      "Choose a pace that fits your life. Follow the same seven reading lanes through the whole Bible in 1 Year · 52 Weeks or take the same journey over 2 Years · 104 Weeks.",
+    cta: "Choose Your Plan",
   },
   {
     href: "/life-essentials",

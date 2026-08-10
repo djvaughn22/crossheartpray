@@ -77,18 +77,24 @@ export default function AboutPage() {
             </section>
 
             <section className={cardClass}>
-              <h2 className="text-2xl font-black text-white">Bible Reading Plan</h2>
+              <h2 className="text-2xl font-black text-white">
+            Read the whole Bible at your pace
+          </h2>
 
-              <ul className="mt-4 space-y-2 text-base leading-8 text-slate-300">
-                <li>Choose your pace: 1 Year · 52 Weeks or 2 Years · 104 Weeks.</li>
-                <li>Follow the same seven lanes across each week, either pace.</li>
-                <li>Open the linked chapter in the Bible app.</li>
-                <li>Mark readings done and keep moving.</li>
-                <li>
-                  Progress saves free on this device. CrossHeartPray Sync can
-                  keep it with you on your other devices.
-                </li>
-              </ul>
+          <div className="mt-4 space-y-3 text-base leading-8 text-slate-300">
+            <p>Choose 1 Year · 52 Weeks or 2 Years · 104 Weeks.</p>
+            <p>
+              Both plans follow the same seven reading lanes through the complete
+              Bible using whole chapters.
+            </p>
+            <p>
+              The one-year plan completes the journey in 52 weeks. The two-year
+              plan follows the same journey at a gentler pace over 104 weeks.
+            </p>
+            <p>
+              Open readings in Scripture and track your progress as you go.
+            </p>
+          </div>
 
               <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
                 {READING_LANES.map((lane) => (
