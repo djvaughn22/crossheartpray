@@ -5,11 +5,15 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import OpenMirrorThemeToggle from "./OpenMirrorTheme";
 
-// The one CrossHeartPray header: brand on the left (links home), the existing
-// YouVersion Bible link centered, and the ☀️/🌙 switch + a single accessible
-// menu button on the right — the same compact treatment on desktop and mobile.
-// Menu destinations are the site's real current pages (the stable navigation),
-// reached via their existing routes. Home is the brand and the first item.
+// The one CrossHeartPray header: brand on the left (links home), the Bible
+// icon centered — opens the internal Bible Reading Plan, not an external
+// site (see "Keep all Scripture interactions internal," 2026-07-31: this
+// icon used to open an external Bible site's Verse of the Day in a new tab;
+// that external link was deliberately retired) — and the ☀️/🌙 switch + a
+// single accessible menu button on the right — the same compact treatment
+// on desktop and mobile. Menu destinations are the site's real current
+// pages (the stable navigation), reached via their existing routes. Home is
+// the brand and the first item.
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/daily-hope", label: "Daily Hope" },
