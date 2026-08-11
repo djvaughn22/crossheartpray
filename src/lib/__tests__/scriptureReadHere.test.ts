@@ -133,6 +133,12 @@ describe("no one-click external Scripture/resource links (site-wide contract)", 
   // fallback, or secondary action may send someone to Bible.com, BibleHub,
   // B&H, BiblePrinciples.org, YouTube, or another external Bible/resource
   // site with one click. Citations stay visible as plain text.
+  //
+  // One scoped, explicit exception (owner decision, 2026-08-10): the shared
+  // header's Holy Bible icon (ChpProductNav.tsx) opens YouVersion's official
+  // Verse of the Day. That single link's exact destination and markup are
+  // locked by chpProductNavBibleIcon.test.ts — this contract still applies
+  // to every other file, including the footer (siteFooter.test.ts).
   const BANNED_HREF_HOSTS = [
     "bible.com",
     "biblehub.com",
@@ -141,12 +147,18 @@ describe("no one-click external Scripture/resource links (site-wide contract)", 
     "youtube.com/", // youtube-nocookie.com iframe embeds stay allowed
     "youtu.be",
   ];
+  const SCOPED_EXCEPTION_FILES = ["ChpProductNav.tsx"];
 
   function* sourceFiles(dir: string): Generator<string> {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory() && entry.name !== "__tests__") yield* sourceFiles(full);
-      else if (/\.(tsx|ts)$/.test(entry.name) && !/\.test\./.test(entry.name)) yield full;
+      else if (
+        /\.(tsx|ts)$/.test(entry.name) &&
+        !/\.test\./.test(entry.name) &&
+        !SCOPED_EXCEPTION_FILES.includes(entry.name)
+      )
+        yield full;
     }
   }
 

@@ -6,14 +6,15 @@ import { useEffect, useId, useRef, useState } from "react";
 import OpenMirrorThemeToggle from "./OpenMirrorTheme";
 
 // The one CrossHeartPray header: brand on the left (links home), the Bible
-// icon centered — opens the internal Bible Reading Plan, not an external
-// site (see "Keep all Scripture interactions internal," 2026-07-31: this
-// icon used to open an external Bible site's Verse of the Day in a new tab;
-// that external link was deliberately retired) — and the ☀️/🌙 switch + a
-// single accessible menu button on the right — the same compact treatment
-// on desktop and mobile. Menu destinations are the site's real current
-// pages (the stable navigation), reached via their existing routes. Home is
-// the brand and the first item.
+// icon centered, the ☀️/🌙 switch + a single accessible menu button on the
+// right — the same compact treatment on desktop and mobile. Menu
+// destinations are the site's real current pages (the stable navigation),
+// reached via their existing routes. Home is the brand and the first item.
+//
+// The Bible icon opens YouVersion's official Verse of the Day in a new tab
+// (owner decision, 2026-08-10 — a scoped, explicit exception to "Keep all
+// Scripture interactions internal": this is the one intentional external
+// Scripture link on the site; see chpProductNavBibleIcon.test.ts).
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/daily-hope", label: "Daily Hope" },
@@ -99,9 +100,11 @@ export default function ChpProductNav() {
           </span>
         </Link>
 
-        <Link
-          href="/bible-reading-plan"
-          aria-label="Open Bible Reading Plan"
+        <a
+          href="https://www.bible.com/verse-of-the-day"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open YouVersion Verse of the Day (opens in a new tab)"
           className="justify-self-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60"
         >
           <img
@@ -109,7 +112,7 @@ export default function ChpProductNav() {
             alt="Holy Bible"
             className="h-9 w-9 rounded-lg sm:h-10 sm:w-10"
           />
-        </Link>
+        </a>
 
         <div className="justify-self-end flex items-center gap-2">
           <OpenMirrorThemeToggle />

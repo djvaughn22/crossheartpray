@@ -44,6 +44,24 @@ describe("CrossHeartPray family footer", () => {
     expect(about).toContain('id="disclaimer"');
   });
 
+  it("the About page has exactly one #contact and one #disclaimer section with real content, not duplicated", () => {
+    expect(about.match(/id="contact"/g) ?? []).toHaveLength(1);
+    expect(about.match(/id="disclaimer"/g) ?? []).toHaveLength(1);
+
+    const contactSection = about.slice(
+      about.indexOf('id="contact"'),
+      about.indexOf('id="disclaimer"'),
+    );
+    expect(contactSection).toContain("ask@openmirrorllc.com");
+
+    const disclaimerSection = about.slice(
+      about.indexOf('id="disclaimer"'),
+      about.indexOf('id="disclaimer"') + 800,
+    );
+    expect(disclaimerSection).toContain("independently owned and operated");
+    expect(disclaimerSection).toContain("https://openmirrorllc.com/disclaimer");
+  });
+
   it("line three is the plain ownership sentence, old clutter stays gone", () => {
     expect(footer).toContain("Open Mirror LLC is a small independent company.");
     for (const banned of [
