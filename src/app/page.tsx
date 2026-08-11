@@ -28,7 +28,7 @@ const dailyWays = [
     eyebrow: "Bible Reading Plan",
     title: "Read the Bible in 1 or 2 Years",
     body:
-      "Choose a pace that fits your life. Follow the same seven reading lanes through the whole Bible in 1 Year · 52 Weeks or take the same journey over 2 Years · 104 Weeks.",
+      "Choose a pace that fits your life. Follow the same seven reading lanes through the whole Bible, at the pace that works for you.",
     cta: "Choose Your Plan",
   },
   {
