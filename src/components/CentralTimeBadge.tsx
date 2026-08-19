@@ -86,32 +86,32 @@ export default function CentralTimeBadge({
   }
 
   return (
-    <div
-      className={`mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400 sm:text-sm ${className}`}
-      aria-label="Current Central Time and Bible reading plan week"
-    >
-      <span>{parts.weekday}</span>
-      <span aria-hidden="true">·</span>
-      <span>
-        {parts.month} {parts.day}, {parts.year}
-      </span>
-      <span aria-hidden="true">·</span>
-      <span>
+    <div className={`mx-auto flex max-w-3xl flex-col items-center gap-1 ${className}`}>
+      <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm font-black text-slate-200 sm:text-base">
+        <span>
+          {parts.weekday}, {parts.month} {parts.day}
+        </span>
+        <span aria-hidden="true" className="text-slate-500">
+          ·
+        </span>
+        <span>Week {parts.week}</span>
+      </p>
+
+      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-xs">
         {parts.hour}:{parts.minute} {parts.dayPeriod} Central Time
-      </span>
-      <span aria-hidden="true">·</span>
-      <span>Week {parts.week}</span>
-      {showReadingPlan ? (
-        <>
-          <span aria-hidden="true">·</span>
-          <a
-            href={READING_PLAN_HREF}
-            className="text-slate-300 underline decoration-white/20 underline-offset-4 transition hover:text-emerald-100 hover:decoration-emerald-100/60"
-          >
-            Bible reading plan
-          </a>
-        </>
-      ) : null}
+        {showReadingPlan ? (
+          <>
+            {" "}
+            ·{" "}
+            <a
+              href={READING_PLAN_HREF}
+              className="text-slate-400 underline decoration-white/20 underline-offset-4 transition hover:text-emerald-100 hover:decoration-emerald-100/60"
+            >
+              Bible reading plan
+            </a>
+          </>
+        ) : null}
+      </p>
     </div>
   );
 }

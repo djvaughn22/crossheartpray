@@ -2,9 +2,6 @@
 
 import SiteFooter from "./SiteFooter";
 
-
-import SiteHeader from "./SiteHeader";
-
 import { useEffect, useMemo, useState } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
 import PageNucleusHero from "./PageNucleusHero";
@@ -605,15 +602,15 @@ export default function DailyHopeRoutine({
       <style>{`@keyframes chpDealIn{0%{opacity:0;transform:translateY(-16px) rotate(-2.5deg) scale(.98)}55%{opacity:1;transform:translateY(3px) rotate(1deg)}100%{opacity:1;transform:none}}
 .chp-deal{animation:chpDealIn .5s cubic-bezier(.2,.8,.3,1) both}
 @media (prefers-reduced-motion: reduce){.chp-deal{animation:none}}`}</style>
-      <section className="mx-auto max-w-6xl px-6 py-8">
-        <SiteHeader />
+      <section className="mx-auto max-w-6xl px-6 py-6 sm:py-8">
         <PageNucleusHero
           title="Daily Hope"
           subhead="A prayer and Scripture rhythm for the day."
+          hideBrandRow
         >
-<CentralTimeBadge className="mt-3" />
+          <div className="flex w-full flex-col items-center gap-4">
+            <CentralTimeBadge showReadingPlan={false} />
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
             <div
               aria-label="Quick day view"
               className="flex flex-wrap items-center justify-center gap-1.5"
@@ -650,22 +647,43 @@ export default function DailyHopeRoutine({
               })}
             </div>
 
-            <button
-              type="button"
-              onClick={allDaysExpanded ? minimizeDays : expandAllDays}
-              aria-expanded={allDaysExpanded}
-              className="inline-flex h-8 items-center justify-center rounded-full border border-emerald-200/30 bg-emerald-300/15 px-3 text-[0.62rem] font-black uppercase tracking-[0.14em] text-emerald-50 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-300/22"
+            <div
+              aria-label="Daily Hope actions"
+              className="flex flex-wrap items-center justify-center gap-x-0.5 gap-y-1"
             >
-              {allDaysExpanded ? "Collapse all days" : "Expand all days"}
-            </button>
+              <a
+                href="/bible-reading-plan"
+                className="inline-flex min-h-9 items-center rounded-full px-2.5 py-1.5 text-xs font-bold text-slate-300 underline decoration-white/15 underline-offset-4 transition hover:bg-white/5 hover:text-emerald-100 hover:decoration-emerald-100/60"
+              >
+                Bible Reading Plan
+              </a>
 
-            <BibleBingoShareMenu
-              boardHref={pagePath}
-              boardUrl={pageUrl}
-              shareText={boardShareText}
-              emailSubject="Daily Hope"
-              htmlEmail={boardHtml}
-            />
+              <span aria-hidden="true" className="px-1 text-slate-600">
+                ·
+              </span>
+
+              <button
+                type="button"
+                onClick={allDaysExpanded ? minimizeDays : expandAllDays}
+                aria-expanded={allDaysExpanded}
+                className="inline-flex min-h-9 items-center rounded-full px-2.5 py-1.5 text-xs font-bold text-slate-300 underline decoration-white/15 underline-offset-4 transition hover:bg-white/5 hover:text-emerald-100 hover:decoration-emerald-100/60"
+              >
+                {allDaysExpanded ? "Collapse all" : "Expand all"}
+              </button>
+
+              <span aria-hidden="true" className="px-1 text-slate-600">
+                ·
+              </span>
+
+              <BibleBingoShareMenu
+                boardHref={pagePath}
+                boardUrl={pageUrl}
+                shareText={boardShareText}
+                emailSubject="Daily Hope"
+                htmlEmail={boardHtml}
+                buttonLabel="Share"
+              />
+            </div>
           </div>
         </PageNucleusHero>
 

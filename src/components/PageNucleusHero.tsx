@@ -8,6 +8,10 @@ type PageNucleusHeroProps = {
   body?: string;
   children?: ReactNode;
   actionsInline?: boolean;
+  // Skip the "Cross Heart Pray" brand row above the title. Use this only when
+  // a page already shows that identity elsewhere (e.g. the global header) and
+  // repeating it here would just be clutter.
+  hideBrandRow?: boolean;
 };
 
 export default function PageNucleusHero({
@@ -16,6 +20,7 @@ export default function PageNucleusHero({
   body,
   children,
   actionsInline = false,
+  hideBrandRow = false,
 }: PageNucleusHeroProps) {
   if (actionsInline) {
     return (
@@ -68,25 +73,27 @@ export default function PageNucleusHero({
   return (
     <section className="text-center">
       <div>
-        <div
-          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.68rem] font-black uppercase tracking-[0.22em] text-white sm:text-xs"
-          aria-hidden="true"
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-xl tracking-normal sm:text-2xl">✝️</span>
-            <span>Cross</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-xl tracking-normal sm:text-2xl">❤️</span>
-            <span>Heart</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-xl tracking-normal sm:text-2xl">🙏</span>
-            <span>Pray</span>
-          </span>
-        </div>
+        {!hideBrandRow ? (
+          <div
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.68rem] font-black uppercase tracking-[0.22em] text-white sm:text-xs"
+            aria-hidden="true"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-xl tracking-normal sm:text-2xl">✝️</span>
+              <span>Cross</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-xl tracking-normal sm:text-2xl">❤️</span>
+              <span>Heart</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-xl tracking-normal sm:text-2xl">🙏</span>
+              <span>Pray</span>
+            </span>
+          </div>
+        ) : null}
 
-        <h1 className="mx-auto mt-2 max-w-3xl text-3xl font-black leading-none tracking-tight text-white print:text-black sm:text-4xl">
+        <h1 className={`mx-auto max-w-3xl text-3xl font-black leading-none tracking-tight text-white print:text-black sm:text-4xl ${hideBrandRow ? "" : "mt-2"}`}>
           {title}
         </h1>
 
