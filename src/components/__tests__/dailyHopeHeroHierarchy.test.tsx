@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/daily-hope",
+}));
+
 import DailyHopeRoutine from "../DailyHopeRoutine";
 import {
   dailyHopeClosingPrayer,
@@ -49,19 +53,28 @@ describe("Daily Hope hero hierarchy", () => {
     expect(screen.queryByText("Pray")).toBeNull();
   });
 
-  it("does not render the floating Home / Bible Reading flow pills", () => {
+  it("reuses the site's page-flow pills: Home behind, Bible Reading Plan ahead", () => {
     renderDailyHope();
 
-    expect(screen.queryByRole("link", { name: /previous: home/i })).toBeNull();
-    expect(screen.queryByRole("link", { name: /next: bible reading/i })).toBeNull();
+    const previous = screen.getByRole("link", { name: /previous: home/i });
+    expect(previous.getAttribute("href")).toBe("/");
+
+    const next = screen.getByRole("link", { name: /next: bible reading/i });
+    expect(next.getAttribute("href")).toBe("/bible-reading-plan");
   });
 
-  it("offers Bible Reading Plan as exactly one contextual link", () => {
+  it("links to Bible Reading Plan exactly once, only via the forward nav pill", () => {
     renderDailyHope();
 
-    const links = screen.getAllByRole("link", { name: /bible reading plan/i });
+    const links = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("href") === "/bible-reading-plan");
     expect(links.length).toBe(1);
-    expect(links[0].getAttribute("href")).toBe("/bible-reading-plan");
+    expect(links[0].getAttribute("aria-label")).toMatch(/next: bible reading/i);
+
+    // The old small utility-row action must be gone.
+    const actions = screen.getByLabelText("Daily Hope actions");
+    expect(within(actions).queryByText(/bible reading plan/i)).toBeNull();
   });
 
   it("keeps today/day-selection, expand-all, and share controls next to the date", async () => {

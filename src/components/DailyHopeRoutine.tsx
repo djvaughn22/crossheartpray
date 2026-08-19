@@ -1,6 +1,7 @@
 "use client";
 
 import SiteFooter from "./SiteFooter";
+import SiteHeader from "./SiteHeader";
 
 import { useEffect, useMemo, useState } from "react";
 import BibleBingoShareMenu from "./BibleBingoShareMenu";
@@ -603,6 +604,7 @@ export default function DailyHopeRoutine({
 .chp-deal{animation:chpDealIn .5s cubic-bezier(.2,.8,.3,1) both}
 @media (prefers-reduced-motion: reduce){.chp-deal{animation:none}}`}</style>
       <section className="mx-auto max-w-6xl px-6 py-6 sm:py-8">
+        <SiteHeader />
         <PageNucleusHero
           title="Daily Hope"
           subhead="A prayer and Scripture rhythm for the day."
@@ -651,17 +653,6 @@ export default function DailyHopeRoutine({
               aria-label="Daily Hope actions"
               className="flex flex-wrap items-center justify-center gap-x-0.5 gap-y-1"
             >
-              <a
-                href="/bible-reading-plan"
-                className="inline-flex min-h-9 items-center rounded-full px-2.5 py-1.5 text-xs font-bold text-slate-300 underline decoration-white/15 underline-offset-4 transition hover:bg-white/5 hover:text-emerald-100 hover:decoration-emerald-100/60"
-              >
-                Bible Reading Plan
-              </a>
-
-              <span aria-hidden="true" className="px-1 text-slate-600">
-                ·
-              </span>
-
               <button
                 type="button"
                 onClick={allDaysExpanded ? minimizeDays : expandAllDays}
@@ -692,7 +683,7 @@ export default function DailyHopeRoutine({
             References to verify: {missingReferences.join(", ")}
           </div>
         ) : null}
-        <section className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-5">
+        <section className="mx-auto mt-6 grid max-w-4xl grid-cols-1 gap-3">
           {openingPrayers.map((prayer, index) => {
             const prayerId = `prayer-${index + 1}`;
             const prayerUrl = `${pageUrl}#${prayerId}`;
@@ -710,7 +701,7 @@ export default function DailyHopeRoutine({
                 key={prayer.title}
                 style={{ animationDelay: `${index * 60}ms` }}
                 className={`chp-deal relative overflow-visible border shadow-2xl shadow-black/20 ${prayerTone} ${
-                  isPrayerExpanded ? "rounded-[2rem] p-6 sm:p-8" : "rounded-2xl p-3.5 sm:p-4"
+                  isPrayerExpanded ? "rounded-[2rem] p-6 sm:p-8" : "rounded-2xl p-3 sm:p-3.5"
                 }`}
               >
                 <button
@@ -793,7 +784,7 @@ export default function DailyHopeRoutine({
           })}
         </section>
 
-        <section id="daily-hope-days" className="mt-12 scroll-mt-24 space-y-8">
+        <section id="daily-hope-days" className="mt-7 scroll-mt-24 space-y-8">
           {visibleDays.map((day, dayIndex) => {
             const isToday = todaySlug === day.slug;
             const defaultDayExpanded =
