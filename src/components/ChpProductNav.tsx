@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import OpenMirrorThemeToggle from "./OpenMirrorTheme";
+import BrandHomeLink from "./BrandHomeLink";
 
 // The one CrossHeartPray header: brand on the left (links home), the Bible
 // icon centered, the ☀️/🌙 switch + a single accessible menu button on the
@@ -87,8 +88,7 @@ export default function ChpProductNav() {
         ref={containerRef}
         className="relative mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3"
       >
-        <Link
-          href="/"
+        <BrandHomeLink
           aria-label="CrossHeartPray home"
           className="justify-self-start inline-flex min-w-0 items-center gap-2 rounded-lg text-[#e8edf5] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60"
         >
@@ -98,7 +98,7 @@ export default function ChpProductNav() {
           <span className="hidden truncate text-sm font-black tracking-tight sm:inline sm:text-base">
             CrossHeartPray
           </span>
-        </Link>
+        </BrandHomeLink>
 
         <a
           href="https://www.bible.com/verse-of-the-day"
@@ -143,21 +143,34 @@ export default function ChpProductNav() {
             >
               {LINKS.map((l) => {
                 const active = isActive(l.href);
-                return (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    aria-current={active ? "page" : undefined}
-                    onClick={closeMenu}
-                    className={`flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 ${
-                      active
-                        ? "bg-[#4ADE80] text-[#06131a]"
-                        : "text-[#e8edf5] hover:bg-[#1c2740]"
-                    }`}
-                  >
-                    {l.label}
-                  </Link>
-                );
+                return l.href === "/" ? (
+                    <BrandHomeLink
+                      key={l.href}
+                      aria-current={active ? "page" : undefined}
+                      onClick={closeMenu}
+                      className={`flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 ${
+                        active
+                          ? "bg-[#4ADE80] text-[#06131a]"
+                          : "text-[#e8edf5] hover:bg-[#1c2740]"
+                      }`}
+                    >
+                      {l.label}
+                    </BrandHomeLink>
+                  ) : (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      aria-current={active ? "page" : undefined}
+                      onClick={closeMenu}
+                      className={`flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 ${
+                        active
+                          ? "bg-[#4ADE80] text-[#06131a]"
+                          : "text-[#e8edf5] hover:bg-[#1c2740]"
+                      }`}
+                    >
+                      {l.label}
+                    </Link>
+                  );
               })}
             </nav>
           ) : null}
