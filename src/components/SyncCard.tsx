@@ -2,8 +2,8 @@
 
 // The one public surface for Save on Any Device.
 //
-// CrossHeartPray itself is free and stays free: Scripture, the Reading Plan,
-// Daily Hope, Bible Bingo 7, and Deep Dive never depend on an account. This
+// Scripture, the Reading Plan, Daily Hope, Bible Bingo 7, and Deep Dive never
+// depend on an account (2026-10-17, owner: no free/subscription wording). This
 // card only offers cross-device persistence, and it is deliberately a quiet
 // utility rather than a pitch — no hero, no banner, no interruption.
 //
@@ -128,9 +128,11 @@ export default function SyncCard() {
       <h2 className="text-lg font-black text-white">Save on any device</h2>
 
       <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
-        CrossHeartPray is free on this device and stays free. An optional
-        subscription will keep your reading progress with you when you move
-        between your phone, tablet, and computer.
+        Scripture, the Reading Plan, Daily Hope, and Bible Bingo 7 all work on
+        this device with no account, and Bible Bingo 7 can email your readings
+        on the schedule you pick. Save on any device keeps your reading
+        progress with you when you move between your phone, tablet, and
+        computer.
       </p>
 
       {!loaded ? null : account ? (

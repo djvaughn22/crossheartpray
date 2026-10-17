@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     {
       account: result.account,
       message:
-        "Account created. CrossHeartPray remains free; cross-device Sync activates with a Sync entitlement.",
+        "Account created. Scripture, the Reading Plan, and your Bible Bingo 7 emails keep working as always; Save on any device turns on once this account has access.",
     },
     201,
   );
