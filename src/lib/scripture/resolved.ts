@@ -164,6 +164,20 @@ export function resolveScriptureSelection(
 }
 
 /**
+ * The absolute CrossHeartPray link for a passage — its Reading Plan cell,
+ * where the reader opens on the selected verse. Shares hand this to the
+ * people they reach, so a shared verse lands on CrossHeartPray, never on an
+ * outside Bible site. Falls back to the Reading Plan if the reference can't
+ * be placed.
+ */
+export function crossHeartPrayPassageUrl(reference: ScriptureReference | null): string {
+  const href = reference
+    ? resolveScriptureSelection(reference)?.readingPlan?.readHereHref
+    : undefined;
+  return `https://crossheartpray.com${href ?? "/bible-reading-plan"}`;
+}
+
+/**
  * Bible.com link honoring a chosen translation when it carries a usable
  * Bible.com id/abbreviation; falls back safely to WEB otherwise.
  */

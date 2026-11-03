@@ -5,7 +5,7 @@ import { passagesForBibleBingoBoardId } from "../../../lib/bibleRandom";
 import { BIBLE_BINGO_SECTIONS } from "../../../lib/dailyBibleBingo";
 import SiteHeader from "../../../components/SiteHeader";
 import SiteFooter from "../../../components/SiteFooter";
-import { bibleComUrlForPassage } from "../../../lib/scripture";
+import { crossHeartPrayPassageUrl, referenceForPassage } from "../../../lib/scripture";
 
 type PageProps = {
   params: Promise<{
@@ -35,12 +35,16 @@ const cardTones = [
   "border-violet-200/15 bg-violet-300/10",
 ];
 
+// The board email's Verse and Chapter links open the passage on
+// CrossHeartPray, never an outside Bible site.
 function verseUrl(passage: PassageForUrl) {
-  return bibleComUrlForPassage(passage);
+  return crossHeartPrayPassageUrl(referenceForPassage(passage));
 }
 
 function chapterUrl(passage: Omit<PassageForUrl, "verse">) {
-  return bibleComUrlForPassage(passage);
+  return crossHeartPrayPassageUrl(
+    referenceForPassage({ code: passage.code, chapter: passage.chapter }),
+  );
 }
 
 function escapeHtmlForEmail(value: string) {

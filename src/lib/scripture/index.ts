@@ -64,6 +64,7 @@ export {
 
 export {
   bibleComUrlForTranslation,
+  crossHeartPrayPassageUrl,
   resolveScriptureSelection,
   type ResolvedReadingPlanTarget,
   type ResolvedScriptureReference,

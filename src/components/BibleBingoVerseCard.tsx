@@ -11,7 +11,7 @@ import {
 } from "../lib/originalLanguageWordStudy";
 
 import { track } from "../lib/analytics";
-import { bibleComUrlForPassage, referenceForPassage } from "../lib/scripture";
+import { crossHeartPrayPassageUrl, referenceForPassage } from "../lib/scripture";
 export type BibleBingoCardPassage = {
   label: string;
   book: string;
@@ -41,12 +41,15 @@ type BibleBingoVerseCardProps = {
   children?: ReactNode;
 };
 
+// Shared links open the passage on CrossHeartPray, never an outside Bible site.
 function verseUrl(passage: BibleBingoCardPassage) {
-  return bibleComUrlForPassage(passage);
+  return crossHeartPrayPassageUrl(referenceForPassage(passage));
 }
 
 function chapterUrl(passage: BibleBingoCardPassage) {
-  return bibleComUrlForPassage({ code: passage.code, chapter: passage.chapter });
+  return crossHeartPrayPassageUrl(
+    referenceForPassage({ code: passage.code, chapter: passage.chapter }),
+  );
 }
 
 
@@ -68,7 +71,7 @@ function shareTextFor(passage: BibleBingoCardPassage) {
     "",
     CONTEXT_TAGLINE,
     "",
-    "Open in the Holy Bible app:",
+    "Open the verse:",
     verseUrl(passage),
     "",
     "Read the chapter:",

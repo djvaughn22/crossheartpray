@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "../../components/SiteHeader";
 import SiteFooter from "../../components/SiteFooter";
 import SyncCard from "../../components/SyncCard";
+import { CROSS_HEART_PRAY_INVITATIONS } from "../../lib/crossHeartPrayInvitations";
 
 export const metadata = {
   title: "About",
@@ -53,6 +54,32 @@ export default function AboutPage() {
               Daily&nbsp;Hope → Bible&nbsp;Reading&nbsp;Plan → Life&nbsp;Essentials →
               Bible&nbsp;Bingo&nbsp;7 → Deep&nbsp;Dive → Track&nbsp;progress
             </p>
+          </section>
+
+          {/* The four invitations — Cross Heart Pray, and the tagline Share the
+              Good News — each with the Scripture it rests on */}
+          <section className={`${cardClass} mb-12`}>
+            <h2 className="text-2xl font-black text-white">Four invitations</h2>
+
+            <ul className="mt-4 space-y-6 text-base leading-8 text-slate-300">
+              {CROSS_HEART_PRAY_INVITATIONS.map((item) => (
+                <li key={item.word}>
+                  <p>
+                    <span className="font-black text-white">{`${item.icon} ${item.word}:`}</span>{" "}
+                    <span className="font-semibold text-emerald-100">{item.invitation}</span>
+                  </p>
+                  {item.note ? <p>{item.note}</p> : null}
+                  <figure className="mt-2">
+                    <blockquote className="chp-scripture-serif leading-7 text-slate-200">
+                      “{item.quote}”
+                    </blockquote>
+                    <figcaption className="mt-1 text-sm font-semibold text-slate-400">
+                      {item.reference} (BSB)
+                    </figcaption>
+                  </figure>
+                </li>
+              ))}
+            </ul>
           </section>
 
           {/* The CrossHeartPray pages — in the same order as the site menu */}
@@ -221,25 +248,6 @@ export default function AboutPage() {
               <Link href="/bible-reading-plan" className={buttonClass}>
                 Track Progress
               </Link>
-            </section>
-
-            <section className={cardClass}>
-              <h2 className="text-2xl font-black text-white">Cross Heart Pray</h2>
-
-              <ul className="mt-4 space-y-3 text-base leading-8 text-slate-300">
-                <li>
-                  <span className="font-black text-white">✝️ Cross:</span>{" "}
-                  <span className="font-semibold text-emerald-100">Come to Jesus…</span>
-                </li>
-                <li>
-                  <span className="font-black text-white">❤️ Heart:</span>{" "}
-                  <span className="font-semibold text-emerald-100">Receive God&apos;s Love…</span>
-                </li>
-                <li>
-                  <span className="font-black text-white">🙏 Pray:</span>{" "}
-                  <span className="font-semibold text-emerald-100">Dear God…</span>
-                </li>
-              </ul>
             </section>
 
             <section className={cardClass}>
