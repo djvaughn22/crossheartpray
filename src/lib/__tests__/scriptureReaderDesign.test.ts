@@ -95,9 +95,10 @@ describe("reader chrome (source contract)", () => {
     expect(picker).toContain("More translations");
     expect(picker).toContain("Reads inside CrossHeartPray");
     expect(picker).toContain("Opens in YouVersion");
-    // The tiny legend — the whole idea in two lines.
+    // The tiny legend. Every listed Bible reads here, so it no longer offers
+    // an "Open in YouVersion" choice that no card could deliver (2026-11-03).
     expect(picker).toContain("Read the Bible without leaving CrossHeartPray.");
-    expect(picker).toContain("Opens the official YouVersion Bible.");
+    expect(picker).not.toContain("Opens the official YouVersion Bible.");
   });
 
   it("the picker searches by name and marks the current Bible clearly", () => {

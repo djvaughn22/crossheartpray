@@ -319,19 +319,17 @@ export default function TranslationPicker({
                 )}
               </div>
 
-              {/* Tiny legend — the whole idea in two lines. */}
+              {/* Tiny legend. The translation list only ever holds Bibles that
+                  read here (locked 2026-08-02), so the old second line — "Open in
+                  YouVersion" — promised a choice no card offered (removed
+                  2026-11-03, owner: chapters stay in CrossHeartPray; the header's
+                  Bible icon is the way to the Bible app). */}
               <div className="shrink-0 space-y-1 border-t border-white/10 px-5 py-3">
                 <p className="text-[11px] leading-4 text-zinc-400">
                   <span className="font-bold text-zinc-200">
                     <span aria-hidden="true">📖</span> Read Here
                   </span>
                   {" — "}Read the Bible without leaving CrossHeartPray.
-                </p>
-                <p className="text-[11px] leading-4 text-zinc-400">
-                  <span className="font-bold text-zinc-200">
-                    <span aria-hidden="true">↗</span> Open in YouVersion
-                  </span>
-                  {" — "}Opens the official YouVersion Bible.
                 </p>
               </div>
             </div>

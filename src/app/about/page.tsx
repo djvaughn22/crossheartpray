@@ -229,7 +229,8 @@ export default function AboutPage() {
                   Source info
                 </p>
                 <p className="mt-2 text-sm font-semibold leading-7 text-slate-300">
-                  The Bible is the path. Chapter links open in the Bible app. Deep Dive adds
+                  The Bible is the path. Chapters stay here in CrossHeartPray unless you
+                  choose to open the Bible app with the Bible icon at the top. Deep Dive adds
                   original-language source notes only where the data is verified.
                 </p>
               </div>

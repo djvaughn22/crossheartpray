@@ -79,6 +79,14 @@ describe("CrossHeartPray family footer", () => {
     }
   });
 
+  it("About says chapters stay in CrossHeartPray unless you choose the Bible app", () => {
+    // Owner, 2026-11-03: the old "Chapter links open in the Bible app" line
+    // predated the in-site reader.
+    const flat = about.replace(/\s+/g, " ");
+    expect(flat).toContain("Chapters stay here in CrossHeartPray unless you choose to open the Bible app");
+    expect(flat).not.toContain("Chapter links open in the Bible app");
+  });
+
   it("line three is the copyright and ownership line, old clutter stays gone", () => {
     expect(footer).toContain('<span className="inline-block">© 2026 Open Mirror LLC,</span>');
     expect(footer).toContain('<span className="inline-block">a small independent company.</span>');
