@@ -9,7 +9,8 @@ import KindleReaderModal from "./scripture/KindleReaderModal";
 // in CrossHeartPray's own voice:
 //   1. OpenMirrorLLC.com · About · ✝️ ❤️ 🙏
 //   2. Contact · Disclaimer      (anchors into /about's own sections)
-//   3. Open Mirror LLC is a small independent company.
+//   3. © 2026 Open Mirror LLC, a small independent company.  (© added
+//      2026-11-03, owner; two phrases so a phone breaks between them)
 // On CrossHeartPray itself the icon group IS the "Love God, love your
 // neighbor" interaction: one accessible control that opens Matthew 22:35–40
 // in the internal KindleReaderModal. It never leaves the page and never
@@ -65,7 +66,8 @@ export default function SiteFooter() {
           </p>
         </nav>
         <p className="m-0 mt-0.5 text-center text-[11px] font-medium text-slate-500">
-          Open Mirror LLC is a small independent company.
+          <span className="inline-block">© 2026 Open Mirror LLC,</span>{" "}
+          <span className="inline-block">a small independent company.</span>
         </p>
       </div>
       <KindleReaderModal

@@ -1,7 +1,7 @@
 // Family footer standard guard (owner, 2026-08-02), CrossHeartPray edition:
 //   OpenMirrorLLC.com · About · ✝️ ❤️ 🙏
 //   Contact · Disclaimer      (anchors into /about's own sections)
-//   Open Mirror LLC is a small independent company.
+//   © 2026 Open Mirror LLC, a small independent company.   (© added 2026-11-03, owner)
 // On CrossHeartPray the icon group IS the "Love God, love your neighbor"
 // interaction — one accessible control opening Matthew 22:35–40 in the
 // internal KindleReaderModal. Locked Scripture rule: the footer never links
@@ -79,10 +79,10 @@ describe("CrossHeartPray family footer", () => {
     }
   });
 
-  it("line three is the plain ownership sentence, old clutter stays gone", () => {
-    expect(footer).toContain("Open Mirror LLC is a small independent company.");
+  it("line three is the copyright and ownership line, old clutter stays gone", () => {
+    expect(footer).toContain('<span className="inline-block">© 2026 Open Mirror LLC,</span>');
+    expect(footer).toContain('<span className="inline-block">a small independent company.</span>');
     for (const banned of [
-      "©",
       "About Open Mirror",
       ">CrossHeartPray</a>",
       'target="_blank"',
