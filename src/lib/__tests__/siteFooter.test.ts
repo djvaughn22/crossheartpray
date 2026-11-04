@@ -54,12 +54,29 @@ describe("CrossHeartPray family footer", () => {
     );
     expect(contactSection).toContain("ask@openmirrorllc.com");
 
-    const disclaimerSection = about.slice(
-      about.indexOf('id="disclaimer"'),
-      about.indexOf('id="disclaimer"') + 800,
-    );
+    const start = about.indexOf('id="disclaimer"');
+    const disclaimerSection = about
+      .slice(start, about.indexOf("</section>", start))
+      .replace(/\s+/g, " ");
     expect(disclaimerSection).toContain("independently owned and operated");
+    expect(disclaimerSection).toContain("current or former employers");
     expect(disclaimerSection).toContain("https://openmirrorllc.com/disclaimer");
+  });
+
+  it("the disclaimer sets Scripture apart and never files it under generic warnings", () => {
+    const start = about.indexOf('id="disclaimer"');
+    const flat = about
+      .slice(start, about.indexOf("</section>", start))
+      .replace(/\s+/g, " ")
+      .replace(/&rsquo;/g, "’");
+    // Owner brief (2026-11-03): Scripture is God's Word, quoted and never
+    // rewritten; the helps around it are named as helps, not Scripture.
+    expect(flat).toContain("Scripture on CrossHeartPray is God’s Word");
+    expect(flat).toContain("never rewritten");
+    expect(flat).toContain("they are not Scripture");
+    for (const banned of [/entertainment/i, /\bAI\b/, /artificial intelligence/i, /informational/i]) {
+      expect(flat).not.toMatch(banned);
+    }
   });
 
   it("line three is the plain ownership sentence, old clutter stays gone", () => {

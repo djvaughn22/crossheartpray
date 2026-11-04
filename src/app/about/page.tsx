@@ -316,10 +316,17 @@ export default function AboutPage() {
             <section id="disclaimer" className="scroll-mt-24">
               <h2 className="text-lg font-black text-white">Disclaimer</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
-                Open Mirror LLC is independently owned and operated. Nothing
-                published by Open Mirror LLC is sponsored by, affiliated with,
-                endorsed by, or representative of the owner&rsquo;s full-time
-                employer. Read the{" "}
+                Scripture on CrossHeartPray is God&rsquo;s Word, quoted from
+                published Bible translations and never rewritten. Prayers,
+                reading plans, study notes, and Dr. Gene Getz&rsquo;s Life
+                Essentials teaching are here to help you read it; they are not
+                Scripture.
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                Open Mirror LLC and its projects are independently owned and
+                operated. They are not affiliated with, sponsored by, or
+                endorsed by the owner&rsquo;s current or former employers or
+                their affiliates. Read the{" "}
                 <a
                   href="https://openmirrorllc.com/disclaimer"
                   className="text-emerald-200 underline decoration-white/20 underline-offset-4 transition hover:decoration-emerald-100/60"
